@@ -31,6 +31,13 @@
     <ClInclude Include="renderer.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Arq000_decisiones_arquitectonicas.md" />
+    <None Include="Arq001_estructura_capas.md" />
+    <None Include="Arq002_rendering_luces.md" />
+    <None Include="Arq003_ciclo_vida_entrada.md" />
+    <None Include="descripcion_Proyecto.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

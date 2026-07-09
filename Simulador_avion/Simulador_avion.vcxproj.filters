@@ -19,6 +19,9 @@
     <Filter Include="include">
       <UniqueIdentifier>{d3bf6973-95ba-4c5c-9048-ed867b1a9a1c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{8c7562ce-c2e6-4515-bc9d-310d82e927da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -50,5 +53,22 @@
     <ClInclude Include="utils.h">
       <Filter>include</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="descripcion_Proyecto.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="Arq000_decisiones_arquitectonicas.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="Arq001_estructura_capas.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="Arq002_rendering_luces.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="Arq003_ciclo_vida_entrada.md">
+      <Filter>docs</Filter>
+    </None>
   </ItemGroup>
 </Project>
