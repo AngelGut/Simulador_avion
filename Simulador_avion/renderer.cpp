@@ -1,59 +1,48 @@
 #include "renderer.h"
 #include "geometry.h"
 #include <GL/glut.h>
+#include <cstdio>
 
 namespace Renderer {
 
     // --------------------------------------------------------
     // setupOpenGL()
     // Inicializacion general antes de glutMainLoop(). Configura
-    // color de fondo, antialiasing (GL_LINE_SMOOTH), Z-Buffer y Culling.
+    // color de fondo, antialiasing (GL_LINE_SMOOTH).
     // --------------------------------------------------------
     void setupOpenGL() {
-        // 1. Color de fondo del entorno (Verde pasto oscuro para los laterales de la pista)
-        glClearColor(0.1f, 0.35f, 0.1f, 1.0f);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f); // Fondo casi negro
 
-        // 2. Antialiasing: suaviza las lineas dibujadas con GL_LINES,
-        // GL_LINE_LOOP y GL_LINE_STRIP (circulos, largueros, Bezier).
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glLineWidth(1.0f);
-
-        // 3. Conceptos de Clase: Z-Buffer para control de profundidad correcta
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-
-        // 4. Conceptos de Clase: Optimización mediante Back-Face Culling
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
 
         applyLighting();
     }
 
     // --------------------------------------------------------
     // applyLighting()
-    // Luz ambiente + una luz direccional basica (GL_LIGHT0).
+    // Luz ambiente + una luz direccional basica (GL_LIGHT0), pero
+    // DESACTIVADA permanentemente. El proyecto es 2D con colores
+    // planos (glColor3f); GL_LIGHTING calcularia reflejos sobre
+    // normales que no representan superficies reales, causando
+    // colores incorrectos. Se documenta la configuracion por si
+    // se usa en una extension futura 3D, pero no se activa aqui.
     // --------------------------------------------------------
     void applyLighting() {
-        glEnable(GL_LIGHTING);
         glEnable(GL_LIGHT0);
-        glShadeModel(GL_SMOOTH); // Gouraud shading visto en clase
+        glShadeModel(GL_FLAT);
 
         GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
         GLfloat diffuseLight[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-        GLfloat lightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f }; // Direccional (w=0)
+        GLfloat lightPosition[] = { 0.0f, 0.0f, 1.0f, 0.0f };
 
         glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
         glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
         glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
-        // Activamos la vinculacion del color material para que funcione glColor3f
-        glEnable(GL_COLOR_MATERIAL);
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+        glDisable(GL_LIGHTING); // Nunca se activa durante el dibujo
     }
 
     // --------------------------------------------------------
@@ -66,32 +55,31 @@ namespace Renderer {
 
     // --------------------------------------------------------
     // drawAirportRunway()
-    // Sustituye a drawGrid(). Dibuja una pista de aterrizaje técnica
-    // usando primitivas puras e iteraciones geométricas.
+    // Escenario de fondo: pista de aterrizaje con bordes y linea
+    // central. Se dibuja antes de la geometria del avion.
     // --------------------------------------------------------
     void drawAirportRunway() {
-        // Deshabilitar iluminación momentáneamente para el escenario plano de fondo
         glDisable(GL_LIGHTING);
 
-        // 1. Asfalto de la pista (Gris oscuro centrado)
+        // Asfalto de la pista
         glColor3f(0.25f, 0.25f, 0.25f);
         glBegin(GL_QUADS);
-        glVertex3f(-60.0f, -150.0f, -0.9f); // Usamos Z ligeramente menor (-0.9)
-        glVertex3f(60.0f, -150.0f, -0.9f); // para que quede al fondo en el Z-Buffer
+        glVertex3f(-60.0f, -150.0f, -0.9f);
+        glVertex3f(60.0f, -150.0f, -0.9f);
         glVertex3f(60.0f, 150.0f, -0.9f);
         glVertex3f(-60.0f, 150.0f, -0.9f);
         glEnd();
 
-        // 2. Líneas laterales blancas (Bordes de pista)
+        // Lineas laterales blancas
         glColor3f(1.0f, 1.0f, 1.0f);
         glLineWidth(2.0f);
         glBegin(GL_LINES);
         glVertex3f(-60.0f, -150.0f, -0.8f); glVertex3f(-60.0f, 150.0f, -0.8f);
-        glVertex3f(60.0f, -150.0f, -0.8f); glVertex3f(60.0f, 150.0f, -0.8f);
+        glVertex3f(60.0f, -150.0f, -0.8f);  glVertex3f(60.0f, 150.0f, -0.8f);
         glEnd();
 
-        // 3. Línea discontinua central (Eje de pista)
-        glColor3f(1.0f, 1.0f, 0.0f); // Amarillo técnico para visibilidad
+        // Linea discontinua central
+        glColor3f(1.0f, 1.0f, 0.0f);
         glLineWidth(1.5f);
         glBegin(GL_LINES);
         for (float y = -150.0f; y < 150.0f; y += 30.0f) {
@@ -100,8 +88,84 @@ namespace Renderer {
         }
         glEnd();
 
-        glLineWidth(1.0f); // Resetear grosor
-        glEnable(GL_LIGHTING); // Reactivar iluminación para el avión
+        glLineWidth(1.0f);
+    }
+
+    // ------------------------------------------------------------
+    // drawLayerLabel()
+    // HUD tipo simulador: caja de fondo, indicador de color, titulo
+    // y subtitulo de la capa activa, contador "X/5". Se declara e
+    // implementa ANTES de drawLayer() porque esta la invoca.
+    // ------------------------------------------------------------
+    void drawLayerLabel(int layerNumber) {
+        struct LayerInfo {
+            const char* title;
+            const char* subtitle;
+            float r, g, b;
+        };
+
+        LayerInfo layers[6] = {
+            { "", "", 0.0f, 0.0f, 0.0f },
+            { "CAPA 1", "EXTERIOR",   0.9f, 0.9f, 0.9f },
+            { "CAPA 2", "ESTRUCTURA", 0.0f, 1.0f, 0.0f },
+            { "CAPA 3", "SISTEMAS",   0.0f, 0.4f, 1.0f },
+            { "CAPA 4", "CABINA",     0.9f, 0.2f, 0.2f },
+            { "CAPA 5", "PROPULSION", 0.5f, 0.5f, 0.5f }
+        };
+
+        if (layerNumber < 1 || layerNumber > 5) return;
+        LayerInfo info = layers[layerNumber];
+
+        // Caja de fondo semi-solida
+        glColor3f(0.08f, 0.08f, 0.08f);
+        glBegin(GL_QUADS);
+        glVertex3f(-195.0f, 128.0f, 0.0f);
+        glVertex3f(-90.0f, 128.0f, 0.0f);
+        glVertex3f(-90.0f, 145.0f, 0.0f);
+        glVertex3f(-195.0f, 145.0f, 0.0f);
+        glEnd();
+
+        // Borde de la caja
+        glColor3f(0.4f, 0.4f, 0.4f);
+        glLineWidth(1.0f);
+        glBegin(GL_LINE_LOOP);
+        glVertex3f(-195.0f, 128.0f, 0.0f);
+        glVertex3f(-90.0f, 128.0f, 0.0f);
+        glVertex3f(-90.0f, 145.0f, 0.0f);
+        glVertex3f(-195.0f, 145.0f, 0.0f);
+        glEnd();
+
+        // Indicador de color
+        glColor3f(info.r, info.g, info.b);
+        glBegin(GL_QUADS);
+        glVertex3f(-192.0f, 132.0f, 0.0f);
+        glVertex3f(-187.0f, 132.0f, 0.0f);
+        glVertex3f(-187.0f, 141.0f, 0.0f);
+        glVertex3f(-192.0f, 141.0f, 0.0f);
+        glEnd();
+
+        // Titulo
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glRasterPos2f(-183.0f, 138.0f);
+        for (const char* c = info.title; *c != '\0'; c++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
+        }
+
+        // Subtitulo
+        glColor3f(0.75f, 0.75f, 0.75f);
+        glRasterPos2f(-183.0f, 131.0f);
+        for (const char* c = info.subtitle; *c != '\0'; c++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, *c);
+        }
+
+        // Contador "X/5"
+        char counter[8];
+        sprintf(counter, "%d/5", layerNumber);
+        glColor3f(0.6f, 0.6f, 0.6f);
+        glRasterPos2f(175.0f, 138.0f);
+        for (const char* c = counter; *c != '\0'; c++) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
+        }
     }
 
     // --------------------------------------------------------
@@ -109,7 +173,6 @@ namespace Renderer {
     // Llama a los generadores de geometry.cpp segun la capa activa.
     // --------------------------------------------------------
     void drawLayer(int layerNumber) {
-        // Cambiamos drawGrid() por nuestro nuevo fondo aeroportuario
         drawAirportRunway();
 
         switch (layerNumber) {
@@ -139,6 +202,8 @@ namespace Renderer {
         default:
             break;
         }
+
+        drawLayerLabel(layerNumber); // HUD tipo simulador
     }
 
 } // namespace Renderer

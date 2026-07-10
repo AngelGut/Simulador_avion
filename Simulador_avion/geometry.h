@@ -78,6 +78,10 @@ namespace GeometryBuilder {
     // --------------------------------------------------------
     void generateMotors();
 
+    // Dibuja el contorno tenue del fuselaje como referencia visual
+// de fondo para las capas internas (2, 3, 4), para que los
+// componentes internos no se vean flotando sin contexto.
+    void drawFuselageOutline();
     // --------------------------------------------------------
     // generateLandingGear() -> Capa 5
     // Tecnica: Bresenham (circulo) para las ruedas; lineas rectas
@@ -85,6 +89,8 @@ namespace GeometryBuilder {
     // verticales puras, sin pendiente que discretizar).
     // --------------------------------------------------------
     void generateLandingGear();
+
+    void drawFuselageOutline();
 
     // --------------------------------------------------------
     // Funciones de apoyo (algoritmos de rasterizacion)
@@ -110,6 +116,13 @@ namespace GeometryBuilder {
     // en ARQ00X con la razon de por que no fue necesario.
     bool clipLineToViewport(float& x0, float& y0, float& x1, float& y1,
         float xmin, float ymin, float xmax, float ymax);
+
+    // Dibuja un "tubo" 2D rellenado: dos curvas Bezier paralelas
+// (con offset vertical) conectadas con GL_QUAD_STRIP, para que
+// tuberias/ductos se vean como conductos solidos, no como lineas.
+    void bezierTube(float x0, float y0, float x1, float y1,
+        float x2, float y2, float x3, float y3,
+        int segments, float thickness);
 
 } // namespace GeometryBuilder
 

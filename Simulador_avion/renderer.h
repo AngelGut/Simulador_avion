@@ -48,6 +48,7 @@ namespace Renderer {
     // --------------------------------------------------------
     void drawLayer(int layerNumber);
 
+    void drawLayerLabel(int layerNumber);
 } // namespace Renderer
 
 #endif // RENDERER_H
