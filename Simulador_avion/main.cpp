@@ -1,44 +1,66 @@
-// ============================================================
-// ARCHIVO: main.cpp � SOLO PARA PRUEBAS TEMPORALES
-// RESPONSABLE: Ronald (Geometr�a / Verificaci�n de Rendering)
+﻿// ============================================================
+// ARCHIVO: main.cpp - VERSIÓN MEJORADA
+// RESPONSABLE: Luis (Aplicación)
 // PROYECTO: Boeing 737 Visualizer - Julio 2026
-// DESCRIPTION: Archivo de entrada provisional. Sirve para validar que 
-//              geometry.cpp y renderer.cpp funcionan de forma correcta 
-//              antes de pasar la l�gica definitiva a Luis.
+// DESCRIPCION: Versión con Push/Pop Matrix, transformaciones,
+//              y navegación interactiva (pan, zoom, rotación).
+//              Permite ver el modelo desde diferentes puntos.
 // ============================================================
 
 #include <GL/glut.h>
 #include <iostream>
+#include <cmath>
 #include "renderer.h"
 
-// Variable global para almacenar el identificador de la capa activa en la prueba
+// Declaración adelantada de función
+void printHelp();
+
+// ============================================================
+// VARIABLES GLOBALES - Estado de la vista
+// ============================================================
+
+// Capa activa (1-5)
 int currentLayer = 1;
 
-// ------------------------------------------------------------
-// display()
-// Callback de dibujo ejecutado por el bucle principal de GLUT.
-// Redibuja el escenario y la geometr�a del avi�n en cada frame.
-// ------------------------------------------------------------
+// Transformación de vista: posición del modelo en pantalla
+float viewX = 0.0f;      // Traslación X (pan horizontal)
+float viewY = 0.0f;      // Traslación Y (pan vertical)
+float viewZoom = 1.0f;   // Escala (zoom in/out)
+float viewRotation = 0.0f; // Rotación en eje Z (grados)
+
+// Variables de control de cámara con teclado
+bool keyStates[256] = { false };  // Almacenar estado de todas las teclas
+
+// ============================================================
+// DISPLAY - Callback de dibujado con transformaciones
+// ============================================================
 void display() {
-    // CORRECCI�N 1: Se limpia tanto el buffer de color como el de profundidad (Z-Buffer)
-    // Esto evita que la pantalla se quede congelada en verde y permite pasar la prueba de visibilidad.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Reiniciar la matriz de modelado/vista para evitar la acumulaci�n de transformaciones
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Invocar al motor gr�fico para renderizar el aeropuerto y la capa seleccionada
-    Renderer::drawLayer(currentLayer);
+    // AVIÓN con transformaciones
+    glPushMatrix();
+    {
+        glTranslatef(viewX, viewY, 0.0f);
+        glRotatef(viewRotation, 0.0f, 0.0f, 1.0f);
+        glScalef(viewZoom, viewZoom, 1.0f);
 
-    // Intercambiar buffers para lograr un refresco fluido sin parpadeos (Doble Buffer)
+        Renderer::drawLayer(currentLayer);
+    }
+    glPopMatrix();
+
+    // HUD ESTÁTICO (sin transformaciones)
+    glLoadIdentity();  // Limpiar matriz nuevamente
+    Renderer::drawLayerLabel(currentLayer);
+
     glutSwapBuffers();
 }
 
-// ------------------------------------------------------------
-// reshape()
-// Callback encargado de ajustar el Viewport y establecer la proyecci�n ortogr�fica.
-// ------------------------------------------------------------
+// ============================================================
+// RESHAPE - Callback de redimensión de ventana
+// ============================================================
 void reshape(int w, int h) {
     if (h == 0) h = 1;
 
@@ -47,58 +69,237 @@ void reshape(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    // CORRECCI�N: Ampliamos los rangos para encuadrar todo el avi�n y la pista
-    // X va de -250 a 250 (Ancho total 500) | Y va de -200 a 200 (Alto total 400)
-    gluOrtho2D(-250.0, 250.0, -200.0, 200.0);
+    // Proyección ortogonal 2D
+    // Ampliado para poder hacer pan sin salir del viewport
+    gluOrtho2D(-400.0, 400.0, -300.0, 300.0);
 
     glMatrixMode(GL_MODELVIEW);
 }
 
-// ------------------------------------------------------------
-// keyboard()
-// Manejo de eventos del teclado para la conmutaci�n interactiva de capas.
-// ------------------------------------------------------------
+// ============================================================
+// KEYBOARD - Manejo de eventos de teclado
+// ============================================================
 void keyboard(unsigned char key, int x, int y) {
-    // Control de selecci�n de capas mediante las teclas 1 a 5
+
+    // ========================================
+    // CAPAS: Teclas 1-5
+    // ========================================
     if (key >= '1' && key <= '5') {
-        currentLayer = key - '0'; // Conversi�n de char num�rico a int de capa
-        std::cout << "Capa " << currentLayer << " activada de forma interactiva.\n"; //
+        currentLayer = key - '0';
+        std::cout << "Capa " << currentLayer << " activada\n";
+        glutPostRedisplay();
+        return;
     }
 
-    // Tecla ESC para cerrar de forma segura el visualizador
+    // ========================================
+    // NAVEGACIÓN: W/A/S/D para PAN
+    // ========================================
+    if (key == 'w' || key == 'W') {
+        viewY += 20.0f;  // Mover arriba
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 's' || key == 'S') {
+        viewY -= 20.0f;  // Mover abajo
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'a' || key == 'A') {
+        viewX -= 20.0f;  // Mover izquierda
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'd' || key == 'D') {
+        viewX += 20.0f;  // Mover derecha
+        glutPostRedisplay();
+        return;
+    }
+
+    // ========================================
+    // ZOOM: Q para aumentar, E para disminuir
+    // ========================================
+    if (key == 'q' || key == 'Q') {
+        viewZoom *= 1.1f;  // Zoom in (+10%)
+        std::cout << "Zoom: " << viewZoom << "\n";
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'e' || key == 'E') {
+        viewZoom /= 1.1f;  // Zoom out (-10%)
+        if (viewZoom < 0.1f) viewZoom = 0.1f;  // Mínimo
+        std::cout << "Zoom: " << viewZoom << "\n";
+        glutPostRedisplay();
+        return;
+    }
+
+    // ========================================
+    // ROTACIÓN: R para rotar izq, T para rotar der
+    // ========================================
+    if (key == 'r' || key == 'R') {
+        viewRotation -= 15.0f;  // Girar 15° CCW
+        if (viewRotation < 0.0f) viewRotation += 360.0f;
+        std::cout << "Rotación: " << viewRotation << "°\n";
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 't' || key == 'T') {
+        viewRotation += 15.0f;  // Girar 15° CW
+        if (viewRotation >= 360.0f) viewRotation -= 360.0f;
+        std::cout << "Rotación: " << viewRotation << "°\n";
+        glutPostRedisplay();
+        return;
+    }
+
+    // ========================================
+    // RESET: ESPACIO para volver a posición inicial
+    // ========================================
+    if (key == ' ') {
+        viewX = 0.0f;
+        viewY = 0.0f;
+        viewZoom = 1.0f;
+        viewRotation = 0.0f;
+        std::cout << "Vista reseteada\n";
+        glutPostRedisplay();
+        return;
+    }
+
+    // ========================================
+    // AYUDA: H para mostrar controles
+    // ========================================
+    if (key == 'h' || key == 'H') {
+        printHelp();
+        return;
+    }
+
+    // ========================================
+    // SALIDA: ESC para cerrar
+    // ========================================
     if (key == 27) {
+        std::cout << "Cerrando aplicación...\n";
         exit(0);
     }
-
-    // Forzar a GLUT a volver a ejecutar el display() para reflejar el cambio de capa
-    glutPostRedisplay();
 }
 
-// ------------------------------------------------------------
-// main()
-// Punto de entrada de la aplicaci�n de pruebas.
-// ------------------------------------------------------------
+// ============================================================
+// PRINTHELP - Mostrar controles disponibles
+// ============================================================
+void printHelp() {
+    std::cout << "\n"
+        << "╔════════════════════════════════════════╗\n"
+        << "║       CONTROLES - Boeing 737           ║\n"
+        << "╠════════════════════════════════════════╣\n"
+        << "║ CAPAS:                                 ║\n"
+        << "║   1-5        Cambiar capas             ║\n"
+        << "║                                        ║\n"
+        << "║ NAVEGACIÓN (PAN):                      ║\n"
+        << "║   W/A/S/D    Mover arriba/izq/abajo/der║\n"
+        << "║                                        ║\n"
+        << "║ ZOOM:                                  ║\n"
+        << "║   Q          Zoom in (+10%)            ║\n"
+        << "║   E          Zoom out (-10%)           ║\n"
+        << "║                                        ║\n"
+        << "║ ROTACIÓN (eje Z):                      ║\n"
+        << "║   R          Rotar izquierda (-15°)    ║\n"
+        << "║   T          Rotar derecha (+15°)      ║\n"
+        << "║                                        ║\n"
+        << "║ OTROS:                                 ║\n"
+        << "║   ESPACIO    Reset vista               ║\n"
+        << "║   H          Mostrar esta ayuda        ║\n"
+        << "║   ESC        Salir                     ║\n"
+        << "╚════════════════════════════════════════╝\n"
+        << "\n";
+}
+
+// ============================================================
+// MAIN - Punto de entrada
+// ============================================================
 int main(int argc, char** argv) {
-    // Inicializaci�n del entorno GLUT
+    std::cout << "\n"
+        << "╔═══════════════════════════════════════════╗\n"
+        << "║  Boeing 737 Visualizer v2.0              ║\n"
+        << "║  Con navegación interactiva (Push/Pop)   ║\n"
+        << "║  Presiona H para ver controles           ║\n"
+        << "╚═══════════════════════════════════════════╝\n"
+        << "\n";
+
+    // Inicializar GLUT
     glutInit(&argc, argv);
-
-    // CORRECCI�N 2: Se a�ade el flag GLUT_DEPTH en el Display Mode
-    // Sin este flag, Visual Studio abre la ventana sin soporte de hardware para profundidad.
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); //
-
-    // Configurar dimensiones f�sicas iniciales de la ventana (800x600 p�xeles)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("PRUEBA - Boeing 737 (temporal)");
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Boeing 737 Visualizer - Navegación Interactiva");
 
-    // Ejecutar inicializaci�n central del pipeline gr�fico (Culling, Antialiasing y Luces)
+    // Setup OpenGL
     Renderer::setupOpenGL();
 
-    // Registro de las funciones de devoluci�n de llamadas (Callbacks) de la aplicaci�n
+    // Registrar callbacks
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
 
-    // Ceder el control del flujo al bucle de renderizado perpetuo de GLUT
+    // Mostrar ayuda inicial
+    printHelp();
+
+    // Loop principal
     glutMainLoop();
+
     return 0;
 }
+
+/*
+========================================
+EXPLICACIÓN: PUSH/POP Y TRANSFORMACIONES
+========================================
+
+MATRIZ DE TRANSFORMACIÓN:
+┌─────────────────────────────────────┐
+│ glLoadIdentity()                    │ Resetear matriz
+├─────────────────────────────────────┤
+│ glTranslatef(x, y, z)               │ Mover objeto
+│ glRotatef(angle, rx, ry, rz)        │ Rotar objeto
+│ glScalef(sx, sy, sz)                │ Escalar objeto
+└─────────────────────────────────────┘
+
+ORDEN IMPORTA:
+1. Translate primero → posiciona
+2. Rotate después → gira alrededor del nuevo origen
+3. Scale último → escala en la posición final
+
+PUSH/POP:
+glPushMatrix()   → Guardar estado actual de matriz
+ [dibujar]
+glPopMatrix()    → Restaurar matriz anterior
+
+EJEMPLO:
+glPushMatrix();
+{
+    glTranslatef(100, 0, 0);    // Mover 100 a derecha
+    glRotatef(45, 0, 0, 1);     // Rotar 45° eje Z
+    drawComponent();             // Dibujar componente
+}
+glPopMatrix();                   // Volver a matriz original
+
+VENTAJA:
+- Sin push/pop → transformaciones se acumulan
+- Con push/pop → cada bloque es independiente
+- Código limpio y predecible
+
+
+NAVEGACIÓN EN 2D ORTHO:
+============================
+
+PAN (Translate):
+- W/A/S/D mueve la vista
+- glTranslatef(viewX, viewY, 0)
+
+ZOOM (Scale):
+- Q/E escala todo el modelo
+- glScalef(viewZoom, viewZoom, 1)
+
+ROTACIÓN (Rotate):
+- R/T gira el modelo alrededor de Z
+- glRotatef(viewRotation, 0, 0, 1)
+
+RESET (Space):
+- Vuelve a posición inicial (0, 0, zoom=1, rotación=0)
+*/

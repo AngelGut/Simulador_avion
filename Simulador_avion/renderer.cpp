@@ -203,7 +203,7 @@ namespace Renderer {
             break;
         }
 
-        drawLayerLabel(layerNumber); // HUD tipo simulador
+        //drawLayerLabel(layerNumber); // HUD tipo simulador
     }
 
 } // namespace Renderer
