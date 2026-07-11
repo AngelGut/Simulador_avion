@@ -1,60 +1,68 @@
 ﻿// ============================================================
-// ARCHIVO: main.cpp - VERSIÓN MEJORADA
-// RESPONSABLE: Luis (Aplicación)
+// ARCHIVO: main.cpp
+// RESPONSABLE: Luis (Aplicación) + Cambios de navegación
 // PROYECTO: Boeing 737 Visualizer - Julio 2026
-// DESCRIPCION: Versión con Push/Pop Matrix, transformaciones,
-//              y navegación interactiva (pan, zoom, rotación).
-//              Permite ver el modelo desde diferentes puntos.
+// DESCRIPCION: Punto de entrada. Integra LayerManager,
+//              Push/Pop Matrix, transformaciones (Translate,
+//              Rotate, Scale) y navegación interactiva.
 // ============================================================
 
 #include <GL/glut.h>
 #include <iostream>
 #include <cmath>
 #include "renderer.h"
+#include "layer_manager.h"
 
-// Declaración adelantada de función
+// Declaración adelantada
 void printHelp();
 
 // ============================================================
-// VARIABLES GLOBALES - Estado de la vista
+// VARIABLES GLOBALES - Estado de aplicación
 // ============================================================
 
-// Capa activa (1-5)
-int currentLayer = 1;
+// Gestión de capas (Luis)
+LayerManager layerManager;
 
-// Transformación de vista: posición del modelo en pantalla
-float viewX = 0.0f;      // Traslación X (pan horizontal)
-float viewY = 0.0f;      // Traslación Y (pan vertical)
-float viewZoom = 1.0f;   // Escala (zoom in/out)
+// Transformación de vista: navegación interactiva
+float viewX = 0.0f;        // Traslación X (pan horizontal)
+float viewY = 0.0f;        // Traslación Y (pan vertical)
+float viewZoom = 1.0f;     // Escala (zoom in/out)
 float viewRotation = 0.0f; // Rotación en eje Z (grados)
 
-// Variables de control de cámara con teclado
-bool keyStates[256] = { false };  // Almacenar estado de todas las teclas
-
 // ============================================================
-// DISPLAY - Callback de dibujado con transformaciones
+// DISPLAY - Callback de dibujado con Push/Pop y transformaciones
 // ============================================================
 void display() {
+    // Limpiar buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // AVIÓN con transformaciones
+    // ========================================
+    // BLOQUE 1: AVIÓN CON TRANSFORMACIONES
+    // ========================================
+    // Aplicar: Translate → Rotate → Scale
+    // Todo dentro de Push/Pop para no afectar HUD
     glPushMatrix();
     {
-        glTranslatef(viewX, viewY, 0.0f);
-        glRotatef(viewRotation, 0.0f, 0.0f, 1.0f);
-        glScalef(viewZoom, viewZoom, 1.0f);
+        glTranslatef(viewX, viewY, 0.0f);      // Pan
+        glRotatef(viewRotation, 0.0f, 0.0f, 1.0f);  // Rotación eje Z
+        glScalef(viewZoom, viewZoom, 1.0f);    // Zoom
 
-        Renderer::drawLayer(currentLayer);
+        // Dibujar geometría de la capa activa
+        Renderer::drawLayer(layerManager.getActiveLayer());
     }
-    glPopMatrix();
+    glPopMatrix();  // Restaurar matriz - HUD no será transformado
 
-    // HUD ESTÁTICO (sin transformaciones)
-    glLoadIdentity();  // Limpiar matriz nuevamente
-    Renderer::drawLayerLabel(currentLayer);
+    // ========================================
+    // BLOQUE 2: HUD ESTÁTICO (sin transformaciones)
+    // ========================================
+    glLoadIdentity();
+    glTranslatef(-200.0f, 0.0f, 0.0f);  // Mover HUD a izquierda
+    Renderer::drawLayerLabel(layerManager.getActiveLayer());
 
+    // Intercambiar buffers (double buffering)
     glutSwapBuffers();
 }
 
@@ -69,11 +77,19 @@ void reshape(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    // Proyección ortogonal 2D
-    // Ampliado para poder hacer pan sin salir del viewport
+    // Proyección ortogonal 2D ampliada para permitir pan sin límites
     gluOrtho2D(-400.0, 400.0, -300.0, 300.0);
 
     glMatrixMode(GL_MODELVIEW);
+}
+
+// ============================================================
+// TIMER - Callback para actualización a ~60 FPS
+// ============================================================
+void timer(int value)
+{
+    glutPostRedisplay();
+    glutTimerFunc(16, timer, 0);  // 16ms ≈ 60 FPS
 }
 
 // ============================================================
@@ -85,8 +101,7 @@ void keyboard(unsigned char key, int x, int y) {
     // CAPAS: Teclas 1-5
     // ========================================
     if (key >= '1' && key <= '5') {
-        currentLayer = key - '0';
-        std::cout << "Capa " << currentLayer << " activada\n";
+        layerManager.setActiveLayer(key - '0');
         glutPostRedisplay();
         return;
     }
@@ -120,14 +135,14 @@ void keyboard(unsigned char key, int x, int y) {
     // ========================================
     if (key == 'q' || key == 'Q') {
         viewZoom *= 1.1f;  // Zoom in (+10%)
-        std::cout << "Zoom: " << viewZoom << "\n";
+        std::cout << "Zoom: " << viewZoom << "x\n";
         glutPostRedisplay();
         return;
     }
     if (key == 'e' || key == 'E') {
         viewZoom /= 1.1f;  // Zoom out (-10%)
-        if (viewZoom < 0.1f) viewZoom = 0.1f;  // Mínimo
-        std::cout << "Zoom: " << viewZoom << "\n";
+        if (viewZoom < 0.1f) viewZoom = 0.1f;
+        std::cout << "Zoom: " << viewZoom << "x\n";
         glutPostRedisplay();
         return;
     }
@@ -185,28 +200,31 @@ void keyboard(unsigned char key, int x, int y) {
 // ============================================================
 void printHelp() {
     std::cout << "\n"
-        << "╔════════════════════════════════════════╗\n"
-        << "║       CONTROLES - Boeing 737           ║\n"
-        << "╠════════════════════════════════════════╣\n"
-        << "║ CAPAS:                                 ║\n"
-        << "║   1-5        Cambiar capas             ║\n"
-        << "║                                        ║\n"
-        << "║ NAVEGACIÓN (PAN):                      ║\n"
-        << "║   W/A/S/D    Mover arriba/izq/abajo/der║\n"
-        << "║                                        ║\n"
-        << "║ ZOOM:                                  ║\n"
-        << "║   Q          Zoom in (+10%)            ║\n"
-        << "║   E          Zoom out (-10%)           ║\n"
-        << "║                                        ║\n"
-        << "║ ROTACIÓN (eje Z):                      ║\n"
-        << "║   R          Rotar izquierda (-15°)    ║\n"
-        << "║   T          Rotar derecha (+15°)      ║\n"
-        << "║                                        ║\n"
-        << "║ OTROS:                                 ║\n"
-        << "║   ESPACIO    Reset vista               ║\n"
-        << "║   H          Mostrar esta ayuda        ║\n"
-        << "║   ESC        Salir                     ║\n"
-        << "╚════════════════════════════════════════╝\n"
+        << "╔═══════════════════════════════════════════════╗\n"
+        << "║       CONTROLES - Boeing 737 Visualizer      ║\n"
+        << "╠═══════════════════════════════════════════════╣\n"
+        << "║ CAPAS:                                        ║\n"
+        << "║   1-5        Cambiar entre capas              ║\n"
+        << "║                                               ║\n"
+        << "║ NAVEGACIÓN (PAN):                             ║\n"
+        << "║   W          Mover arriba                     ║\n"
+        << "║   S          Mover abajo                      ║\n"
+        << "║   A          Mover izquierda                  ║\n"
+        << "║   D          Mover derecha                    ║\n"
+        << "║                                               ║\n"
+        << "║ ZOOM:                                         ║\n"
+        << "║   Q          Zoom in (+10%)                   ║\n"
+        << "║   E          Zoom out (-10%)                  ║\n"
+        << "║                                               ║\n"
+        << "║ ROTACIÓN (eje Z):                             ║\n"
+        << "║   R          Rotar izquierda (-15°)           ║\n"
+        << "║   T          Rotar derecha (+15°)             ║\n"
+        << "║                                               ║\n"
+        << "║ OTROS:                                        ║\n"
+        << "║   ESPACIO    Reset vista                      ║\n"
+        << "║   H          Mostrar esta ayuda               ║\n"
+        << "║   ESC        Salir                            ║\n"
+        << "╚═══════════════════════════════════════════════╝\n"
         << "\n";
 }
 
@@ -215,11 +233,11 @@ void printHelp() {
 // ============================================================
 int main(int argc, char** argv) {
     std::cout << "\n"
-        << "╔═══════════════════════════════════════════╗\n"
-        << "║  Boeing 737 Visualizer v2.0              ║\n"
-        << "║  Con navegación interactiva (Push/Pop)   ║\n"
-        << "║  Presiona H para ver controles           ║\n"
-        << "╚═══════════════════════════════════════════╝\n"
+        << "╔════════════════════════════════════════════════╗\n"
+        << "║   Boeing 737 Visualizer v3.0                  ║\n"
+        << "║   Con Push/Pop Matrix y navegación            ║\n"
+        << "║   Presiona H para ver controles               ║\n"
+        << "╚════════════════════════════════════════════════╝\n"
         << "\n";
 
     // Inicializar GLUT
@@ -227,15 +245,19 @@ int main(int argc, char** argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Boeing 737 Visualizer - Navegación Interactiva");
+    glutCreateWindow("Boeing 737 Visualizer - Con Push/Pop Matrix");
 
-    // Setup OpenGL
+    // Inicializar OpenGL
     Renderer::setupOpenGL();
+
+    // Inicializar LayerManager
+    layerManager.init();
 
     // Registrar callbacks
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutTimerFunc(16, timer, 0);
 
     // Mostrar ayuda inicial
     printHelp();
@@ -248,58 +270,32 @@ int main(int argc, char** argv) {
 
 /*
 ========================================
-EXPLICACIÓN: PUSH/POP Y TRANSFORMACIONES
+RESUMEN DE CAMBIOS IMPLEMENTADOS
 ========================================
 
-MATRIZ DE TRANSFORMACIÓN:
-┌─────────────────────────────────────┐
-│ glLoadIdentity()                    │ Resetear matriz
-├─────────────────────────────────────┤
-│ glTranslatef(x, y, z)               │ Mover objeto
-│ glRotatef(angle, rx, ry, rz)        │ Rotar objeto
-│ glScalef(sx, sy, sz)                │ Escalar objeto
-└─────────────────────────────────────┘
+✅ PUSH/POP MATRIX:
+   - glPushMatrix() antes de transformaciones
+   - glPopMatrix() después
+   - Permite aislamiento de transformaciones
 
-ORDEN IMPORTA:
-1. Translate primero → posiciona
-2. Rotate después → gira alrededor del nuevo origen
-3. Scale último → escala en la posición final
+✅ TRANSFORMACIONES:
+   - glTranslatef(viewX, viewY, 0) para PAN
+   - glRotatef(viewRotation, 0, 0, 1) para rotación eje Z
+   - glScalef(viewZoom, viewZoom, 1) para ZOOM
 
-PUSH/POP:
-glPushMatrix()   → Guardar estado actual de matriz
- [dibujar]
-glPopMatrix()    → Restaurar matriz anterior
+✅ NAVEGACIÓN INTERACTIVA:
+   - W/A/S/D: mover modelo
+   - Q/E: zoom in/out
+   - R/T: rotar
+   - ESPACIO: reset vista
 
-EJEMPLO:
-glPushMatrix();
-{
-    glTranslatef(100, 0, 0);    // Mover 100 a derecha
-    glRotatef(45, 0, 0, 1);     // Rotar 45° eje Z
-    drawComponent();             // Dibujar componente
-}
-glPopMatrix();                   // Volver a matriz original
+✅ LAYERMANAGER INTEGRADO:
+   - layerManager.setActiveLayer() en keyboard
+   - layerManager.getActiveLayer() en display
+   - layerManager.init() en main
 
-VENTAJA:
-- Sin push/pop → transformaciones se acumulan
-- Con push/pop → cada bloque es independiente
-- Código limpio y predecible
-
-
-NAVEGACIÓN EN 2D ORTHO:
-============================
-
-PAN (Translate):
-- W/A/S/D mueve la vista
-- glTranslatef(viewX, viewY, 0)
-
-ZOOM (Scale):
-- Q/E escala todo el modelo
-- glScalef(viewZoom, viewZoom, 1)
-
-ROTACIÓN (Rotate):
-- R/T gira el modelo alrededor de Z
-- glRotatef(viewRotation, 0, 0, 1)
-
-RESET (Space):
-- Vuelve a posición inicial (0, 0, zoom=1, rotación=0)
+✅ HUD ESTÁTICO:
+   - Fuera de Push/Pop
+   - glTranslatef(-200, 0, 0) para posición
+   - No se transforma con modelo
 */
