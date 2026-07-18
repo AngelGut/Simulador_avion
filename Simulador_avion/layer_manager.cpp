@@ -1,7 +1,6 @@
 // ============================================================
 // ARCHIVO: layer_manager.cpp
-// RESPONSABLE: Luis (Gestión de capas)
-// PROYECTO: Boeing 737 Visualizer - Julio 2026
+// RESPONSABLE: Luis(ese tipo es vagisimo) (Gestión de capas)
 // DESCRIPCION: Implementación de LayerManager - controla qué
 //              capa (1-5) está activa y visible.
 // ============================================================

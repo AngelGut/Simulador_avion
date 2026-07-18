@@ -1,7 +1,6 @@
 ﻿// ============================================================
 // ARCHIVO: geometry.cpp
 // RESPONSABLE: Ronald (Geometría y Motores)
-// PROYECTO: Boeing 737 Visualizer - Julio 2026
 // DESCRIPTION: Implementación de mallas 2D con NORMALES
 //              para soporte de iluminación Phong.
 // ============================================================

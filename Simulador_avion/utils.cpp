@@ -1,1 +1,1 @@
-//agregar codigo
+//agregar codigo(no se implementa por que no hay funciones genericas compartidas entre los modulos, cuando se escale se agrega)

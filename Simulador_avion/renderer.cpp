@@ -1,7 +1,6 @@
 // ============================================================
 // ARCHIVO: renderer.cpp - VERSIÓN CORREGIDA
 // RESPONSABLE: Ronald (Rendering)
-// PROYECTO: Boeing 737 Visualizer - Julio 2026
 // DESCRIPCION: Luces pequeñas a lo largo pista + HUD visible
 // ============================================================
 
