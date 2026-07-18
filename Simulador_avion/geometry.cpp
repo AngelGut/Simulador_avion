@@ -1,11 +1,3 @@
-// ============================================================
-// ARCHIVO: geometry.cpp
-// RESPONSABLE: Ronald (Geometría y Motores)
-// PROYECTO: Boeing 737 Visualizer - Julio 2026
-// DESCRIPTION: Implementación final corregida de las mallas 
-//              sólidas 2D paramétricas y algoritmos de soporte.
-// ============================================================
-
 #include "geometry.h"
 #include <GL/glut.h>
 #include <cmath>
@@ -14,9 +6,8 @@
 
 namespace GeometryBuilder {
 
-    // ============================================================
     // FUNCIONES DE APOYO (Algoritmos de rasterización entera y curvas)
-    // ============================================================
+ 
 
     void bresenhamCircle(float cx, float cy, float radius) {
         int x = 0;
@@ -149,15 +140,15 @@ namespace GeometryBuilder {
         return true;
     }
 
-    // ============================================================
-    // GENERADORES DE COMPONENTES MEJORADOS (SOLUCIÓN DE MALLAS MESH)
-    // ============================================================
 
-    // ------------------------------------------------------------
+
+
+
+
     // generateFuselage() - Capa 1: Exterior (SOLUCIÓN AL FILAMENTO)
-    // CORRECCIÓN: Se inyectan de forma pareada los vértices izquierdo y derecho
+    // Se inyectan de forma pareada los vértices izquierdo y derecho
     // en el bucle longitudinal para que GL_QUAD_STRIP construya masa sólida real.
-    // ------------------------------------------------------------
+
     void generateFuselage(float centerX, float centerY, float radius, float length) {
         float rMax = 15.0f;
         float yInicio = -110.0f;
@@ -418,12 +409,12 @@ void generateCabin() {
     glVertex3f(0.0f, yStart - rows * rowSpacing, 0.0f);
     glEnd();
 }
-    // ------------------------------------------------------------
+
 // drawFuselageOutline()
 // Silueta tenue (solo contorno, gris oscuro) del fuselaje, usada
 // como referencia de fondo en capas internas. No es la Capa 1
 // real, solo guia visual para dar contexto espacial.
-// ------------------------------------------------------------
+
     void drawFuselageOutline() {
         glColor3f(0.6f, 0.6f, 0.6f); // Gris claro, contrasta con pista (0.25)
         glLineWidth(1.5f);

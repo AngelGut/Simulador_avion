@@ -1,11 +1,3 @@
-// ============================================================
-// ARCHIVO: main.cpp — SOLO PARA PRUEBAS TEMPORALES
-// RESPONSABLE: Ronald (Geometría / Verificación de Rendering)
-// PROYECTO: Boeing 737 Visualizer - Julio 2026
-// DESCRIPTION: Archivo de entrada provisional. Sirve para validar que 
-//              geometry.cpp y renderer.cpp funcionan de forma correcta 
-//              antes de pasar la lógica definitiva a Luis.
-// ============================================================
 
 #include <GL/glut.h>
 #include <iostream>
