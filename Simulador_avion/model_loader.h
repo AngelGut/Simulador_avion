@@ -6,35 +6,23 @@
 #include <string>
 #include <memory>
 #include <map>
-
-// ============================================================
-// Estructuras matemáticas básicas (sin dependencias externas)
-// ============================================================
-struct Vec2 {
-    float x, y;
-    Vec2(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
-};
-
-struct Vec3 {
-    float x, y, z;
-    Vec3(float x = 0.0f, float y = 0.0f, float z = 0.0f) : x(x), y(y), z(z) {}
-};
+#include <glm/glm.hpp>
 
 // ============================================================
 // Model - Estructura para almacenar datos de un modelo 3D
 // ============================================================
 struct Model {
-    std::vector<Vec3> vertices;
-    std::vector<Vec3> normals;
-    std::vector<Vec2> texCoords;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
     std::string name;
-    Vec3 position;
-    Vec3 scale;
+    glm::vec3 position;
+    glm::vec3 scale;
     float rotation;  // Rotación en eje Y (grados)
 
-    Model() : position(0.0f), scale(1.0f), rotation(0.0f) {}
+    Model() : position(0.0f, 0.0f, 0.0f), scale(1.0f, 1.0f, 1.0f), rotation(0.0f) {}
 
     bool isEmpty() const {
         return vertices.empty();
@@ -60,51 +48,18 @@ public:
 };
 
 // ============================================================
-// OBJLoader - Carga archivos .obj (Wavefront OBJ)
+// AssimpLoader - Carga cualquier formato soportado por Assimp
+// Soporta: OBJ, FBX, BLEND, DAE, STL, 3DS, y más
 // ============================================================
-class OBJLoader : public ModelLoader {
+class AssimpLoader : public ModelLoader {
 public:
+    AssimpLoader();
     bool load(const std::string& filePath, Model& model) override;
     bool isFormatSupported(const std::string& filePath) const override;
 
 private:
-    bool parseOBJFile(const std::string& filePath, Model& model);
-};
-
-// ============================================================
-// FBXLoader - Carga archivos .fbx (Autodesk FBX)
-// Nota: Requiere librería FBX SDK de Autodesk o alternativa
-// ============================================================
-class FBXLoader : public ModelLoader {
-public:
-    bool load(const std::string& filePath, Model& model) override;
-    bool isFormatSupported(const std::string& filePath) const override;
-
-private:
-    bool parseFBXFile(const std::string& filePath, Model& model);
-};
-
-// ============================================================
-// BLENDLoader - Carga archivos .blend (Blender)
-// Nota: Requiere parsing de formato binario de Blender
-// ============================================================
-class BLENDLoader : public ModelLoader {
-public:
-    bool load(const std::string& filePath, Model& model) override;
-    bool isFormatSupported(const std::string& filePath) const override;
-
-private:
-    bool parseBLENDFile(const std::string& filePath, Model& model);
-    bool extractMeshFromBlend(const std::string& filePath, Model& model);
-};
-
-// ============================================================
-// RARLoader - Stub (descompresión deshabilitada por seguridad)
-// ============================================================
-class RARLoader : public ModelLoader {
-public:
-    bool load(const std::string& filePath, Model& model) override;
-    bool isFormatSupported(const std::string& filePath) const override;
+    bool parseWithAssimp(const std::string& filePath, Model& model);
+    std::vector<std::string> supportedExtensions;
 };
 
 // ============================================================
@@ -145,6 +100,7 @@ private:
 
     std::map<std::string, Model> models;
     std::unique_ptr<ModelLoader> getLoaderForFormat(const std::string& filePath);
+    AssimpLoader assimpLoader;  // Único loader necesario
 };
 
 #endif // MODEL_LOADER_H

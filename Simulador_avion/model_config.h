@@ -27,48 +27,48 @@ namespace ModelConfig {
     };
 
     // ============================================================
-    // Configuración de los 5 modelos
+    // Configuración de los 5 modelos (Assimp soporta todos)
     // ============================================================
     const std::vector<ModelInfo> AVAILABLE_MODELS = {
         {
             "boeing_737_800",
             "American Airlines Boeing 737-800.blend",
             "BLEND",
-            "Boeing 737-800 de American Airlines (Blender)",
-            true,
-            "Exportar desde Blender como .obj: File > Export As > Wavefront (.obj)"
+            "Boeing 737-800 de American Airlines",
+            false,
+            "Assimp carga directamente"
         },
         {
             "kawasaki_ki61",
             "kawasaki-ki-61.blend",
             "BLEND",
-            "Cazabombardero Kawasaki Ki-61 (Blender)",
-            true,
-            "Exportar desde Blender como .obj o convertir con Blender headless"
+            "Cazabombardero Kawasaki Ki-61",
+            false,
+            "Assimp carga directamente"
         },
         {
-            "mystere_iv",
+            "ms406",
             "uploads_files_5625074_MS-406.rar",
             "RAR",
-            "Avión MS-406 (comprimido en RAR)",
+            "Avión MS-406 (descomprimir primero)",
             true,
-            "Descomprime manualmente con unrar, luego sube el .obj o .fbx"
+            "Descomprimir manualmente, luego copiar archivo a models/"
         },
         {
             "mystere_iv_provence",
             "MYSTERE IV N 117 Provence Nancy.fbx",
             "FBX",
-            "MYSTERE IV N°117 de Provenza (FBX)",
-            true,
-            "Convertir a OBJ con Assimp o Blender"
+            "MYSTERE IV N°117 de Provenza",
+            false,
+            "Assimp carga directamente"
         },
         {
             "millennium_falcon",
             "Millennium Falcon star wars.obj",
             "OBJ",
-            "Nave Millennium Falcon de Star Wars (OBJ)",
+            "Nave Millennium Falcon",
             false,
-            "Formato directamente soportado"
+            "Assimp carga directamente"
         }
     };
 
