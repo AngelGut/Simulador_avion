@@ -123,7 +123,10 @@ void ModelManagerAuto::clearAll() {
 bool ModelManagerAuto::isModelFile(const fs::path& filePath) const {
     std::string ext = filePath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".obj" || ext == ".fbx" || ext == ".blend";
+    // Soportar todos los formatos que Assimp puede leer
+    return ext == ".obj" || ext == ".fbx" || ext == ".blend" ||
+           ext == ".dae" || ext == ".stl" || ext == ".3ds" ||
+           ext == ".gltf" || ext == ".glb" || ext == ".ply";
 }
 
 std::string ModelManagerAuto::extractModelName(const fs::path& filePath) const {
