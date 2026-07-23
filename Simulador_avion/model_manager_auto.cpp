@@ -123,7 +123,7 @@ void ModelManagerAuto::clearAll() {
 bool ModelManagerAuto::isModelFile(const fs::path& filePath) const {
     std::string ext = filePath.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".obj" || ext == ".fbx" || ext == ".blend" || ext == ".rar";
+    return ext == ".obj" || ext == ".fbx" || ext == ".blend";
 }
 
 std::string ModelManagerAuto::extractModelName(const fs::path& filePath) const {

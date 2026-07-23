@@ -99,16 +99,12 @@ private:
 };
 
 // ============================================================
-// RARLoader - Descomprime archivos .rar y carga modelos dentro
+// RARLoader - Stub (descompresión deshabilitada por seguridad)
 // ============================================================
 class RARLoader : public ModelLoader {
 public:
     bool load(const std::string& filePath, Model& model) override;
     bool isFormatSupported(const std::string& filePath) const override;
-
-private:
-    std::string extractRAR(const std::string& rarFilePath, const std::string& tempDir);
-    bool findSupportedModelInRAR(const std::string& rarFilePath, std::string& foundModelPath);
 };
 
 // ============================================================

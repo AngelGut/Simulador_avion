@@ -3,19 +3,32 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
-#include <cstdlib>
 #include <algorithm>
+
+// ============================================================
+// Funciones auxiliares privadas
+// ============================================================
+namespace {
+    bool checkFileExtension(const std::string& filePath, const std::string& expectedExt) {
+        size_t pos = filePath.rfind('.');
+        if (pos == std::string::npos) return false;
+        std::string ext = filePath.substr(pos);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext == expectedExt;
+    }
+
+    std::string toLowercase(std::string str) {
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        return str;
+    }
+}
 
 // ============================================================
 // OBJLoader - Implementación del loader de archivos .obj
 // ============================================================
 
 bool OBJLoader::isFormatSupported(const std::string& filePath) const {
-    size_t pos = filePath.rfind('.');
-    if (pos == std::string::npos) return false;
-    std::string ext = filePath.substr(pos);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".obj";
+    return checkFileExtension(filePath, ".obj");
 }
 
 bool OBJLoader::load(const std::string& filePath, Model& model) {
@@ -133,11 +146,7 @@ bool OBJLoader::parseOBJFile(const std::string& filePath, Model& model) {
 // ============================================================
 
 bool FBXLoader::isFormatSupported(const std::string& filePath) const {
-    size_t pos = filePath.rfind('.');
-    if (pos == std::string::npos) return false;
-    std::string ext = filePath.substr(pos);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".fbx";
+    return checkFileExtension(filePath, ".fbx");
 }
 
 bool FBXLoader::load(const std::string& filePath, Model& model) {
@@ -161,11 +170,7 @@ bool FBXLoader::parseFBXFile(const std::string& filePath, Model& model) {
 // ============================================================
 
 bool BLENDLoader::isFormatSupported(const std::string& filePath) const {
-    size_t pos = filePath.rfind('.');
-    if (pos == std::string::npos) return false;
-    std::string ext = filePath.substr(pos);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".blend";
+    return checkFileExtension(filePath, ".blend");
 }
 
 bool BLENDLoader::load(const std::string& filePath, Model& model) {
@@ -188,11 +193,7 @@ bool BLENDLoader::extractMeshFromBlend(const std::string& filePath, Model& model
 // ============================================================
 
 bool RARLoader::isFormatSupported(const std::string& filePath) const {
-    size_t pos = filePath.rfind('.');
-    if (pos == std::string::npos) return false;
-    std::string ext = filePath.substr(pos);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    return ext == ".rar";
+    return checkFileExtension(filePath, ".rar");
 }
 
 bool RARLoader::load(const std::string& filePath, Model& model) {
@@ -203,78 +204,9 @@ bool RARLoader::load(const std::string& filePath, Model& model) {
         return false;
     }
 
-    std::string tempDir = "/tmp/rar_extract_" + std::to_string(time(nullptr));
-    std::string foundModelPath;
-
-    if (!findSupportedModelInRAR(filePath, foundModelPath)) {
-        std::cerr << "[RARLoader] No se encontró modelo soportado en el RAR" << std::endl;
-        return false;
-    }
-
-    // Extraer el RAR
-    std::string extractCmd = "mkdir -p " + tempDir + " && unrar x \"" + filePath + "\" \"" + tempDir + "\" > /dev/null 2>&1";
-    int result = system(extractCmd.c_str());
-
-    if (result != 0) {
-        std::cerr << "[RARLoader] Error al descomprimir (¿unrar instalado?)" << std::endl;
-        return false;
-    }
-
-    // Buscar archivo de modelo extraído
-    std::string modelPath = tempDir + "/" + foundModelPath;
-    ModelManager& mgr = ModelManager::getInstance();
-    auto loader = mgr.getLoaderForFormat(modelPath);
-
-    if (!loader || !loader->load(modelPath, model)) {
-        std::cerr << "[RARLoader] Error al cargar modelo extraído" << std::endl;
-        system(("rm -rf " + tempDir).c_str());
-        return false;
-    }
-
-    // Limpiar directorio temporal
-    system(("rm -rf " + tempDir).c_str());
-
-    std::cout << "[RARLoader] Carga exitosa desde RAR" << std::endl;
-    return true;
-}
-
-bool RARLoader::findSupportedModelInRAR(const std::string& rarFilePath, std::string& foundModelPath) {
-    // Listar contenido del RAR y buscar archivos .obj, .fbx, .blend
-    std::string listCmd = "unrar l \"" + rarFilePath + "\" 2>/dev/null";
-    FILE* pipe = popen(listCmd.c_str(), "r");
-
-    if (!pipe) {
-        std::cerr << "[RARLoader] No se pudo listar contenido del RAR" << std::endl;
-        return false;
-    }
-
-    char buffer[256];
-    std::vector<std::string> supportedExtensions = {".obj", ".fbx", ".blend"};
-    bool found = false;
-
-    while (fgets(buffer, sizeof(buffer), pipe)) {
-        std::string line(buffer);
-        std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-
-        for (const auto& ext : supportedExtensions) {
-            if (line.find(ext) != std::string::npos) {
-                // Extraer nombre del archivo (formato unrar: "nombre archivo")
-                size_t lastSpace = line.rfind(' ');
-                if (lastSpace != std::string::npos) {
-                    foundModelPath = line.substr(lastSpace + 1);
-                    // Limpiar espacios y newlines
-                    foundModelPath.erase(0, foundModelPath.find_first_not_of(" \n\r\t"));
-                    foundModelPath.erase(foundModelPath.find_last_not_of(" \n\r\t") + 1);
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (found) break;
-    }
-
-    pclose(pipe);
-    return found;
+    std::cerr << "[RARLoader] ADVERTENCIA: Descompresión de RAR deshabilitada por seguridad" << std::endl;
+    std::cerr << "[RARLoader] Por favor descomprime manualmente el RAR y carga el modelo .obj/.fbx" << std::endl;
+    return false;
 }
 
 // ============================================================

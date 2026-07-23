@@ -51,8 +51,8 @@ namespace ModelConfig {
             "uploads_files_5625074_MS-406.rar",
             "RAR",
             "Avión MS-406 (comprimido en RAR)",
-            false,
-            "Se descomprimirá automáticamente - requiere 'unrar' instalado"
+            true,
+            "Descomprime manualmente con unrar, luego sube el .obj o .fbx"
         },
         {
             "mystere_iv_provence",

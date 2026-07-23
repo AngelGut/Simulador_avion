@@ -128,31 +128,24 @@ bpy.ops.wm.obj_export(
 blender -b archivo.blend -P export_blend.py --no-window
 ```
 
-### Formato RAR ⚠️ (Requiere Descompresión)
+### Formato RAR ⚠️ (Deshabilitado por Seguridad)
 **Archivo:** `uploads_files_5625074_MS-406.rar`
 
-#### Requisitos:
-```bash
-# Instalar unrar en el sistema
-sudo apt-get install unrar  # Debian/Ubuntu
-# o
-sudo yum install unrar      # RedHat/CentOS
-# o
-brew install unrar          # macOS
-```
+**NOTA:** Descompresión automática de RAR deshabilitada por razones de seguridad (vulnerabilidades en `system()` y `popen()`).
 
-#### Flujo Automático:
-1. RARLoader detecta extensión `.rar`
-2. Ejecuta `unrar x archivo.rar /temp/dir/`
-3. Busca archivos `.obj`, `.fbx`, o `.blend` dentro
-4. Carga el modelo encontrado
-5. Limpia archivo temporal
+#### Solución:
+Descomprime manualmente el RAR y carga el archivo `.obj` o `.fbx` resultante:
 
-#### Alternativa Manual:
 ```bash
 unrar x uploads_files_5625074_MS-406.rar
-# Luego convertir o cargar el archivo extraído
+# Esto extrae el contenido a la carpeta actual
+# Luego sube los archivos .obj/.fbx a ./models/
 ```
+
+#### Alternativa Online:
+- Usa herramientas online para descomprimir RAR
+- Descarga el modelo interior
+- Carga el .obj o .fbx
 
 ### Formato FBX ⚠️ (Requiere SDK o Conversión)
 **Archivo:** `MYSTERE IV N 117 Provence Nancy.fbx`
