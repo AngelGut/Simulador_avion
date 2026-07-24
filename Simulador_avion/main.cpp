@@ -1,18 +1,51 @@
 // ============================================================
-// ARCHIVO: main.cpp - VERSIÓN SIMPLIFICADA TEST
-// DESCRIPCION: Test simple de carga y renderizado de modelos Assimp
+// ARCHIVO: main.cpp - 3D AIRPLANE VIEWER
+// DESCRIPCION: Visor 3D interactivo con selección de modelos Assimp
 // ============================================================
 
 #include <GL/glut.h>
 #include <iostream>
 #include <cmath>
+#include <string>
 #include "model_loader.h"
+#include "model_config.h"
 
 // Variables globales
 float viewX = 0.0f;
 float viewY = 0.0f;
 float viewZoom = 1.0f;
 float viewRotation = 0.0f;
+std::string loadedModelName;
+
+// ============================================================
+// SELECCIONAR MODELO - Menú de selección interactivo
+// ============================================================
+int seleccionarModelo() {
+    std::cout << "\n========================================\n"
+              << "3D Airplane Viewer\n"
+              << "========================================\n\n";
+
+    std::cout << "SELECCIONA UN MODELO:\n";
+
+    // Mostrar solo los 4 modelos de aviones principales
+    const int MAX_MODELS = 4;
+    for (int i = 0; i < MAX_MODELS && i < ModelConfig::AVAILABLE_MODELS.size(); ++i) {
+        const auto& modelInfo = ModelConfig::AVAILABLE_MODELS[i];
+        std::cout << "  " << (i + 1) << " - " << modelInfo.description << "\n";
+    }
+
+    std::cout << "\nOpcion (1-" << MAX_MODELS << "): ";
+
+    int choice;
+    std::cin >> choice;
+
+    if (choice < 1 || choice > MAX_MODELS) {
+        std::cerr << "Opcion invalida. Usando modelo por defecto (Boeing 737).\n";
+        return 0;  // Índice 0 = Boeing 737
+    }
+
+    return choice - 1;  // Convertir a índice (0-based)
+}
 
 // ============================================================
 // RESHAPE - Configurar proyección
@@ -41,8 +74,8 @@ void display() {
         glRotatef(viewRotation, 0.0f, 0.0f, 1.0f);
         glScalef(viewZoom, viewZoom, 1.0f);
 
-        // Renderizar modelo Boeing 737
-        Model* model = ModelManager::getInstance().getModel("boeing737");
+        // Renderizar modelo seleccionado
+        Model* model = ModelManager::getInstance().getModel(loadedModelName);
         if (model && !model->isEmpty()) {
             glColor3f(0.85f, 0.85f, 0.85f);
 
@@ -51,7 +84,7 @@ void display() {
             glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, &model->indices[0]);
             glDisableClientState(GL_VERTEX_ARRAY);
         } else {
-            std::cerr << "Modelo boeing737 no encontrado\n";
+            std::cerr << "Modelo " << loadedModelName << " no encontrado\n";
         }
     }
     glPopMatrix();
@@ -90,15 +123,17 @@ void timer(int value) {
 // MAIN - Punto de entrada
 // ============================================================
 int main(int argc, char** argv) {
-    std::cout << "\n========================================\n"
-              << "Boeing 737 - Test Assimp + GLM\n"
-              << "========================================\n\n";
+    // Solicitar selección de modelo
+    int modelIndex = seleccionarModelo();
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Boeing 737 - Assimp Test");
+
+    const auto& selectedModelInfo = ModelConfig::AVAILABLE_MODELS[modelIndex];
+    std::string windowTitle = "3D Viewer - " + selectedModelInfo.description;
+    glutCreateWindow(windowTitle.c_str());
 
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -109,13 +144,17 @@ int main(int argc, char** argv) {
     gluOrtho2D(-400.0, 400.0, -300.0, 300.0);
     glMatrixMode(GL_MODELVIEW);
 
-    // Cargar Boeing 737
-    std::cout << "Cargando Boeing 737...\n";
+    // Cargar modelo seleccionado
+    std::cout << "Cargando " << selectedModelInfo.description << "...\n";
     ModelManager& mgr = ModelManager::getInstance();
-    if (mgr.loadModel("./source/American Airlines Boeing 737-800.blend", "boeing737")) {
+
+    std::string fullPath = ModelConfig::getFullPath(selectedModelInfo.filename);
+    loadedModelName = selectedModelInfo.name;
+
+    if (mgr.loadModel(fullPath, loadedModelName)) {
         std::cout << "Exito!\n"
-                  << "  Vertices: " << mgr.getModelVertexCount("boeing737") << "\n"
-                  << "  Triangulos: " << mgr.getModelTriangleCount("boeing737") << "\n\n";
+                  << "  Vertices: " << mgr.getModelVertexCount(loadedModelName) << "\n"
+                  << "  Triangulos: " << mgr.getModelTriangleCount(loadedModelName) << "\n\n";
     } else {
         std::cerr << "Error cargando modelo\n";
         return 1;
