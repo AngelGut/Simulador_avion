@@ -97,6 +97,7 @@ void Model::normalizeModel() {
 
     glm::vec3 minBounds(FLT_MAX);
     glm::vec3 maxBounds(-FLT_MAX);
+    int vertexCount = 0;
 
     for (auto& mesh : meshes) {
         for (auto& vertex : mesh.vertices) {
@@ -107,17 +108,19 @@ void Model::normalizeModel() {
             maxBounds.x = std::max(maxBounds.x, vertex.position.x);
             maxBounds.y = std::max(maxBounds.y, vertex.position.y);
             maxBounds.z = std::max(maxBounds.z, vertex.position.z);
+            vertexCount++;
         }
     }
 
     glm::vec3 modelSize = maxBounds - minBounds;
     float maxDim = std::max({modelSize.x, modelSize.y, modelSize.z});
 
-    scale = 2.0f / maxDim;
+    // Escalar a 1.5f (dejando margen para rotaciones)
+    scale = 1.5f / maxDim;
     center = (minBounds + maxBounds) * 0.5f;
 
-    std::cout << "  Bounds: [" << minBounds.x << ", " << minBounds.y << ", " << minBounds.z << "] - ["
-        << maxBounds.x << ", " << maxBounds.y << ", " << maxBounds.z << "]" << std::endl;
+    std::cout << "  Total vértices: " << vertexCount << std::endl;
+    std::cout << "  Size: [" << modelSize.x << ", " << modelSize.y << ", " << modelSize.z << "]" << std::endl;
     std::cout << "  Scale: " << scale << ", Center: [" << center.x << ", " << center.y << ", " << center.z << "]" << std::endl;
 
     for (auto& mesh : meshes) {
