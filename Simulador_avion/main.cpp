@@ -12,6 +12,7 @@
 #include <cmath>
 #include "renderer.h"
 #include "layer_manager.h"
+#include "model_loader.h"
 
 // Declaración adelantada
 void printHelp();
@@ -317,6 +318,44 @@ int main(int argc, char** argv) {
 
     // Inicializar OpenGL
     Renderer::setupOpenGL();
+
+    // Cargar modelos 3D con Assimp
+    std::cout << "\nCargando modelos 3D...\n";
+    ModelManager& modelManager = ModelManager::getInstance();
+
+    if (modelManager.loadModel("./source/American Airlines Boeing 737-800.blend", "boeing737")) {
+        std::cout << "✓ Boeing 737 cargado exitosamente\n";
+    } else {
+        std::cerr << "✗ Error cargando Boeing 737\n";
+    }
+
+    if (modelManager.loadModel("./source/kawasaki-ki-61.blend", "kawasaki_ki61")) {
+        std::cout << "✓ Kawasaki Ki-61 cargado exitosamente\n";
+    } else {
+        std::cerr << "✗ Error cargando Kawasaki Ki-61\n";
+    }
+
+    if (modelManager.loadModel("./source/MYSTERE IV N 117 Provence Nancy.fbx", "mystere_iv")) {
+        std::cout << "✓ Mystere IV cargado exitosamente\n";
+    } else {
+        std::cerr << "✗ Error cargando Mystere IV\n";
+    }
+
+    if (modelManager.loadModel("./source/MS-406.fbx", "ms406")) {
+        std::cout << "✓ MS-406 cargado exitosamente\n";
+    } else {
+        std::cerr << "✗ Error cargando MS-406\n";
+    }
+
+    // Mostrar resumen de carga
+    auto loadedModels = modelManager.getLoadedModels();
+    std::cout << "\nModelos cargados: " << loadedModels.size() << "\n";
+    for (const auto& name : loadedModels) {
+        std::cout << "  - " << name << " ("
+                  << modelManager.getModelVertexCount(name) << " vértices, "
+                  << modelManager.getModelTriangleCount(name) << " triángulos)\n";
+    }
+    std::cout << "\n";
 
     // Inicializar LayerManager
     layerManager.init();
