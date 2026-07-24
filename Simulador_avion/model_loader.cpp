@@ -6,8 +6,10 @@
 #include "model_loader.h"
 #include <GL/glut.h>
 #include <iostream>
+#include <algorithm>
+#include <cfloat>
 
-Model::Model() : loaded(false) {}
+Model::Model() : loaded(false), scale(1.0f), center(0.0f) {}
 
 Model::~Model() {}
 
@@ -28,6 +30,7 @@ bool Model::loadModel(const char* path) {
     std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 
     processNode(scene->mRootNode, scene);
+    normalizeModel();
 
     loaded = true;
     return true;
@@ -87,6 +90,41 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         << indices.size() / 3 << " triángulos" << std::endl;
 
     meshes.push_back(newMesh);
+}
+
+void Model::normalizeModel() {
+    if (meshes.empty()) return;
+
+    glm::vec3 minBounds(FLT_MAX);
+    glm::vec3 maxBounds(-FLT_MAX);
+
+    for (auto& mesh : meshes) {
+        for (auto& vertex : mesh.vertices) {
+            minBounds.x = std::min(minBounds.x, vertex.position.x);
+            minBounds.y = std::min(minBounds.y, vertex.position.y);
+            minBounds.z = std::min(minBounds.z, vertex.position.z);
+
+            maxBounds.x = std::max(maxBounds.x, vertex.position.x);
+            maxBounds.y = std::max(maxBounds.y, vertex.position.y);
+            maxBounds.z = std::max(maxBounds.z, vertex.position.z);
+        }
+    }
+
+    glm::vec3 modelSize = maxBounds - minBounds;
+    float maxDim = std::max({modelSize.x, modelSize.y, modelSize.z});
+
+    scale = 2.0f / maxDim;
+    center = (minBounds + maxBounds) * 0.5f;
+
+    std::cout << "  Bounds: [" << minBounds.x << ", " << minBounds.y << ", " << minBounds.z << "] - ["
+        << maxBounds.x << ", " << maxBounds.y << ", " << maxBounds.z << "]" << std::endl;
+    std::cout << "  Scale: " << scale << ", Center: [" << center.x << ", " << center.y << ", " << center.z << "]" << std::endl;
+
+    for (auto& mesh : meshes) {
+        for (auto& vertex : mesh.vertices) {
+            vertex.position = (vertex.position - center) * scale;
+        }
+    }
 }
 
 void Mesh::draw() {

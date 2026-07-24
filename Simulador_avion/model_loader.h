@@ -31,9 +31,12 @@ class Model {
 private:
     std::vector<Mesh> meshes;
     bool loaded;
+    float scale;
+    glm::vec3 center;
 
     void processNode(aiNode* node, const aiScene* scene);
     void processMesh(aiMesh* mesh, const aiScene* scene);
+    void normalizeModel();
 
 public:
     Model();
