@@ -23,15 +23,12 @@
     <ClCompile Include="layer_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="model_loader.cpp" />
-    <ClCompile Include="model_manager_auto.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="utils.cpp" />
-    <ClCompile Include="model_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geometry.h" />
     <ClInclude Include="layer_manager.h" />
-    <ClInclude Include="model_config.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="model_loader.h" />
