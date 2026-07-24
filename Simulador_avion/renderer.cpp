@@ -1,14 +1,17 @@
 // ============================================================
-// ARCHIVO: renderer.cpp - VERSIÓN CORREGIDA
-// RESPONSABLE: Ronald (Rendering)
-// DESCRIPCION: Luces pequeñas a lo largo pista + HUD visible
+// ARCHIVO: renderer.cpp - VERSIÓN CON ASSIMP
+// RESPONSABLE: Ronald (Rendering) + Assimp Integration
+// DESCRIPCION: Renderizado de modelos 3D cargados con Assimp
 // ============================================================
 
 #include "renderer.h"
 #include "geometry.h"
+#include "model_loader.h"
 #include <GL/glut.h>
 #include <cstdio>
 #include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Renderer {
 
@@ -221,7 +224,28 @@ namespace Renderer {
     }
 
     // ============================================================
-    // drawLayer() - Renderizar capa seleccionada
+    // drawModel() - Renderizar modelo Assimp cargado
+    // ============================================================
+    void drawModel(const std::string& modelName) {
+        Model* model = ModelManager::getInstance().getModel(modelName);
+        if (!model || model->isEmpty()) {
+            return;
+        }
+
+        // Usar vertex arrays para renderizar
+        if (model->indices.empty()) return;
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, &model->vertices[0].x);
+
+        // Dibujar índices
+        glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, &model->indices[0]);
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+    }
+
+    // ============================================================
+    // drawLayer() - Renderizar capa seleccionada (con modelos Assimp)
     // ============================================================
     void drawLayer(int layerNumber) {
         drawAirportRunway();
@@ -235,28 +259,33 @@ namespace Renderer {
         // DIBUJAR HUD EN CADA FRAME
         drawLayerLabel(layerNumber);
 
+        // Colores para las diferentes capas
+        glColor3f(0.9f, 0.9f, 0.9f);
+
         switch (layerNumber) {
-        case 1: // Exterior
-            GeometryBuilder::generateFuselage(0.0f, 0.0f, 30.0f, 300.0f);
-            GeometryBuilder::generateWings();
-            GeometryBuilder::generateMotors();
+        case 1: // Exterior - Boeing 737
+            glColor3f(0.85f, 0.85f, 0.85f);
+            drawModel("boeing737");
             break;
 
-        case 2: // Estructura interna
-            GeometryBuilder::generateStructure();
+        case 2: // Estructura - Kawasaki Ki-61
+            glColor3f(0.0f, 1.0f, 0.0f);
+            drawModel("kawasaki_ki61");
             break;
 
-        case 3: // Sistemas
-            GeometryBuilder::generateSystems();
+        case 3: // Sistemas - Mystere IV
+            glColor3f(0.0f, 0.4f, 1.0f);
+            drawModel("mystere_iv");
             break;
 
-        case 4: // Cabina
-            GeometryBuilder::generateCabin();
+        case 4: // Cabina - MS-406
+            glColor3f(0.9f, 0.2f, 0.2f);
+            drawModel("ms406");
             break;
 
-        case 5: // Propulsion
-            GeometryBuilder::generateMotors();
-            GeometryBuilder::generateLandingGear();
+        case 5: // Propulsion - Boeing 737 (fallback)
+            glColor3f(0.5f, 0.5f, 0.5f);
+            drawModel("boeing737");
             break;
 
         default:
