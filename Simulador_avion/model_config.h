@@ -12,7 +12,7 @@
 namespace ModelConfig {
 
     // Ruta base donde se almacenan los modelos
-    constexpr const char* MODELS_BASE_PATH = "./models/";
+    constexpr const char* MODELS_BASE_PATH = "./source/";
 
     // ============================================================
     // Estructura de metadatos de modelo
