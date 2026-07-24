@@ -159,13 +159,18 @@ void Mesh::draw() {
 float Model::getRecommendedZoom() const {
     if (!loaded || scale <= 0.0f) return -4.0f;
 
-    // Calcular zoom basándose en la escala del modelo
-    // A mayor escala aplicada = más pequeño es el modelo original = necesita zoom más cercano
-    // A menor escala aplicada = más grande es el modelo original = necesita zoom más lejano
-    float zoomBase = -3.5f;
-    float zoomAdjustment = (1.0f / scale) * 0.5f;
+    // Si el modelo es muy pequeño (scale muy grande), acercamos más
+    // Si el modelo es muy grande (scale muy pequeño), alejamos más
+    float inverseScale = 1.0f / scale;
 
-    return zoomBase - zoomAdjustment;
+    // Zoom adaptativo: entre -2.5 (muy cerca) y -8.0 (muy lejos)
+    float zoomValue = -4.0f - (inverseScale * 0.3f);
+    zoomValue = std::max(zoomValue, -10.0f);  // No más lejos que -10
+    zoomValue = std::min(zoomValue, -1.5f);   // No más cerca que -1.5
+
+    std::cout << "  Scale: " << scale << " → Zoom: " << zoomValue << std::endl;
+
+    return zoomValue;
 }
 
 void Model::draw() {
