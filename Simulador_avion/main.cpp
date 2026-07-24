@@ -269,11 +269,20 @@ int main(int argc, char** argv) {
     layerManager.init();
 
     // ============================================================
-    // CARGAR MODELO 3D POR DEFECTO
+    // SELECCIONAR MODELO INTERACTIVAMENTE
     // ============================================================
     printModelMenu();
-    std::cout << "Cargando modelo por defecto (5)...\n";
-    Renderer::loadModelByNumber(DEFAULT_MODEL);
+
+    int selectedModel = 0;
+    std::cout << "Ingresa el número de la aeronave (1-5): ";
+    std::cin >> selectedModel;
+
+    if (selectedModel >= 1 && selectedModel <= 5) {
+        Renderer::loadModelByNumber(selectedModel);
+    } else {
+        std::cout << "Opción inválida. Cargando modelo por defecto (5)...\n";
+        Renderer::loadModelByNumber(5);
+    }
 
     // Registrar callbacks
     glutDisplayFunc(display);
