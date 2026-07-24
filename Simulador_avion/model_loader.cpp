@@ -1,14 +1,3 @@
-#include "model_loader.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-
-// Assimp headers
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 // ============================================================
 // ARCHIVO: model_loader.cpp
 // DESCRIPCION: Implementación del cargador de modelos 3D
@@ -68,14 +57,14 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
             mesh->mVertices[i].z
         );
 
-        // Normales
         if (mesh->HasNormals()) {
             vertex.normal = glm::vec3(
                 mesh->mNormals[i].x,
                 mesh->mNormals[i].y,
                 mesh->mNormals[i].z
             );
-        } else {
+        }
+        else {
             vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
         }
 
@@ -88,10 +77,6 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
             indices.push_back(face.mIndices[j]);
         }
-
-    models[modelName] = model;
-    std::cout << "[ModelManager] Model '" << modelName << "' loaded successfully" << std::endl;
-    return true;
     }
 
     Mesh newMesh;
@@ -99,7 +84,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     newMesh.indices = indices;
 
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
-              << indices.size() / 3 << " triángulos" << std::endl;
+        << indices.size() / 3 << " triángulos" << std::endl;
 
     meshes.push_back(newMesh);
 }
@@ -113,11 +98,6 @@ void Mesh::draw() {
             glNormal3f(v.normal.x, v.normal.y, v.normal.z);
             glVertex3f(v.position.x, v.position.y, v.position.z);
         }
-
-int ModelManager::getModelVertexCount(const std::string& modelName) const {
-    auto it = models.find(modelName);
-    if (it != models.end()) {
-        return it->second.vertices.size();
     }
     glEnd();
 }
@@ -132,6 +112,4 @@ void Model::draw() {
     for (auto& mesh : meshes) {
         mesh.draw();
     }
-
-    return nullptr;
 }

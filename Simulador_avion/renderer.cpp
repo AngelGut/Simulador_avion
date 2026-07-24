@@ -63,7 +63,8 @@ namespace Renderer {
         std::cout << "Cargando modelo: " << modelPath << std::endl;
         if (loadedModel->loadModel(modelPath)) {
             std::cout << "✓ Modelo cargado exitosamente\n";
-        } else {
+        }
+        else {
             std::cerr << "✗ Error al cargar modelo. Se usará geometría procedural.\n";
             delete loadedModel;
             loadedModel = nullptr;
@@ -99,34 +100,14 @@ namespace Renderer {
     }
 
     // ============================================================
-    // drawModel() - Renderizar modelo Assimp cargado
-    // ============================================================
-    void drawModel(const std::string& modelName) {
-        Model* model = ModelManager::getInstance().getModel(modelName);
-        if (!model || model->isEmpty()) {
-            return;
-        }
-
-        // Usar vertex arrays para renderizar
-        if (model->indices.empty()) return;
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, &model->vertices[0].x);
-
-        // Dibujar índices
-        glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, &model->indices[0]);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-    }
-
-    // ============================================================
-    // drawLayer() - Renderizar capa seleccionada (con modelos Assimp)
+    // drawLayer() - Renderizar capa seleccionada
     // ============================================================
     void drawLayer(int layerNumber) {
         // Si hay modelo cargado, dibujarlo
         if (loadedModel != nullptr && loadedModel->isLoaded()) {
             loadedModel->draw();
-        } else {
+        }
+        else {
             // Fallback: geometría procedural si no hay modelo
             std::cout << "Usando geometría procedural (modelo no disponible)\n";
 
