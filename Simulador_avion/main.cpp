@@ -32,6 +32,26 @@ float viewY = 0.0f;          // Pan vertical
 
 bool showHelp = false;
 
+// Función para resetear cámara a zoom óptimo
+void resetCameraToModel() {
+    Model* model = Renderer::getLoadedModel();
+    if (model && model->isLoaded()) {
+        viewZoom = model->getRecommendedZoom();
+        viewRotationX = 0.0f;
+        viewRotationY = 0.0f;
+        viewRotationZ = 0.0f;
+        viewX = 0.0f;
+        viewY = 0.0f;
+    } else {
+        viewZoom = -5.0f;
+        viewRotationX = 0.0f;
+        viewRotationY = 0.0f;
+        viewRotationZ = 0.0f;
+        viewX = 0.0f;
+        viewY = 0.0f;
+    }
+}
+
 // ============================================================
 // DISPLAY - Callback de dibujado 3D
 // ============================================================
@@ -91,6 +111,7 @@ void keyboard(unsigned char key, int x, int y) {
     if (key >= '1' && key <= '5') {
         int modelNumber = key - '0';
         Renderer::loadModelByNumber(modelNumber);
+        resetCameraToModel();
         glutPostRedisplay();
         return;
     }
@@ -283,6 +304,8 @@ int main(int argc, char** argv) {
         std::cout << "Opción inválida. Cargando modelo por defecto (5)...\n";
         Renderer::loadModelByNumber(5);
     }
+
+    resetCameraToModel();
 
     // Registrar callbacks
     glutDisplayFunc(display);
