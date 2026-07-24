@@ -1,10 +1,8 @@
 ﻿// ============================================================
 // ARCHIVO: main.cpp
-// RESPONSABLE: Luis(dique, ese vago) (Aplicación) + Cambios de navegación
-// DESCRIPCION: Punto de entrada. Integra LayerManager,
-//              Push/Pop Matrix, transformaciones (Translate,
-//              Rotate, Scale) y navegación interactiva.
-// si algo sale mal es culpa solamente de luis amir 
+// RESPONSABLE: Luis (Aplicación) + Cambios 3D con Modelos
+// DESCRIPCION: Punto de entrada. Proyección 3D con carga de
+//              modelos usando Assimp. Rotación en 3 ejes.
 // ============================================================
 
 #include <GL/glut.h>
@@ -12,6 +10,7 @@
 #include <cmath>
 #include "renderer.h"
 #include "layer_manager.h"
+#include "config.h"
 
 // Declaración adelantada
 void printHelp();
@@ -302,8 +301,8 @@ void drawHelpOverlay() {
 int main(int argc, char** argv) {
     std::cout << "\n"
         << "====================================================\n"
-        << "   Boeing 737 Visualizer v3.0\n"
-        << "   Con Push/Pop Matrix y navegacion\n"
+        << "   Boeing 737 Visualizer 3D v2.0\n"
+        << "   Con carga de modelos 3D (Assimp)\n"
         << "   Presiona H para ver controles\n"
         << "====================================================\n"
         << "\n";
@@ -311,15 +310,22 @@ int main(int argc, char** argv) {
     // Inicializar GLUT
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(1024, 768);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Boeing 737 Visualizer - Con Push/Pop Matrix");
+    glutCreateWindow("Boeing 737 Visualizer 3D - Con Modelos");
 
     // Inicializar OpenGL
     Renderer::setupOpenGL();
 
     // Inicializar LayerManager
     layerManager.init();
+
+    // ============================================================
+    // CARGAR MODELO 3D
+    // ============================================================
+    std::cout << "\n--- Iniciando carga de modelos ---\n";
+    Renderer::initModel(MODEL_PATH);
+    std::cout << "--- Carga completada ---\n\n";
 
     // Registrar callbacks
     glutDisplayFunc(display);
