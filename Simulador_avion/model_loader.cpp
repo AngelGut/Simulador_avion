@@ -10,187 +10,127 @@
 #include <assimp/postprocess.h>
 
 // ============================================================
-// AssimpLoader - Implementación usando Assimp
+// ARCHIVO: model_loader.cpp
+// DESCRIPCION: Implementación del cargador de modelos 3D
 // ============================================================
 
-AssimpLoader::AssimpLoader() {
-    supportedExtensions = {
-        ".obj", ".fbx", ".blend", ".dae", ".stl",
-        ".3ds", ".ase", ".gltf", ".glb", ".ply",
-        ".lwo", ".lws", ".x", ".md5", ".md3"
-    };
-}
+#include "model_loader.h"
+#include <GL/glut.h>
+#include <iostream>
 
-bool AssimpLoader::isFormatSupported(const std::string& filePath) const {
-    size_t pos = filePath.rfind('.');
-    if (pos == std::string::npos) return false;
+Model::Model() : loaded(false) {}
 
-    std::string ext = filePath.substr(pos);
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+Model::~Model() {}
 
-    return std::find(supportedExtensions.begin(), supportedExtensions.end(), ext)
-        != supportedExtensions.end();
-}
-
-bool AssimpLoader::load(const std::string& filePath, Model& model) {
-    std::cout << "[AssimpLoader] Cargando: " << filePath << std::endl;
-
-    if (!isFormatSupported(filePath)) {
-        std::cerr << "[AssimpLoader] Formato no soportado: " << filePath << std::endl;
-        return false;
-    }
-
-    return parseWithAssimp(filePath, model);
-}
-
-bool AssimpLoader::parseWithAssimp(const std::string& filePath, Model& model) {
+bool Model::loadModel(const char* path) {
     Assimp::Importer importer;
-
-    // Flags de post-procesamiento
-    unsigned int flags = aiProcess_Triangulate           // Triangular todas las caras
-                       | aiProcess_GenNormals            // Generar normales si no existen
-                       | aiProcess_FixInfacingNormals    // Arreglar normales invertidas
-                       | aiProcess_JoinIdenticalVertices // Juntar vértices duplicados
-                       | aiProcess_OptimizeMeshes;       // Optimizar mallas
-
-    const aiScene* scene = importer.ReadFile(filePath.c_str(), flags);
+    const aiScene* scene = importer.ReadFile(path,
+        aiProcess_Triangulate |
+        aiProcess_GenSmoothNormals |
+        aiProcess_FlipUVs |
+        aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "[AssimpLoader] Error: " << importer.GetErrorString() << std::endl;
+        std::cerr << "Error al cargar modelo: " << importer.GetErrorString() << std::endl;
         return false;
     }
 
-    if (scene->mNumMeshes == 0) {
-        std::cerr << "[AssimpLoader] No meshes found in file" << std::endl;
-        return false;
-    }
+    std::cout << "Modelo cargado: " << path << std::endl;
+    std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 
-    // Cargar todas las mallas
-    for (unsigned int m = 0; m < scene->mNumMeshes; ++m) {
-        aiMesh* mesh = scene->mMeshes[m];
+    processNode(scene->mRootNode, scene);
 
-        // Vértices
-        for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-            model.vertices.push_back(glm::vec3(
-                mesh->mVertices[i].x,
-                mesh->mVertices[i].y,
-                mesh->mVertices[i].z
-            ));
-        }
-
-        // Normales
-        if (mesh->HasNormals()) {
-            for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-                model.normals.push_back(glm::vec3(
-                    mesh->mNormals[i].x,
-                    mesh->mNormals[i].y,
-                    mesh->mNormals[i].z
-                ));
-            }
-        }
-
-        // Coordenadas de textura (si existen)
-        if (mesh->HasTextureCoords(0)) {
-            for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-                model.texCoords.push_back(glm::vec2(
-                    mesh->mTextureCoords[0][i].x,
-                    mesh->mTextureCoords[0][i].y
-                ));
-            }
-        }
-
-        // Índices (caras)
-        for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-            aiFace& face = mesh->mFaces[i];
-            for (unsigned int j = 0; j < face.mNumIndices; ++j) {
-                model.indices.push_back(face.mIndices[j]);
-            }
-        }
-    }
-
-    if (model.vertices.empty()) {
-        std::cerr << "[AssimpLoader] No vertices loaded" << std::endl;
-        return false;
-    }
-
-    std::cout << "[AssimpLoader] Carga exitosa: "
-              << model.vertices.size() << " vértices, "
-              << model.indices.size() / 3 << " triángulos" << std::endl;
-
+    loaded = true;
     return true;
 }
 
-// ============================================================
-// ModelManager - Implementación
-// ============================================================
-
-bool ModelManager::loadModel(const std::string& filePath, const std::string& modelName) {
-    auto loader = getLoaderForFormat(filePath);
-
-    if (!loader) {
-        std::cerr << "[ModelManager] No loader available for: " << filePath << std::endl;
-        return false;
+void Model::processNode(aiNode* node, const aiScene* scene) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        processMesh(mesh, scene);
     }
 
-    Model model;
-    model.name = modelName;
-
-    if (!loader->load(filePath, model)) {
-        std::cerr << "[ModelManager] Error loading: " << filePath << std::endl;
-        return false;
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+        processNode(node->mChildren[i], scene);
     }
+}
+
+void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    // Procesar vértices
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        Vertex vertex;
+        vertex.position = glm::vec3(
+            mesh->mVertices[i].x,
+            mesh->mVertices[i].y,
+            mesh->mVertices[i].z
+        );
+
+        // Normales
+        if (mesh->HasNormals()) {
+            vertex.normal = glm::vec3(
+                mesh->mNormals[i].x,
+                mesh->mNormals[i].y,
+                mesh->mNormals[i].z
+            );
+        } else {
+            vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+
+        vertices.push_back(vertex);
+    }
+
+    // Procesar índices
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            indices.push_back(face.mIndices[j]);
+        }
 
     models[modelName] = model;
     std::cout << "[ModelManager] Model '" << modelName << "' loaded successfully" << std::endl;
     return true;
-}
-
-Model* ModelManager::getModel(const std::string& modelName) {
-    auto it = models.find(modelName);
-    if (it != models.end()) {
-        return &it->second;
     }
-    return nullptr;
+
+    Mesh newMesh;
+    newMesh.vertices = vertices;
+    newMesh.indices = indices;
+
+    std::cout << "  Mesh: " << vertices.size() << " vértices, "
+              << indices.size() / 3 << " triángulos" << std::endl;
+
+    meshes.push_back(newMesh);
 }
 
-std::vector<std::string> ModelManager::getLoadedModels() const {
-    std::vector<std::string> names;
-    for (const auto& pair : models) {
-        names.push_back(pair.first);
-    }
-    return names;
-}
-
-void ModelManager::unloadModel(const std::string& modelName) {
-    models.erase(modelName);
-}
-
-void ModelManager::clearAll() {
-    models.clear();
-}
+void Mesh::draw() {
+    glBegin(GL_TRIANGLES);
+    for (unsigned int i = 0; i < indices.size(); i++) {
+        unsigned int idx = indices[i];
+        if (idx < vertices.size()) {
+            const Vertex& v = vertices[idx];
+            glNormal3f(v.normal.x, v.normal.y, v.normal.z);
+            glVertex3f(v.position.x, v.position.y, v.position.z);
+        }
 
 int ModelManager::getModelVertexCount(const std::string& modelName) const {
     auto it = models.find(modelName);
     if (it != models.end()) {
         return it->second.vertices.size();
     }
-    return 0;
+    glEnd();
 }
 
-int ModelManager::getModelTriangleCount(const std::string& modelName) const {
-    auto it = models.find(modelName);
-    if (it != models.end()) {
-        return it->second.indices.size() / 3;
+void Model::draw() {
+    if (!loaded) {
+        std::cerr << "Modelo no cargado\n";
+        return;
     }
-    return 0;
-}
 
-std::unique_ptr<ModelLoader> ModelManager::getLoaderForFormat(const std::string& filePath) {
-    // Usar AssimpLoader para todo (soporta todos los formatos)
-    auto loader = std::make_unique<AssimpLoader>();
-
-    if (loader->isFormatSupported(filePath)) {
-        return loader;
+    glColor3f(0.85f, 0.85f, 0.85f);
+    for (auto& mesh : meshes) {
+        mesh.draw();
     }
 
     return nullptr;

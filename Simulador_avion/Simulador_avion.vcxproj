@@ -26,6 +26,7 @@
     <ClCompile Include="model_manager_auto.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="model_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geometry.h" />
@@ -33,6 +34,8 @@
     <ClInclude Include="model_config.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="model_loader.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Arq000_decisiones_arquitectonicas.md" />
@@ -109,7 +112,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glut32.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
