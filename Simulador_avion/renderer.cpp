@@ -7,6 +7,7 @@
 #include "renderer.h"
 #include "geometry.h"
 #include "model_loader.h"
+#include "config.h"
 #include <GL/glut.h>
 #include <cstdio>
 #include <cmath>
