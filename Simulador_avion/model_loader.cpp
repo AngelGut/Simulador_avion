@@ -8,6 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cfloat>
+#include <glm/gtc/matrix_transform.hpp>
 
 Model::Model() : loaded(false), scale(1.0f), center(0.0f) {}
 
@@ -29,43 +30,55 @@ bool Model::loadModel(const char* path) {
     std::cout << "Modelo cargado: " << path << std::endl;
     std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 
-    processNode(scene->mRootNode, scene);
+    glm::mat4 identity(1.0f);
+    processNode(scene->mRootNode, scene, identity);
     normalizeModel();
 
     loaded = true;
     return true;
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene) {
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMesh(mesh, scene);
+void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform) {
+    // Convertir transformación de Assimp a GLM
+    glm::mat4 nodeTransform(1.0f);
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            nodeTransform[j][i] = node->mTransformation[i][j];
+        }
     }
 
+    glm::mat4 currentTransform = parentTransform * nodeTransform;
+
+    // Procesar meshes del nodo
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        processMesh(mesh, scene, currentTransform);
+    }
+
+    // Procesar hijos recursivamente
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene, currentTransform);
     }
 }
 
-void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
+void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
-    // Procesar vértices
+    // Procesar vértices con transformación de nodo
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
-        vertex.position = glm::vec3(
-            mesh->mVertices[i].x,
-            mesh->mVertices[i].y,
-            mesh->mVertices[i].z
-        );
 
+        // Aplicar transformación del nodo a la posición
+        glm::vec4 pos(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
+        glm::vec4 transformedPos = nodeTransform * pos;
+        vertex.position = glm::vec3(transformedPos) / transformedPos.w;
+
+        // Aplicar transformación a normales (sin traslación)
         if (mesh->HasNormals()) {
-            vertex.normal = glm::vec3(
-                mesh->mNormals[i].x,
-                mesh->mNormals[i].y,
-                mesh->mNormals[i].z
-            );
+            glm::vec4 norm(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
+            glm::vec4 transformedNorm = nodeTransform * norm;
+            vertex.normal = glm::normalize(glm::vec3(transformedNorm));
         }
         else {
             vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);

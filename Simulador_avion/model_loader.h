@@ -34,8 +34,8 @@ private:
     float scale;
     glm::vec3 center;
 
-    void processNode(aiNode* node, const aiScene* scene);
-    void processMesh(aiMesh* mesh, const aiScene* scene);
+    void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
+    void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);
     void normalizeModel();
 
 public:
