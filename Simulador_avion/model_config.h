@@ -12,7 +12,7 @@
 namespace ModelConfig {
 
     // Ruta base donde se almacenan los modelos
-    constexpr const char* MODELS_BASE_PATH = "./models/";
+    constexpr const char* MODELS_BASE_PATH = "./source/";
 
     // ============================================================
     // Estructura de metadatos de modelo
@@ -75,8 +75,8 @@ namespace ModelConfig {
     // ============================================================
     // Funciones de utilidad
     // ============================================================
-    inline ModelInfo* getModelInfo(const std::string& modelName) {
-        for (auto& model : AVAILABLE_MODELS) {
+    inline const ModelInfo* getModelInfo(const std::string& modelName) {
+        for (const auto& model : AVAILABLE_MODELS) {
             if (model.name == modelName) {
                 return &model;
             }
