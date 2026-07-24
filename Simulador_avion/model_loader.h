@@ -45,8 +45,9 @@ public:
     bool loadModel(const char* path);
     void draw();
     bool isLoaded() const { return loaded; }
-    float getRecommendedZoom() const { return -4.0f; }
+    float getRecommendedZoom() const;
     glm::vec3 getCenter() const { return center; }
+    float getScale() const { return scale; }
 };
 
 #endif // MODEL_LOADER_H

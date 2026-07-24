@@ -143,6 +143,18 @@ void Mesh::draw() {
     glEnd();
 }
 
+float Model::getRecommendedZoom() const {
+    if (!loaded || scale <= 0.0f) return -4.0f;
+
+    // Calcular zoom basándose en la escala del modelo
+    // A mayor escala aplicada = más pequeño es el modelo original = necesita zoom más cercano
+    // A menor escala aplicada = más grande es el modelo original = necesita zoom más lejano
+    float zoomBase = -3.5f;
+    float zoomAdjustment = (1.0f / scale) * 0.5f;
+
+    return zoomBase - zoomAdjustment;
+}
+
 void Model::draw() {
     if (!loaded) {
         std::cerr << "Modelo no cargado\n";
