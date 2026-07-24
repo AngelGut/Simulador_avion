@@ -14,6 +14,7 @@
 
 // Declaración adelantada
 void printHelp();
+void printModelMenu();
 
 // ============================================================
 // VARIABLES GLOBALES - Estado de aplicación 3D
@@ -85,6 +86,14 @@ void timer(int value) {
 // KEYBOARD - Manejo de eventos de teclado 3D
 // ============================================================
 void keyboard(unsigned char key, int x, int y) {
+
+    // SELECCIONAR MODELO (1-5)
+    if (key >= '1' && key <= '5') {
+        int modelNumber = key - '0';
+        Renderer::loadModelByNumber(modelNumber);
+        glutPostRedisplay();
+        return;
+    }
 
     // ROTACIÓN PITCH (Arriba/Abajo)
     if (key == 'i' || key == 'I') {
@@ -188,13 +197,33 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 // ============================================================
+// PRINTMODELmenu - Mostrar menú de aeronaves
+// ============================================================
+void printModelMenu() {
+    std::cout << "\n"
+        << "==================================================\n"
+        << "    SELECCIONA UNA AERONAVE (1-5)\n"
+        << "==================================================\n"
+        << " 1  " << NAME_1 << "\n"
+        << " 2  " << NAME_2 << "\n"
+        << " 3  " << NAME_3 << "\n"
+        << " 4  " << NAME_4 << "\n"
+        << " 5  " << NAME_5 << "\n"
+        << "==================================================\n"
+        << "\n";
+}
+
+// ============================================================
 // PRINTHELP - Mostrar controles disponibles
 // ============================================================
 void printHelp() {
     std::cout << "\n"
         << "==================================================\n"
-        << "    Boeing 737 Visualizer 3D v1.0\n"
+        << "    Boeing 737 Visualizer 3D v2.0\n"
         << "==================================================\n"
+        << " SELECCIONAR AERONAVE:\n"
+        << "   1-5        Cambiar modelo\n"
+        << "\n"
         << " ROTACIÓN (Pitch/Yaw/Roll):\n"
         << "   I / K      Rotar arriba / abajo (Pitch)\n"
         << "   J / L      Rotar izquierda / derecha (Yaw)\n"
@@ -240,11 +269,11 @@ int main(int argc, char** argv) {
     layerManager.init();
 
     // ============================================================
-    // CARGAR MODELO 3D
+    // CARGAR MODELO 3D POR DEFECTO
     // ============================================================
-    std::cout << "\n--- Iniciando carga de modelos ---\n";
-    Renderer::initModel(MODEL_PATH);
-    std::cout << "--- Carga completada ---\n\n";
+    printModelMenu();
+    std::cout << "Cargando modelo por defecto (5)...\n";
+    Renderer::loadModelByNumber(DEFAULT_MODEL);
 
     // Registrar callbacks
     glutDisplayFunc(display);

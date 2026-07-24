@@ -10,6 +10,7 @@ namespace Renderer {
     // ========== INICIALIZACIÓN ==========
     void setupOpenGL();
     void initModel(const char* modelPath);
+    void loadModelByNumber(int modelNumber);
 
     // ========== ILUMINACIÓN ==========
     void applyLighting();
@@ -22,6 +23,7 @@ namespace Renderer {
 
     // ========== ACCESO AL MODELO ==========
     Model* getLoadedModel();
+    int getCurrentModelNumber();
 
 } // namespace Renderer
 

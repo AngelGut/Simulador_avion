@@ -16,6 +16,7 @@ namespace Renderer {
 
     // Variable estática para almacenar el modelo cargado
     static Model* loadedModel = nullptr;
+    static int currentModelNumber = 5;
 
     // ============================================================
     // setupOpenGL() - Configuración para 3D
@@ -146,6 +147,51 @@ namespace Renderer {
     // ============================================================
     void drawLayerLabel(int layerNumber) {
         // Deshabilitado en versión 3D de modelos
+    }
+
+    // ============================================================
+    // loadModelByNumber() - Cargar modelo por número (1-5)
+    // ============================================================
+    void loadModelByNumber(int modelNumber) {
+        const char* modelPath = nullptr;
+        const char* modelName = nullptr;
+
+        switch (modelNumber) {
+        case 1:
+            modelPath = MODEL_1;
+            modelName = NAME_1;
+            break;
+        case 2:
+            modelPath = MODEL_2;
+            modelName = NAME_2;
+            break;
+        case 3:
+            modelPath = MODEL_3;
+            modelName = NAME_3;
+            break;
+        case 4:
+            modelPath = MODEL_4;
+            modelName = NAME_4;
+            break;
+        case 5:
+            modelPath = MODEL_5;
+            modelName = NAME_5;
+            break;
+        default:
+            std::cerr << "Modelo inválido. Opciones: 1-5\n";
+            return;
+        }
+
+        currentModelNumber = modelNumber;
+        std::cout << "\n--- Cargando: " << modelName << " ---\n";
+        initModel(modelPath);
+    }
+
+    // ============================================================
+    // getCurrentModelNumber() - Obtener número del modelo actual
+    // ============================================================
+    int getCurrentModelNumber() {
+        return currentModelNumber;
     }
 
 } // namespace Renderer
