@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Simulador_avion/Simulador_avion.vcxproj" />
+  <Project Path="Simulador_avion/Simulador_avion.vcxproj" Id="488bdd56-0621-4807-9f15-bd3157191e1f" />
 </Solution>
