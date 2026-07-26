@@ -1,196 +1,91 @@
-﻿// ============================================================
-// ARCHIVO: main.cpp
-// RESPONSABLE: Luis (Aplicación) + Cambios 3D con Modelos
-// DESCRIPCION: Punto de entrada. Proyección 3D con carga de
-//              modelos usando Assimp. Rotación en 3 ejes.
+// ============================================================
+// ARCHIVO: main.cpp - GLFW + Shaders (Fase B Moderna)
+// DESCRIPCION: Punto de entrada para OpenGL 3.3+ moderno
 // ============================================================
 
-#include <GL/glut.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <cmath>
 #include "renderer.h"
-#include "layer_manager.h"
+#include "shader.h"
+#include "model_loader.h"
 #include "config.h"
 
-// Declaración adelantada
-void printHelp();
-void printModelMenu();
-
 // ============================================================
-// VARIABLES GLOBALES - Estado de aplicación 3D
+// VARIABLES GLOBALES
 // ============================================================
 
-LayerManager layerManager;
+GLFWwindow* window = nullptr;
+Shader* shaderProgram = nullptr;
 
-// Transformación de vista: navegación interactiva 3D
-float viewRotationX = 0.0f;  // Rotación eje X (pitch)
-float viewRotationY = 0.0f;  // Rotación eje Y (yaw)
-float viewRotationZ = 0.0f;  // Rotación eje Z (roll)
-float viewZoom = -5.0f;      // Distancia de cámara en Z
-float viewX = 0.0f;          // Pan horizontal
-float viewY = 0.0f;          // Pan vertical
+// Estado de cámara
+glm::vec3 cameraPos(0.0f, 0.0f, 4.0f);
+glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+
+float viewRotationX = 0.0f;
+float viewRotationY = 0.0f;
+float viewRotationZ = 0.0f;
+float viewZoom = -5.0f;
+float viewX = 0.0f;
+float viewY = 0.0f;
+
+int windowWidth = 1024;
+int windowHeight = 768;
 
 bool showHelp = false;
 
-// Función para resetear cámara a zoom óptimo
-void resetCameraToModel() {
+// ============================================================
+// CALLBACKS GLFW
+// ============================================================
+
+void windowSizeCallback(GLFWwindow* window, int width, int height) {
+    windowWidth = width;
+    windowHeight = height;
+    glViewport(0, 0, width, height);
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action != GLFW_PRESS) return;
+
     Model* model = Renderer::getLoadedModel();
-    if (model && model->isLoaded()) {
-        viewZoom = model->getRecommendedZoom();
-        viewRotationX = 0.0f;
-        viewRotationY = 0.0f;
-        viewRotationZ = 0.0f;
-        viewX = 0.0f;
-        viewY = 0.0f;
-    } else {
-        viewZoom = -5.0f;
-        viewRotationX = 0.0f;
-        viewRotationY = 0.0f;
-        viewRotationZ = 0.0f;
-        viewX = 0.0f;
-        viewY = 0.0f;
-    }
-}
 
-// ============================================================
-// DISPLAY - Callback de dibujado 3D
-// ============================================================
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    // Posición de cámara y vista
-    gluLookAt(viewX, viewY, viewZoom,  // Posición cámara
-        0.0f, 0.0f, 0.0f,        // Punto de mira
-        0.0f, 1.0f, 0.0f);       // Vector "arriba"
-
-    // Aplicar rotaciones 3D
-    glRotatef(viewRotationX, 1.0f, 0.0f, 0.0f);  // Pitch
-    glRotatef(viewRotationY, 0.0f, 1.0f, 0.0f);  // Yaw
-    glRotatef(viewRotationZ, 0.0f, 0.0f, 1.0f);  // Roll
-
-    // Dibujar avión
-    Renderer::drawLayer(1);  // Solo capa exterior para prueba
-
-    glutSwapBuffers();
-}
-
-// ============================================================
-// RESHAPE - Callback de redimensión de ventana
-// ============================================================
-void reshape(int w, int h) {
-    if (h == 0) h = 1;
-
-    glViewport(0, 0, w, h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    // Proyección 3D con perspectiva
-    gluPerspective(45.0f, (float)w / (float)h, 0.1f, 500.0f);
-
-    glMatrixMode(GL_MODELVIEW);
-}
-
-// ============================================================
-// TIMER - Callback para actualización a ~60 FPS
-// ============================================================
-void timer(int value) {
-    glutPostRedisplay();
-    glutTimerFunc(16, timer, 0);  // 16ms ≈ 60 FPS
-}
-
-// ============================================================
-// KEYBOARD - Manejo de eventos de teclado 3D
-// ============================================================
-void keyboard(unsigned char key, int x, int y) {
-
-    // SELECCIONAR MODELO (1-5)
-    if (key >= '1' && key <= '5') {
-        int modelNumber = key - '0';
+    // Seleccionar modelo (1-5)
+    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_5) {
+        int modelNumber = key - GLFW_KEY_1 + 1;
         Renderer::loadModelByNumber(modelNumber);
-        resetCameraToModel();
-        glutPostRedisplay();
         return;
     }
 
-    // ROTACIÓN PITCH (Arriba/Abajo)
-    if (key == 'i' || key == 'I') {
-        viewRotationX += 10.0f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 'k' || key == 'K') {
-        viewRotationX -= 10.0f;
-        glutPostRedisplay();
-        return;
-    }
+    // Rotación PITCH (I/K)
+    if (key == GLFW_KEY_I) viewRotationX += 10.0f;
+    if (key == GLFW_KEY_K) viewRotationX -= 10.0f;
 
-    // ROTACIÓN YAW (Izquierda/Derecha)
-    if (key == 'j' || key == 'J') {
-        viewRotationY -= 10.0f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 'l' || key == 'L') {
-        viewRotationY += 10.0f;
-        glutPostRedisplay();
-        return;
-    }
+    // Rotación YAW (J/L)
+    if (key == GLFW_KEY_J) viewRotationY -= 10.0f;
+    if (key == GLFW_KEY_L) viewRotationY += 10.0f;
 
-    // ROTACIÓN ROLL (Rotación alrededor eje Z)
-    if (key == 'r' || key == 'R') {
-        viewRotationZ -= 10.0f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 't' || key == 'T') {
-        viewRotationZ += 10.0f;
-        glutPostRedisplay();
-        return;
-    }
+    // Rotación ROLL (R/T)
+    if (key == GLFW_KEY_R) viewRotationZ -= 10.0f;
+    if (key == GLFW_KEY_T) viewRotationZ += 10.0f;
 
-    // ZOOM (Acercar/Alejar)
-    if (key == 'q' || key == 'Q') {
-        viewZoom += 0.5f;  // Alejar
-        std::cout << "Zoom: " << -viewZoom << "\n";
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 'e' || key == 'E') {
-        viewZoom -= 0.5f;  // Acercar
-        if (viewZoom > -0.5f) viewZoom = -0.5f;
-        std::cout << "Zoom: " << -viewZoom << "\n";
-        glutPostRedisplay();
-        return;
-    }
+    // ZOOM (Q/E)
+    if (key == GLFW_KEY_Q) viewZoom += 0.5f;
+    if (key == GLFW_KEY_E) viewZoom -= 0.5f;
+    if (viewZoom > -0.5f) viewZoom = -0.5f;
 
-    // PAN (Mover arriba/abajo/izquierda/derecha)
-    if (key == 'w' || key == 'W') {
-        viewY += 0.5f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 's' || key == 'S') {
-        viewY -= 0.5f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 'a' || key == 'A') {
-        viewX -= 0.5f;
-        glutPostRedisplay();
-        return;
-    }
-    if (key == 'd' || key == 'D') {
-        viewX += 0.5f;
-        glutPostRedisplay();
-        return;
-    }
+    // PAN (W/A/S/D)
+    if (key == GLFW_KEY_W) viewY += 0.5f;
+    if (key == GLFW_KEY_S) viewY -= 0.5f;
+    if (key == GLFW_KEY_A) viewX -= 0.5f;
+    if (key == GLFW_KEY_D) viewX += 0.5f;
 
-    // RESET
-    if (key == ' ') {
+    // RESET (ESPACIO)
+    if (key == GLFW_KEY_SPACE) {
         viewRotationX = 0.0f;
         viewRotationY = 0.0f;
         viewRotationZ = 0.0f;
@@ -198,28 +93,85 @@ void keyboard(unsigned char key, int x, int y) {
         viewX = 0.0f;
         viewY = 0.0f;
         std::cout << "Vista reseteada\n";
-        glutPostRedisplay();
-        return;
     }
 
-    // AYUDA
-    if (key == 'h' || key == 'H') {
+    // AYUDA (H)
+    if (key == GLFW_KEY_H) {
         showHelp = !showHelp;
-        printHelp();
-        glutPostRedisplay();
-        return;
+        Renderer::printHelp();
     }
 
-    // SALIDA
-    if (key == 27) {
-        std::cout << "Cerrando aplicación...\n";
-        exit(0);
+    // SALIR (ESC)
+    if (key == GLFW_KEY_ESCAPE) {
+        glfwSetWindowShouldClose(window, true);
     }
 }
 
 // ============================================================
-// PRINTMODELmenu - Mostrar menú de aeronaves
+// INICIALIZACIÓN
 // ============================================================
+
+bool initGLFW() {
+    if (!glfwInit()) {
+        std::cerr << "Error: No se pudo inicializar GLFW\n";
+        return false;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    window = glfwCreateWindow(windowWidth, windowHeight, "Boeing 737 Visualizer 3D - Fase B Moderna", NULL, NULL);
+    if (!window) {
+        std::cerr << "Error: No se pudo crear ventana GLFW\n";
+        glfwTerminate();
+        return false;
+    }
+
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, windowSizeCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSwapInterval(1);
+
+    return true;
+}
+
+bool initGLEW() {
+    glewExperimental = GL_TRUE;
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
+        return false;
+    }
+
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
+    return true;
+}
+
+bool initOpenGL() {
+    glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    // Cargar shaders
+    try {
+        shaderProgram = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+        std::cout << "✓ Shaders cargados exitosamente\n";
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error al cargar shaders: " << e.what() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 void printModelMenu() {
     std::cout << "\n"
         << "==================================================\n"
@@ -235,63 +187,78 @@ void printModelMenu() {
 }
 
 // ============================================================
-// PRINTHELP - Mostrar controles disponibles
+// LOOP PRINCIPAL
 // ============================================================
-void printHelp() {
-    std::cout << "\n"
-        << "==================================================\n"
-        << "    Boeing 737 Visualizer 3D v2.0\n"
-        << "==================================================\n"
-        << " SELECCIONAR AERONAVE:\n"
-        << "   1-5        Cambiar modelo\n"
-        << "\n"
-        << " ROTACIÓN (Pitch/Yaw/Roll):\n"
-        << "   I / K      Rotar arriba / abajo (Pitch)\n"
-        << "   J / L      Rotar izquierda / derecha (Yaw)\n"
-        << "   R / T      Rotar CW / CCW (Roll)\n"
-        << "\n"
-        << " ZOOM (Cámara):\n"
-        << "   Q / E      Alejar / Acercar\n"
-        << "\n"
-        << " PAN (Mover vista):\n"
-        << "   W / A / S / D    Arriba / Izq / Abajo / Der\n"
-        << "\n"
-        << " OTROS:\n"
-        << "   ESPACIO    Reset vista\n"
-        << "   H          Mostrar/ocultar esta ayuda\n"
-        << "   ESC        Salir\n"
-        << "==================================================\n"
-        << "\n";
+
+void render() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!shaderProgram) return;
+
+    shaderProgram->use();
+
+    // Matrices de transformación
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+        (float)windowWidth / (float)windowHeight, 0.1f, 500.0f);
+
+    // Vista con rotaciones
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(viewX, viewY, viewZoom),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    // Modelo con rotaciones
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(viewRotationX), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(viewRotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(viewRotationZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    // Pasar matrices al shader
+    shaderProgram->setMat4("uModel", model);
+    shaderProgram->setMat4("uView", view);
+    shaderProgram->setMat4("uProjection", projection);
+
+    // Parámetros de iluminación
+    shaderProgram->setVec3("uLightPos", glm::vec3(5.0f, 5.0f, 5.0f));
+    shaderProgram->setVec3("uViewPos", glm::vec3(viewX, viewY, viewZoom));
+    shaderProgram->setVec3("uLightColor", glm::vec3(0.9f, 0.9f, 0.9f));
+
+    // Dibujar modelo
+    Renderer::drawLayer(1);
 }
 
 // ============================================================
-// MAIN - Punto de entrada
+// MAIN
 // ============================================================
+
 int main(int argc, char** argv) {
     std::cout << "\n"
         << "====================================================\n"
-        << "   Boeing 737 Visualizer 3D v2.0\n"
-        << "   Con carga de modelos 3D (Assimp)\n"
+        << "   Boeing 737 Visualizer 3D v2.1\n"
+        << "   Con GLFW + Shaders OpenGL 3.3+\n"
         << "   Presiona H para ver controles\n"
         << "====================================================\n"
         << "\n";
 
-    // Inicializar GLUT
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(1024, 768);
-    glutInitWindowPosition(100, 100);
-    glutCreateWindow("Boeing 737 Visualizer 3D - Con Modelos");
+    // Inicializar GLFW
+    if (!initGLFW()) {
+        return -1;
+    }
+
+    // Inicializar GLEW
+    if (!initGLEW()) {
+        glfwTerminate();
+        return -1;
+    }
 
     // Inicializar OpenGL
-    Renderer::setupOpenGL();
+    if (!initOpenGL()) {
+        glfwTerminate();
+        return -1;
+    }
 
-    // Inicializar LayerManager
-    layerManager.init();
-
-    // ============================================================
-    // SELECCIONAR MODELO INTERACTIVAMENTE
-    // ============================================================
+    // Cargar modelo
     printModelMenu();
 
     int selectedModel = 0;
@@ -300,24 +267,38 @@ int main(int argc, char** argv) {
 
     if (selectedModel >= 1 && selectedModel <= 5) {
         Renderer::loadModelByNumber(selectedModel);
-    } else {
+    }
+    else {
         std::cout << "Opción inválida. Cargando modelo por defecto (5)...\n";
         Renderer::loadModelByNumber(5);
     }
 
-    resetCameraToModel();
-
-    // Registrar callbacks
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-    glutKeyboardFunc(keyboard);
-    glutTimerFunc(16, timer, 0);
-
-    // Mostrar ayuda inicial
-    printHelp();
+    Renderer::printHelp();
 
     // Loop principal
-    glutMainLoop();
+    double lastTime = glfwGetTime();
+    int frameCount = 0;
+
+    while (!glfwWindowShouldClose(window)) {
+        render();
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        // FPS counter
+        double currentTime = glfwGetTime();
+        frameCount++;
+        if (currentTime - lastTime >= 1.0) {
+            std::cout << "FPS: " << frameCount << std::endl;
+            frameCount = 0;
+            lastTime = currentTime;
+        }
+    }
+
+    // Limpiar
+    delete shaderProgram;
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
 }

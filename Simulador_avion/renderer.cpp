@@ -8,7 +8,7 @@
 #include "geometry.h"
 #include "model_loader.h"
 #include "config.h"
-#include <GL/glut.h>
+#include <GL/glew.h>
 #include <cstdio>
 #include <cmath>
 #include <iostream>
@@ -20,36 +20,13 @@ namespace Renderer {
     static int currentModelNumber = 5;
 
     // ============================================================
-    // setupOpenGL() - Configuración para 3D
+    // setupOpenGL() - Configuración para 3D (compatible OpenGL 3.3+)
     // ============================================================
     void setupOpenGL() {
         glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
-
-        // Habilitar test de profundidad para 3D
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
-
-        // Habilitar iluminación
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glEnable(GL_COLOR_MATERIAL);
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-        // Parámetros de iluminación
-        GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-        GLfloat diffuseLight[] = { 0.9f, 0.9f, 0.9f, 1.0f };
-        GLfloat specularLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        GLfloat lightPosition[] = { 5.0f, 5.0f, 5.0f, 0.0f };
-
-        glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-        glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-        glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-
-        // Suavizado de líneas
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-        glLineWidth(1.5f);
+        glEnable(GL_MULTISAMPLE);
     }
 
     // ============================================================
@@ -193,6 +170,36 @@ namespace Renderer {
     // ============================================================
     int getCurrentModelNumber() {
         return currentModelNumber;
+    }
+
+    // ============================================================
+    // printHelp() - Mostrar controles disponibles
+    // ============================================================
+    void printHelp() {
+        std::cout << "\n"
+            << "==================================================\n"
+            << "    Boeing 737 Visualizer 3D v2.1 (GLFW + Shaders)\n"
+            << "==================================================\n"
+            << " SELECCIONAR AERONAVE:\n"
+            << "   1-5        Cambiar modelo\n"
+            << "\n"
+            << " ROTACIÓN (Pitch/Yaw/Roll):\n"
+            << "   I / K      Rotar arriba / abajo (Pitch)\n"
+            << "   J / L      Rotar izquierda / derecha (Yaw)\n"
+            << "   R / T      Rotar CW / CCW (Roll)\n"
+            << "\n"
+            << " ZOOM (Cámara):\n"
+            << "   Q / E      Alejar / Acercar\n"
+            << "\n"
+            << " PAN (Mover vista):\n"
+            << "   W / A / S / D    Arriba / Izq / Abajo / Der\n"
+            << "\n"
+            << " OTROS:\n"
+            << "   ESPACIO    Reset vista\n"
+            << "   H          Mostrar/ocultar esta ayuda\n"
+            << "   ESC        Salir\n"
+            << "==================================================\n"
+            << "\n";
     }
 
 } // namespace Renderer
