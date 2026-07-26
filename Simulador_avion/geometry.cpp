@@ -6,7 +6,7 @@
 // ============================================================
 
 #include "geometry.h"
-#include <GL/glut.h>
+#include <GL/glew.h>
 #include <cmath>
 #include <vector>
 #include <algorithm>
