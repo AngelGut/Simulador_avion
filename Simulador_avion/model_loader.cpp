@@ -5,6 +5,7 @@
 
 #include "model_loader.h"
 #include "shader.h"
+#include "stb_image_loader.h"
 #include <GL/glew.h>
 #include <iostream>
 #include <algorithm>
@@ -112,16 +113,29 @@ unsigned int Model::loadTextureFromMaterial(aiMaterial* material, const aiScene*
 
     aiString textureFile;
     if (material->GetTexture(aiTextureType_DIFFUSE, 0, &textureFile) == AI_SUCCESS) {
-        std::cout << "    Textura encontrada: " << textureFile.C_Str() << std::endl;
+        std::string texturePath = modelDirectory + textureFile.C_Str();
 
-        unsigned int textureID = 0;
-        glGenTextures(1, &textureID);
+        std::cout << "    Intentando cargar: " << texturePath << std::endl;
+        unsigned int textureID = TextureLoader::loadTextureFromFile(texturePath.c_str());
 
-        // TODO: Implementar carga de textura con STB Image
-        // Por ahora retornamos 0 (sin textura) y se usará color de material
-        std::cout << "    [Nota: Agregar stb_image.h para cargar texturas reales]" << std::endl;
+        if (textureID != 0) {
+            return textureID;
+        }
 
-        return 0;
+        // Intentar rutas alternativas
+        std::string altPaths[] = {
+            std::string(textureFile.C_Str()),
+            modelDirectory + "../" + textureFile.C_Str(),
+            modelDirectory + "../../" + textureFile.C_Str()
+        };
+
+        for (const auto& path : altPaths) {
+            std::cout << "    Intentando ruta alternativa: " << path << std::endl;
+            textureID = TextureLoader::loadTextureFromFile(path.c_str());
+            if (textureID != 0) {
+                return textureID;
+            }
+        }
     }
 
     return 0;
