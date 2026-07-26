@@ -6,6 +6,8 @@
 #ifndef STB_IMAGE_H
 #define STB_IMAGE_H
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #ifdef __cplusplus
 extern "C" {
 #endif
