@@ -1,36 +1,85 @@
+Ôªø// ============================================================
+// ARCHIVO: main.cpp
+// RESPONSABLE: Luis (Aplicaci√≥n) + Cambios 3D con Modelos
+// DESCRIPCION: Punto de entrada. Proyecci√≥n 3D con carga de
+//              modelos usando Assimp. Rotaci√≥n en 3 ejes.
+// ============================================================
 
 #include <GL/glut.h>
 #include <iostream>
+#include <cmath>
 #include "renderer.h"
+#include "layer_manager.h"
+#include "config.h"
 
-// Variable global para almacenar el identificador de la capa activa en la prueba
-int currentLayer = 1;
+// Declaraci√≥n adelantada
+void printHelp();
+void printModelMenu();
 
-// ------------------------------------------------------------
-// display()
-// Callback de dibujo ejecutado por el bucle principal de GLUT.
-// Redibuja el escenario y la geometrÌa del aviÛn en cada frame.
-// ------------------------------------------------------------
+// ============================================================
+// VARIABLES GLOBALES - Estado de aplicaci√≥n 3D
+// ============================================================
+
+LayerManager layerManager;
+
+// Transformaci√≥n de vista: navegaci√≥n interactiva 3D
+float viewRotationX = 0.0f;  // Rotaci√≥n eje X (pitch)
+float viewRotationY = 0.0f;  // Rotaci√≥n eje Y (yaw)
+float viewRotationZ = 0.0f;  // Rotaci√≥n eje Z (roll)
+float viewZoom = -5.0f;      // Distancia de c√°mara en Z
+float viewX = 0.0f;          // Pan horizontal
+float viewY = 0.0f;          // Pan vertical
+
+bool showHelp = false;
+
+// Funci√≥n para resetear c√°mara a zoom √≥ptimo
+void resetCameraToModel() {
+    Model* model = Renderer::getLoadedModel();
+    if (model && model->isLoaded()) {
+        viewZoom = model->getRecommendedZoom();
+        viewRotationX = 0.0f;
+        viewRotationY = 0.0f;
+        viewRotationZ = 0.0f;
+        viewX = 0.0f;
+        viewY = 0.0f;
+    } else {
+        viewZoom = -5.0f;
+        viewRotationX = 0.0f;
+        viewRotationY = 0.0f;
+        viewRotationZ = 0.0f;
+        viewX = 0.0f;
+        viewY = 0.0f;
+    }
+}
+
+// ============================================================
+// DISPLAY - Callback de dibujado 3D
+// ============================================================
 void display() {
-    // CORRECCI”N 1: Se limpia tanto el buffer de color como el de profundidad (Z-Buffer)
-    // Esto evita que la pantalla se quede congelada en verde y permite pasar la prueba de visibilidad.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Reiniciar la matriz de modelado/vista para evitar la acumulaciÛn de transformaciones
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Invocar al motor gr·fico para renderizar el aeropuerto y la capa seleccionada
-    Renderer::drawLayer(currentLayer);
+    // Posici√≥n de c√°mara y vista
+    gluLookAt(viewX, viewY, viewZoom,  // Posici√≥n c√°mara
+        0.0f, 0.0f, 0.0f,        // Punto de mira
+        0.0f, 1.0f, 0.0f);       // Vector "arriba"
 
-    // Intercambiar buffers para lograr un refresco fluido sin parpadeos (Doble Buffer)
+    // Aplicar rotaciones 3D
+    glRotatef(viewRotationX, 1.0f, 0.0f, 0.0f);  // Pitch
+    glRotatef(viewRotationY, 0.0f, 1.0f, 0.0f);  // Yaw
+    glRotatef(viewRotationZ, 0.0f, 0.0f, 1.0f);  // Roll
+
+    // Dibujar avi√≥n
+    Renderer::drawLayer(1);  // Solo capa exterior para prueba
+
     glutSwapBuffers();
 }
 
-// ------------------------------------------------------------
-// reshape()
-// Callback encargado de ajustar el Viewport y establecer la proyecciÛn ortogr·fica.
-// ------------------------------------------------------------
+// ============================================================
+// RESHAPE - Callback de redimensi√≥n de ventana
+// ============================================================
 void reshape(int w, int h) {
     if (h == 0) h = 1;
 
@@ -39,58 +88,236 @@ void reshape(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    // CORRECCI”N: Ampliamos los rangos para encuadrar todo el aviÛn y la pista
-    // X va de -250 a 250 (Ancho total 500) | Y va de -200 a 200 (Alto total 400)
-    gluOrtho2D(-250.0, 250.0, -200.0, 200.0);
+    // Proyecci√≥n 3D con perspectiva
+    gluPerspective(45.0f, (float)w / (float)h, 0.1f, 500.0f);
 
     glMatrixMode(GL_MODELVIEW);
 }
 
-// ------------------------------------------------------------
-// keyboard()
-// Manejo de eventos del teclado para la conmutaciÛn interactiva de capas.
-// ------------------------------------------------------------
-void keyboard(unsigned char key, int x, int y) {
-    // Control de selecciÛn de capas mediante las teclas 1 a 5
-    if (key >= '1' && key <= '5') {
-        currentLayer = key - '0'; // ConversiÛn de char numÈrico a int de capa
-        std::cout << "Capa " << currentLayer << " activada de forma interactiva.\n"; //
-    }
-
-    // Tecla ESC para cerrar de forma segura el visualizador
-    if (key == 27) {
-        exit(0);
-    }
-
-    // Forzar a GLUT a volver a ejecutar el display() para reflejar el cambio de capa
+// ============================================================
+// TIMER - Callback para actualizaci√≥n a ~60 FPS
+// ============================================================
+void timer(int value) {
     glutPostRedisplay();
+    glutTimerFunc(16, timer, 0);  // 16ms ‚âà 60 FPS
 }
 
-// ------------------------------------------------------------
-// main()
-// Punto de entrada de la aplicaciÛn de pruebas.
-// ------------------------------------------------------------
+// ============================================================
+// KEYBOARD - Manejo de eventos de teclado 3D
+// ============================================================
+void keyboard(unsigned char key, int x, int y) {
+
+    // SELECCIONAR MODELO (1-5)
+    if (key >= '1' && key <= '5') {
+        int modelNumber = key - '0';
+        Renderer::loadModelByNumber(modelNumber);
+        resetCameraToModel();
+        glutPostRedisplay();
+        return;
+    }
+
+    // ROTACI√ìN PITCH (Arriba/Abajo)
+    if (key == 'i' || key == 'I') {
+        viewRotationX += 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'k' || key == 'K') {
+        viewRotationX -= 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+
+    // ROTACI√ìN YAW (Izquierda/Derecha)
+    if (key == 'j' || key == 'J') {
+        viewRotationY -= 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'l' || key == 'L') {
+        viewRotationY += 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+
+    // ROTACI√ìN ROLL (Rotaci√≥n alrededor eje Z)
+    if (key == 'r' || key == 'R') {
+        viewRotationZ -= 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 't' || key == 'T') {
+        viewRotationZ += 10.0f;
+        glutPostRedisplay();
+        return;
+    }
+
+    // ZOOM (Acercar/Alejar)
+    if (key == 'q' || key == 'Q') {
+        viewZoom += 0.5f;  // Alejar
+        std::cout << "Zoom: " << -viewZoom << "\n";
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'e' || key == 'E') {
+        viewZoom -= 0.5f;  // Acercar
+        if (viewZoom > -0.5f) viewZoom = -0.5f;
+        std::cout << "Zoom: " << -viewZoom << "\n";
+        glutPostRedisplay();
+        return;
+    }
+
+    // PAN (Mover arriba/abajo/izquierda/derecha)
+    if (key == 'w' || key == 'W') {
+        viewY += 0.5f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 's' || key == 'S') {
+        viewY -= 0.5f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'a' || key == 'A') {
+        viewX -= 0.5f;
+        glutPostRedisplay();
+        return;
+    }
+    if (key == 'd' || key == 'D') {
+        viewX += 0.5f;
+        glutPostRedisplay();
+        return;
+    }
+
+    // RESET
+    if (key == ' ') {
+        viewRotationX = 0.0f;
+        viewRotationY = 0.0f;
+        viewRotationZ = 0.0f;
+        viewZoom = -5.0f;
+        viewX = 0.0f;
+        viewY = 0.0f;
+        std::cout << "Vista reseteada\n";
+        glutPostRedisplay();
+        return;
+    }
+
+    // AYUDA
+    if (key == 'h' || key == 'H') {
+        showHelp = !showHelp;
+        printHelp();
+        glutPostRedisplay();
+        return;
+    }
+
+    // SALIDA
+    if (key == 27) {
+        std::cout << "Cerrando aplicaci√≥n...\n";
+        exit(0);
+    }
+}
+
+// ============================================================
+// PRINTMODELmenu - Mostrar men√∫ de aeronaves
+// ============================================================
+void printModelMenu() {
+    std::cout << "\n"
+        << "==================================================\n"
+        << "    SELECCIONA UNA AERONAVE (1-5)\n"
+        << "==================================================\n"
+        << " 1  " << NAME_1 << "\n"
+        << " 2  " << NAME_2 << "\n"
+        << " 3  " << NAME_3 << "\n"
+        << " 4  " << NAME_4 << "\n"
+        << " 5  " << NAME_5 << "\n"
+        << "==================================================\n"
+        << "\n";
+}
+
+// ============================================================
+// PRINTHELP - Mostrar controles disponibles
+// ============================================================
+void printHelp() {
+    std::cout << "\n"
+        << "==================================================\n"
+        << "    Boeing 737 Visualizer 3D v2.0\n"
+        << "==================================================\n"
+        << " SELECCIONAR AERONAVE:\n"
+        << "   1-5        Cambiar modelo\n"
+        << "\n"
+        << " ROTACI√ìN (Pitch/Yaw/Roll):\n"
+        << "   I / K      Rotar arriba / abajo (Pitch)\n"
+        << "   J / L      Rotar izquierda / derecha (Yaw)\n"
+        << "   R / T      Rotar CW / CCW (Roll)\n"
+        << "\n"
+        << " ZOOM (C√°mara):\n"
+        << "   Q / E      Alejar / Acercar\n"
+        << "\n"
+        << " PAN (Mover vista):\n"
+        << "   W / A / S / D    Arriba / Izq / Abajo / Der\n"
+        << "\n"
+        << " OTROS:\n"
+        << "   ESPACIO    Reset vista\n"
+        << "   H          Mostrar/ocultar esta ayuda\n"
+        << "   ESC        Salir\n"
+        << "==================================================\n"
+        << "\n";
+}
+
+// ============================================================
+// MAIN - Punto de entrada
+// ============================================================
 int main(int argc, char** argv) {
-    // InicializaciÛn del entorno GLUT
+    std::cout << "\n"
+        << "====================================================\n"
+        << "   Boeing 737 Visualizer 3D v2.0\n"
+        << "   Con carga de modelos 3D (Assimp)\n"
+        << "   Presiona H para ver controles\n"
+        << "====================================================\n"
+        << "\n";
+
+    // Inicializar GLUT
     glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(1024, 768);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Boeing 737 Visualizer 3D - Con Modelos");
 
-    // CORRECCI”N 2: Se aÒade el flag GLUT_DEPTH en el Display Mode
-    // Sin este flag, Visual Studio abre la ventana sin soporte de hardware para profundidad.
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); //
-
-    // Configurar dimensiones fÌsicas iniciales de la ventana (800x600 pÌxeles)
-    glutInitWindowSize(800, 600);
-    glutCreateWindow("PRUEBA - Boeing 737 (temporal)");
-
-    // Ejecutar inicializaciÛn central del pipeline gr·fico (Culling, Antialiasing y Luces)
+    // Inicializar OpenGL
     Renderer::setupOpenGL();
 
-    // Registro de las funciones de devoluciÛn de llamadas (Callbacks) de la aplicaciÛn
+    // Inicializar LayerManager
+    layerManager.init();
+
+    // ============================================================
+    // SELECCIONAR MODELO INTERACTIVAMENTE
+    // ============================================================
+    printModelMenu();
+
+    int selectedModel = 0;
+    std::cout << "Ingresa el n√∫mero de la aeronave (1-5): ";
+    std::cin >> selectedModel;
+
+    if (selectedModel >= 1 && selectedModel <= 5) {
+        Renderer::loadModelByNumber(selectedModel);
+    } else {
+        std::cout << "Opci√≥n inv√°lida. Cargando modelo por defecto (5)...\n";
+        Renderer::loadModelByNumber(5);
+    }
+
+    resetCameraToModel();
+
+    // Registrar callbacks
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutTimerFunc(16, timer, 0);
 
-    // Ceder el control del flujo al bucle de renderizado perpetuo de GLUT
+    // Mostrar ayuda inicial
+    printHelp();
+
+    // Loop principal
     glutMainLoop();
+
     return 0;
 }
