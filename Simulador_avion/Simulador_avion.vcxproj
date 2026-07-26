@@ -165,7 +165,7 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PostBuildEvent>
-      <Command>call "$(ProjectDir)..\..\copy_dlls.bat" "$(OutDir)"</Command>
+      <Command>call "$(ProjectDir)copy_dlls.bat" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -189,7 +189,7 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PostBuildEvent>
-      <Command>call "$(ProjectDir)..\..\copy_dlls.bat" "$(OutDir)"</Command>
+      <Command>call "$(ProjectDir)copy_dlls.bat" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
