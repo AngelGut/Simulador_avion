@@ -165,8 +165,7 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PostBuildEvent>
-      <Command>copy /Y "C:\Users\angel\Desktop\vcpkg\installed\x64-windows\bin\glew32.dll" "$(OutDir)" 2>nul
-copy /Y "C:\Users\angel\Desktop\vcpkg\installed\x64-windows\bin\assimp-vc145-mt.dll" "$(OutDir)" 2>nul</Command>
+      <Command>call "$(ProjectDir)..\..\copy_dlls.bat" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -190,8 +189,7 @@ copy /Y "C:\Users\angel\Desktop\vcpkg\installed\x64-windows\bin\assimp-vc145-mt.
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PostBuildEvent>
-      <Command>copy /Y "C:\Users\angel\Desktop\vcpkg\installed\x64-windows\bin\glew32.dll" "$(OutDir)" 2>nul
-copy /Y "C:\Users\angel\Desktop\vcpkg\installed\x64-windows\bin\assimp-vc145-mt.dll" "$(OutDir)" 2>nul</Command>
+      <Command>call "$(ProjectDir)..\..\copy_dlls.bat" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
