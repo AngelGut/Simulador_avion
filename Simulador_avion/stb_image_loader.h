@@ -1,21 +1,14 @@
-// Simple texture loader using basic file I/O (without full STB Image)
-// Handles PNG/JPG/BMP loading by wrapping basic image format parsing
+// Simple texture loader using STB Image
+// Handles BMP, PNG, JPG loading
 
 #ifndef STB_IMAGE_LOADER_H
 #define STB_IMAGE_LOADER_H
 
 #include <GL/glew.h>
 #include <iostream>
-#include <fstream>
-#include <cstring>
-#include <vector>
 
-// Forward declare stbi functions - will be linked from system libraries if available
-extern "C" {
-    typedef unsigned char stbi_uc;
-    extern stbi_uc* stbi_load(const char* filename, int* x, int* y, int* comp, int req_comp);
-    extern void stbi_image_free(void* retval_from_stbi_load);
-}
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 namespace TextureLoader {
     inline unsigned int loadTextureFromFile(const char* path) {
