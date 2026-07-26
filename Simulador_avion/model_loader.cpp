@@ -1,18 +1,73 @@
 // ============================================================
 // ARCHIVO: model_loader.cpp
-// DESCRIPCION: Implementación del cargador de modelos 3D
+// DESCRIPCION: Implementación del cargador con VAO/VBO
 // ============================================================
 
 #include "model_loader.h"
-#include <GL/glut.h>
+#include <GL/glew.h>
 #include <iostream>
 #include <algorithm>
 #include <cfloat>
 #include <glm/gtc/matrix_transform.hpp>
 
+Mesh::~Mesh() {
+    if (VAO != 0) glDeleteVertexArrays(1, &VAO);
+    if (VBO != 0) glDeleteBuffers(1, &VBO);
+    if (EBO != 0) glDeleteBuffers(1, &EBO);
+}
+
+void Mesh::setupMesh() {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+    // Atributo de posición (location 0)
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    // Atributo de normal (location 1)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+    // Atributo de color (location 2)
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Mesh::draw() {
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
 Model::Model() : loaded(false), scale(1.0f), center(0.0f) {}
 
 Model::~Model() {}
+
+glm::vec3 Model::extractColorFromMaterial(aiMaterial* material) {
+    if (!material) return glm::vec3(0.8f, 0.8f, 0.8f);
+
+    aiColor4D color(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Intentar obtener color difuso del material
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color) == AI_SUCCESS) {
+        return glm::vec3(color.r, color.g, color.b);
+    }
+
+    // Fallback a gris
+    return glm::vec3(0.8f, 0.8f, 0.8f);
+}
 
 bool Model::loadModel(const char* path) {
     Assimp::Importer importer;
@@ -34,12 +89,16 @@ bool Model::loadModel(const char* path) {
     processNode(scene->mRootNode, scene, identity);
     normalizeModel();
 
+    // Configurar VAO/VBO para todos los meshes
+    for (auto& mesh : meshes) {
+        mesh.setupMesh();
+    }
+
     loaded = true;
     return true;
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform) {
-    // Convertir transformación de Assimp a GLM
     glm::mat4 nodeTransform(1.0f);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -49,13 +108,11 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 
     glm::mat4 currentTransform = parentTransform * nodeTransform;
 
-    // Procesar meshes del nodo
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         processMesh(mesh, scene, currentTransform);
     }
 
-    // Procesar hijos recursivamente
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
         processNode(node->mChildren[i], scene, currentTransform);
     }
@@ -65,16 +122,23 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
-    // Procesar vértices con transformación de nodo
+    // Extraer color del material asociado
+    glm::vec3 meshColor(0.8f, 0.8f, 0.8f);
+    if (mesh->mMaterialIndex < scene->mNumMaterials) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        meshColor = extractColorFromMaterial(material);
+    }
+
+    // Procesar vértices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
-        // Aplicar transformación del nodo a la posición
+        // Posición con transformación de nodo
         glm::vec4 pos(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
         glm::vec4 transformedPos = nodeTransform * pos;
         vertex.position = glm::vec3(transformedPos) / transformedPos.w;
 
-        // Aplicar transformación a normales (sin traslación)
+        // Normal con transformación de nodo
         if (mesh->HasNormals()) {
             glm::vec4 norm(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
             glm::vec4 transformedNorm = nodeTransform * norm;
@@ -82,6 +146,14 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         }
         else {
             vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+
+        // Color del vértice o del material
+        if (mesh->HasVertexColors(0)) {
+            vertex.color = glm::vec3(mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b);
+        }
+        else {
+            vertex.color = meshColor;
         }
 
         vertices.push_back(vertex);
@@ -128,7 +200,6 @@ void Model::normalizeModel() {
     glm::vec3 modelSize = maxBounds - minBounds;
     float maxDim = std::max({modelSize.x, modelSize.y, modelSize.z});
 
-    // Escalar a 1.5f (dejando margen para rotaciones)
     scale = 1.5f / maxDim;
     center = (minBounds + maxBounds) * 0.5f;
 
@@ -143,30 +214,13 @@ void Model::normalizeModel() {
     }
 }
 
-void Mesh::draw() {
-    glBegin(GL_TRIANGLES);
-    for (unsigned int i = 0; i < indices.size(); i++) {
-        unsigned int idx = indices[i];
-        if (idx < vertices.size()) {
-            const Vertex& v = vertices[idx];
-            glNormal3f(v.normal.x, v.normal.y, v.normal.z);
-            glVertex3f(v.position.x, v.position.y, v.position.z);
-        }
-    }
-    glEnd();
-}
-
 float Model::getRecommendedZoom() const {
     if (!loaded || scale <= 0.0f) return -4.0f;
 
-    // Si el modelo es muy pequeño (scale muy grande), acercamos más
-    // Si el modelo es muy grande (scale muy pequeño), alejamos más
     float inverseScale = 1.0f / scale;
-
-    // Zoom adaptativo: entre -2.5 (muy cerca) y -8.0 (muy lejos)
     float zoomValue = -4.0f - (inverseScale * 0.3f);
-    zoomValue = std::max(zoomValue, -10.0f);  // No más lejos que -10
-    zoomValue = std::min(zoomValue, -1.5f);   // No más cerca que -1.5
+    zoomValue = std::max(zoomValue, -10.0f);
+    zoomValue = std::min(zoomValue, -1.5f);
 
     std::cout << "  Scale: " << scale << " → Zoom: " << zoomValue << std::endl;
 
@@ -179,7 +233,6 @@ void Model::draw() {
         return;
     }
 
-    glColor3f(0.85f, 0.85f, 0.85f);
     for (auto& mesh : meshes) {
         mesh.draw();
     }
