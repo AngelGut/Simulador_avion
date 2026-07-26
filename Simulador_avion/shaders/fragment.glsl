@@ -4,6 +4,7 @@ in VS_OUT {
     vec3 fragPos;
     vec3 normal;
     vec3 color;
+    vec2 texCoords;
 } fs_in;
 
 out vec4 FragColor;
@@ -11,8 +12,18 @@ out vec4 FragColor;
 uniform vec3 uLightPos;
 uniform vec3 uViewPos;
 uniform vec3 uLightColor;
+uniform sampler2D uTexture;
+uniform bool uHasTexture;
 
 void main() {
+    // Obtener color base (textura o color de vértice)
+    vec3 baseColor;
+    if (uHasTexture) {
+        baseColor = texture(uTexture, fs_in.texCoords).rgb;
+    } else {
+        baseColor = fs_in.color;
+    }
+
     // Iluminación ambiental
     float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * uLightColor;
@@ -30,7 +41,7 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = specularStrength * spec * uLightColor;
 
-    // Combinar iluminación con color del vértice
-    vec3 result = (ambient + diffuse + specular) * fs_in.color;
+    // Combinar iluminación con color base (textura o color del vértice)
+    vec3 result = (ambient + diffuse + specular) * baseColor;
     FragColor = vec4(result, 1.0);
 }

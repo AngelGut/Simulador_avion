@@ -224,8 +224,13 @@ void render() {
     shaderProgram->setVec3("uViewPos", glm::vec3(viewX, viewY, viewZoom));
     shaderProgram->setVec3("uLightColor", glm::vec3(0.9f, 0.9f, 0.9f));
 
-    // Dibujar modelo
-    Renderer::drawLayer(1);
+    // Dibujar modelo con soporte a texturas
+    Model* model = Renderer::getLoadedModel();
+    if (model && model->isLoaded()) {
+        model->draw(shaderProgram);
+    } else {
+        Renderer::drawLayer(1);
+    }
 }
 
 // ============================================================

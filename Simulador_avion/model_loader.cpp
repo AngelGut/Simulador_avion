@@ -41,11 +41,18 @@ void Mesh::setupMesh() {
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
 
+    // Atributo de coordenadas UV (location 3)
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
 void Mesh::draw() {
+    if (hasTexture && textureID != 0) {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+    }
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -99,6 +106,26 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
     return colorPalette[meshIndex % paletteSize];
 }
 
+unsigned int Model::loadTextureFromMaterial(aiMaterial* material, const aiScene* scene, const char* modelPath) {
+    if (!material) return 0;
+
+    aiString textureFile;
+    if (material->GetTexture(aiTextureType_DIFFUSE, 0, &textureFile) == AI_SUCCESS) {
+        std::cout << "    Textura encontrada: " << textureFile.C_Str() << std::endl;
+
+        unsigned int textureID = 0;
+        glGenTextures(1, &textureID);
+
+        // TODO: Implementar carga de textura con STB Image
+        // Por ahora retornamos 0 (sin textura) y se usará color de material
+        std::cout << "    [Nota: Agregar stb_image.h para cargar texturas reales]" << std::endl;
+
+        return 0;
+    }
+
+    return 0;
+}
+
 bool Model::loadModel(const char* path) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
@@ -113,7 +140,13 @@ bool Model::loadModel(const char* path) {
         return false;
     }
 
+    // Extraer directorio del modelo para cargar texturas
+    std::string fullPath(path);
+    size_t lastSlash = fullPath.find_last_of("/\\");
+    modelDirectory = (lastSlash != std::string::npos) ? fullPath.substr(0, lastSlash + 1) : "";
+
     std::cout << "Modelo cargado: " << path << std::endl;
+    std::cout << "Directorio: " << modelDirectory << std::endl;
     std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 
     glm::mat4 identity(1.0f);
@@ -192,6 +225,14 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
             vertex.color = meshColor;
         }
 
+        // Coordenadas de textura
+        if (mesh->HasTextureCoords(0)) {
+            vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        }
+        else {
+            vertex.texCoords = glm::vec2(0.0f, 0.0f);
+        }
+
         vertices.push_back(vertex);
     }
 
@@ -207,8 +248,15 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
     newMesh.vertices = vertices;
     newMesh.indices = indices;
 
+    // Intentar cargar textura del material
+    if (mesh->mMaterialIndex < scene->mNumMaterials) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        newMesh.textureID = loadTextureFromMaterial(material, scene);
+        newMesh.hasTexture = (newMesh.textureID != 0);
+    }
+
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
-        << indices.size() / 3 << " triángulos" << std::endl;
+        << indices.size() / 3 << " triángulos" << (newMesh.hasTexture ? " [con textura]" : "") << std::endl;
 
     meshes.push_back(newMesh);
 }
@@ -263,13 +311,24 @@ float Model::getRecommendedZoom() const {
     return zoomValue;
 }
 
-void Model::draw() {
+void Model::draw(class Shader* shader) {
     if (!loaded) {
         std::cerr << "Modelo no cargado\n";
         return;
     }
 
     for (auto& mesh : meshes) {
+        // Si hay shader, pasar uniforme de textura
+        if (shader != nullptr) {
+            if (mesh.hasTexture && mesh.textureID != 0) {
+                shader->setBool("uHasTexture", true);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, mesh.textureID);
+                shader->setInt("uTexture", 0);
+            } else {
+                shader->setBool("uHasTexture", false);
+            }
+        }
         mesh.draw();
     }
 }

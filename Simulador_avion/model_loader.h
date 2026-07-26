@@ -19,6 +19,7 @@ struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec3 color;
+    glm::vec2 texCoords;
 };
 
 struct Mesh {
@@ -26,8 +27,10 @@ struct Mesh {
     std::vector<unsigned int> indices;
 
     unsigned int VAO, VBO, EBO;
+    unsigned int textureID;
+    bool hasTexture;
 
-    Mesh() : VAO(0), VBO(0), EBO(0) {}
+    Mesh() : VAO(0), VBO(0), EBO(0), textureID(0), hasTexture(false) {}
     ~Mesh();
 
     void setupMesh();
@@ -40,19 +43,21 @@ private:
     bool loaded;
     float scale;
     glm::vec3 center;
+    std::string modelDirectory;
 
     void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
     void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);
     void normalizeModel();
     glm::vec3 extractColorFromMaterial(aiMaterial* material);
     glm::vec3 getMeshColorByIndex(int meshIndex);
+    unsigned int loadTextureFromMaterial(aiMaterial* material, const aiScene* scene);
 
 public:
     Model();
     ~Model();
 
     bool loadModel(const char* path);
-    void draw();
+    void draw(class Shader* shader = nullptr);
     bool isLoaded() const { return loaded; }
     float getRecommendedZoom() const;
     glm::vec3 getCenter() const { return center; }

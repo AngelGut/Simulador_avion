@@ -84,7 +84,8 @@ namespace Renderer {
     void drawLayer(int layerNumber) {
         // Si hay modelo cargado, dibujarlo
         if (loadedModel != nullptr && loadedModel->isLoaded()) {
-            loadedModel->draw();
+            // Note: Draw es llamado desde main.cpp con shader
+            loadedModel->draw(nullptr);
         }
         else {
             // Fallback: geometría procedural si no hay modelo
