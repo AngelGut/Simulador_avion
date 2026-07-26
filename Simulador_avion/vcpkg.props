@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Rutas de vcpkg para GLFW, GLEW, Assimp, GLM -->
+    <VcpkgIncludeDir>C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include</VcpkgIncludeDir>
+    <VcpkgLibDir>C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib</VcpkgLibDir>
+  </PropertyGroup>
+
+  <!-- Agregar includes globalmente para todas las configuraciones -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(VcpkgIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VcpkgLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
