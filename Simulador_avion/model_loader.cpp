@@ -65,8 +65,38 @@ glm::vec3 Model::extractColorFromMaterial(aiMaterial* material) {
         return glm::vec3(color.r, color.g, color.b);
     }
 
-    // Fallback a gris
+    // Intentar color especular como fallback
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color) == AI_SUCCESS) {
+        return glm::vec3(color.r, color.g, color.b);
+    }
+
+    // Intentar color ambiental como fallback
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &color) == AI_SUCCESS) {
+        return glm::vec3(color.r, color.g, color.b);
+    }
+
+    // Intentar color emisivo como fallback
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &color) == AI_SUCCESS) {
+        return glm::vec3(color.r, color.g, color.b);
+    }
+
+    // Fallback a gris si no hay color definido
     return glm::vec3(0.8f, 0.8f, 0.8f);
+}
+
+glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
+    static const glm::vec3 colorPalette[] = {
+        glm::vec3(1.0f, 0.2f, 0.2f),   // Rojo
+        glm::vec3(0.2f, 1.0f, 0.2f),   // Verde
+        glm::vec3(0.2f, 0.2f, 1.0f),   // Azul
+        glm::vec3(1.0f, 1.0f, 0.2f),   // Amarillo
+        glm::vec3(1.0f, 0.2f, 1.0f),   // Magenta
+        glm::vec3(0.2f, 1.0f, 1.0f),   // Cyan
+        glm::vec3(1.0f, 0.6f, 0.2f),   // Naranja
+        glm::vec3(0.6f, 0.2f, 1.0f),   // Púrpura
+    };
+    const int paletteSize = sizeof(colorPalette) / sizeof(colorPalette[0]);
+    return colorPalette[meshIndex % paletteSize];
 }
 
 bool Model::loadModel(const char* path) {
@@ -75,7 +105,8 @@ bool Model::loadModel(const char* path) {
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
         aiProcess_FlipUVs |
-        aiProcess_CalcTangentSpace);
+        aiProcess_CalcTangentSpace |
+        aiProcess_PreTransformVertices);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "Error al cargar modelo: " << importer.GetErrorString() << std::endl;
@@ -127,6 +158,11 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
     if (mesh->mMaterialIndex < scene->mNumMaterials) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         meshColor = extractColorFromMaterial(material);
+    }
+
+    // Si el color es el gris por defecto, usar color procedural por índice de mesh
+    if (meshColor == glm::vec3(0.8f, 0.8f, 0.8f)) {
+        meshColor = getMeshColorByIndex(meshes.size());
     }
 
     // Procesar vértices
