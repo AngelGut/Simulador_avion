@@ -225,9 +225,9 @@ void render() {
     shaderProgram->setVec3("uLightColor", glm::vec3(0.9f, 0.9f, 0.9f));
 
     // Dibujar modelo con soporte a texturas
-    Model* model = Renderer::getLoadedModel();
-    if (model && model->isLoaded()) {
-        model->draw(shaderProgram);
+    Model* loadedModel = Renderer::getLoadedModel();
+    if (loadedModel && loadedModel->isLoaded()) {
+        loadedModel->draw(shaderProgram);
     } else {
         Renderer::drawLayer(1);
     }

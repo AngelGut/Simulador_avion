@@ -4,6 +4,7 @@
 // ============================================================
 
 #include "model_loader.h"
+#include "shader.h"
 #include <GL/glew.h>
 #include <iostream>
 #include <algorithm>
@@ -106,7 +107,7 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
     return colorPalette[meshIndex % paletteSize];
 }
 
-unsigned int Model::loadTextureFromMaterial(aiMaterial* material, const aiScene* scene, const char* modelPath) {
+unsigned int Model::loadTextureFromMaterial(aiMaterial* material, const aiScene* scene) {
     if (!material) return 0;
 
     aiString textureFile;
