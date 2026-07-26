@@ -52,7 +52,8 @@ typedef struct {
 #pragma pack(pop)
 
 static unsigned char* stbi_load_bmp(const char* filename, int* x, int* y, int* comp, int req_comp) {
-    FILE* f = fopen(filename, "rb");
+    FILE* f = NULL;
+    fopen_s(&f, filename, "rb");
     if (!f) return NULL;
 
     BMPHeader header;
@@ -130,7 +131,8 @@ stbi_uc* stbi_load(const char* filename, int* x, int* y, int* comp, int req_comp
         return stbi_load_bmp(filename, x, y, comp, req_comp);
     }
 
-    FILE* f = fopen(filename, "rb");
+    FILE* f = NULL;
+    fopen_s(&f, filename, "rb");
     if (!f) return NULL;
 
     unsigned char magic[4];
