@@ -45,6 +45,7 @@ private:
     void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);
     void normalizeModel();
     glm::vec3 extractColorFromMaterial(aiMaterial* material);
+    glm::vec3 getMeshColorByIndex(int meshIndex);
 
 public:
     Model();
