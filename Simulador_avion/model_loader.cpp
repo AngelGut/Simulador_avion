@@ -95,14 +95,14 @@ glm::vec3 Model::extractColorFromMaterial(aiMaterial* material) {
 
 glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
     static const glm::vec3 colorPalette[] = {
-        glm::vec3(1.0f, 0.2f, 0.2f),   // Rojo
-        glm::vec3(0.2f, 1.0f, 0.2f),   // Verde
-        glm::vec3(0.2f, 0.2f, 1.0f),   // Azul
-        glm::vec3(1.0f, 1.0f, 0.2f),   // Amarillo
-        glm::vec3(1.0f, 0.2f, 1.0f),   // Magenta
-        glm::vec3(0.2f, 1.0f, 1.0f),   // Cyan
-        glm::vec3(1.0f, 0.6f, 0.2f),   // Naranja
-        glm::vec3(0.6f, 0.2f, 1.0f),   // Púrpura
+        glm::vec3(0.75f, 0.75f, 0.78f),   // Plata metálica
+        glm::vec3(0.15f, 0.25f, 0.45f),   // Azul oscuro (livery)
+        glm::vec3(0.65f, 0.65f, 0.68f),   // Gris claro
+        glm::vec3(0.40f, 0.42f, 0.44f),   // Gris medio oscuro
+        glm::vec3(0.85f, 0.80f, 0.70f),   // Beige/Tan
+        glm::vec3(0.30f, 0.32f, 0.35f),   // Carbón oscuro
+        glm::vec3(0.88f, 0.88f, 0.90f),   // Aluminio claro
+        glm::vec3(0.50f, 0.52f, 0.55f),   // Gris metalizado
     };
     const int paletteSize = sizeof(colorPalette) / sizeof(colorPalette[0]);
     return colorPalette[meshIndex % paletteSize];
