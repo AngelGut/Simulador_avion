@@ -25,6 +25,9 @@ namespace Renderer {
     Model* getLoadedModel();
     int getCurrentModelNumber();
 
+    // ========== UTILIDADES ==========
+    void printHelp();
+
 } // namespace Renderer
 
 #endif // RENDERER_H
