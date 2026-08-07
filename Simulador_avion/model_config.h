@@ -12,7 +12,7 @@
 namespace ModelConfig {
 
     // Ruta base donde se almacenan los modelos
-    constexpr const char* MODELS_BASE_PATH = "./source/";
+    constexpr const char* MODELS_BASE_PATH = "../modelos 3d/";
 
     // ============================================================
     // Estructura de metadatos de modelo
@@ -20,55 +20,42 @@ namespace ModelConfig {
     struct ModelInfo {
         std::string name;           // Nombre único del modelo
         std::string filename;       // Nombre del archivo (relativo a MODELS_BASE_PATH)
-        std::string format;         // Formato (OBJ, FBX, BLEND, RAR)
+        std::string format;         // Formato
         std::string description;    // Descripción
-        bool requiresConversion;    // ¿Necesita conversión previa?
-        std::string conversionHint; // Hint sobre cómo convertir
+        std::string partsFolder;    // Carpeta de piezas desarmadas (relativo a MODELS_BASE_PATH)
     };
 
     // ============================================================
-    // Configuración de los 5 modelos (Assimp soporta todos)
+    // Configuración de los 4 modelos GLB
     // ============================================================
     const std::vector<ModelInfo> AVAILABLE_MODELS = {
         {
-            "boeing_737_800",
-            "American Airlines Boeing 737-800.blend",
-            "BLEND",
-            "Boeing 737-800 de American Airlines",
-            false,
-            "Assimp carga directamente"
+            "a-10_thunderbolt_ii",
+            "a-10_thunderbolt_ii.glb",
+            "GLB",
+            "Avión de ataque a tierra A-10 Thunderbolt II",
+            "Desarmados/a10"
         },
         {
-            "kawasaki_ki61",
-            "kawasaki-ki-61.blend",
-            "BLEND",
-            "Cazabombardero Kawasaki Ki-61",
-            false,
-            "Assimp carga directamente"
+            "b-24_liberator",
+            "b-24_liberator.glb",
+            "GLB",
+            "Bombardero pesado B-24 Liberator",
+            "Desarmados/b-24"
         },
         {
-            "ms406",
-            "uploads_files_5625074_MS-406.rar",
-            "RAR",
-            "Avión MS-406 (descomprimir primero)",
-            true,
-            "Descomprimir manualmente, luego copiar archivo a models/"
+            "boeing-787-_dreamliner",
+            "boeing-787-_dreamliner.glb",
+            "GLB",
+            "Avión comercial de pasajeros Boeing 787",
+            "Desarmados/boing"
         },
         {
-            "mystere_iv_provence",
-            "MYSTERE IV N 117 Provence Nancy.fbx",
-            "FBX",
-            "MYSTERE IV N°117 de Provenza",
-            false,
-            "Assimp carga directamente"
-        },
-        {
-            "millennium_falcon",
-            "Millennium Falcon star wars.obj",
-            "OBJ",
-            "Nave Millennium Falcon",
-            false,
-            "Assimp carga directamente"
+            "mig_29_9-13",
+            "mig_29_9-13.glb",
+            "GLB",
+            "Caza de combate supersónico MiG-29",
+            "Desarmados/mig"
         }
     };
 

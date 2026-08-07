@@ -1,6 +1,6 @@
 // ============================================================
 // ARCHIVO: model_loader.h
-// DESCRIPCION: Cargador de modelos 3D usando Assimp
+// DESCRIPCION: Cargador de modelos 3D usando Assimp + VAO/VBO
 // ============================================================
 
 #ifndef MODEL_LOADER_H
@@ -18,12 +18,19 @@
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
+    glm::vec3 color;
 };
 
 struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
+    unsigned int VAO, VBO, EBO;
+
+    Mesh() : VAO(0), VBO(0), EBO(0) {}
+    ~Mesh();
+
+    void setupMesh();
     void draw();
 };
 
@@ -33,10 +40,13 @@ private:
     bool loaded;
     float scale;
     glm::vec3 center;
+    std::map<std::string, aiMatrix4x4> finalTransforms;
 
     void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
     void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);
     void normalizeModel();
+    glm::vec3 extractColorFromMaterial(aiMaterial* material);
+    glm::vec3 getMeshColorByIndex(int meshIndex);
 
 public:
     Model();

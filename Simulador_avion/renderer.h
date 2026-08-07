@@ -4,6 +4,7 @@
 
 #include "geometry.h"
 #include "model_loader.h"
+#include <string>
 
 namespace Renderer {
 
@@ -24,6 +25,18 @@ namespace Renderer {
     // ========== ACCESO AL MODELO ==========
     Model* getLoadedModel();
     int getCurrentModelNumber();
+
+    // ========== MODO PIEZAS ==========
+    void togglePartsMode();
+    void nextPart();
+    void prevPart();
+    bool isPartsModeActive();
+    std::string getCurrentPartName();
+    int getCurrentPartIndex();
+    int getNumParts();
+
+    // ========== UTILIDADES ==========
+    void printHelp();
 
 } // namespace Renderer
 

@@ -1,12 +1,12 @@
-ï»¿// ============================================================
+// ============================================================
 // ARCHIVO: geometry.cpp
-// RESPONSABLE: Ronald (GeometrÃ­a y Motores)
-// DESCRIPTION: ImplementaciÃ³n de mallas 2D con NORMALES
-//              para soporte de iluminaciÃ³n Phong.
+// RESPONSABLE: Ronald (Geometría y Motores)
+// DESCRIPTION: Implementación de mallas 2D con NORMALES
+//              para soporte de iluminación Phong.
 // ============================================================
 
 #include "geometry.h"
-#include <GL/glut.h>
+#include <GL/glew.h>
 #include <cmath>
 #include <vector>
 #include <algorithm>

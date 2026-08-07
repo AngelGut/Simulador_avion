@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Rutas de vcpkg - intenta primero installed, luego packages -->
+    <!-- GLEW y otros paquetes se instalan en: packages/NOMBRE_x64-windows/include|lib -->
+    <VcpkgIncludeDir>C:\Users\angel\Desktop\varios\vcpkg\packages\glew_x64-windows\include;C:\Users\angel\Desktop\varios\vcpkg\packages\glfw3_x64-windows\include;C:\Users\angel\Desktop\varios\vcpkg\packages\assimp_x64-windows\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include</VcpkgIncludeDir>
+    <VcpkgLibDir>C:\Users\angel\Desktop\varios\vcpkg\packages\glew_x64-windows\lib;C:\Users\angel\Desktop\varios\vcpkg\packages\glfw3_x64-windows\lib;C:\Users\angel\Desktop\varios\vcpkg\packages\assimp_x64-windows\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib</VcpkgLibDir>
+  </PropertyGroup>
+
+  <!-- Agregar includes globalmente para todas las configuraciones -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(VcpkgIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VcpkgLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
