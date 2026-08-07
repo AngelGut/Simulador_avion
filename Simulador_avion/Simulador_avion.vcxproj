@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -101,12 +101,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -115,13 +115,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;glfw3dll.lib;glew32.lib;assimp-vc145-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
+    <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories></Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
@@ -135,13 +135,13 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>opengl32.lib;glfw3dll.lib;glew32.lib;assimp-vc145-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
+    <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories></Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
@@ -153,12 +153,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3dll.lib;glew32.lib;assimp-vc145-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
@@ -177,12 +177,12 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3dll.lib;glew32.lib;assimp-vc145-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>

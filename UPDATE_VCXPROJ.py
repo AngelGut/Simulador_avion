@@ -12,8 +12,8 @@ root = tree.getroot()
 
 # Rutas que necesitamos
 local_include = r"C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include"
-vcpkg_include = r"C:\Users\angel\Desktop\vcpkg\installed\x64-windows\include"
-vcpkg_lib = r"C:\Users\angel\Desktop\vcpkg\installed\x64-windows\lib"
+vcpkg_include = r"C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include"
+vcpkg_lib = r"C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib"
 
 # Incluir path local
 local_lib = r"C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib"
