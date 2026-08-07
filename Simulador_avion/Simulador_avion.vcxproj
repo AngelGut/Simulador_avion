@@ -19,19 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Downloads\glad\src\glad.c" />
     <ClCompile Include="geometry.cpp" />
     <ClCompile Include="layer_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="model_loader.cpp" />
     <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="shader.cpp" />
+    <ClCompile Include="screens.cpp" />
+    <ClCompile Include="ui_renderer.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app_state.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="layer_manager.h" />
     <ClInclude Include="renderer.h" />
-    <ClInclude Include="shader.h" />
+    <ClInclude Include="screens.h" />
+    <ClInclude Include="ui_renderer.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="model_loader.h" />
     <ClInclude Include="model_config.h" />
@@ -153,13 +157,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\include;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Louis\source\repos\Simulador_avion\Simulador_avion\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\varios\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3dll.lib;glew32.lib;assimp-vc145-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Louis\source\repos\Simulador_avion\Simulador_avion\lib;C:\Users\angel\Desktop\Universidad\8vo\Computacion Grafica\Proyectos\Proyecto 2\Simulador_avion\Simulador_avion\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;assimp-vc145-mt.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>

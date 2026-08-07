@@ -1,4 +1,4 @@
-// ============================================================
+/* ============================================================
 // ARCHIVO: geometry.cpp
 // RESPONSABLE: Ronald (Geometría y Motores)
 // DESCRIPTION: Implementación de mallas 2D con NORMALES
@@ -478,4 +478,4 @@ namespace GeometryBuilder {
         glLineWidth(1.0f);
     }
 
-} // namespace GeometryBuilder
+} // namespace GeometryBuilder*/
