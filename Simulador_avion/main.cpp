@@ -54,10 +54,44 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
     Model* model = Renderer::getLoadedModel();
 
-    // Seleccionar modelo (1-5)
-    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_5) {
+    // Seleccionar modelo (1-4)
+    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_4) {
         int modelNumber = key - GLFW_KEY_1 + 1;
         Renderer::loadModelByNumber(modelNumber);
+        
+        // Restablecer zoom para el nuevo modelo
+        Model* newModel = Renderer::getLoadedModel();
+        if (newModel) {
+            viewZoom = newModel->getRecommendedZoom();
+        }
+        return;
+    }
+
+    // Activar / desactivar modo piezas (P)
+    if (key == GLFW_KEY_P) {
+        Renderer::togglePartsMode();
+        Model* currentModel = Renderer::getLoadedModel();
+        if (currentModel) {
+            viewZoom = currentModel->getRecommendedZoom();
+        }
+        return;
+    }
+
+    // Navegar entre piezas (Flecha Izq / Flecha Der)
+    if (key == GLFW_KEY_RIGHT) {
+        Renderer::nextPart();
+        Model* currentModel = Renderer::getLoadedModel();
+        if (currentModel) {
+            viewZoom = currentModel->getRecommendedZoom();
+        }
+        return;
+    }
+    if (key == GLFW_KEY_LEFT) {
+        Renderer::prevPart();
+        Model* currentModel = Renderer::getLoadedModel();
+        if (currentModel) {
+            viewZoom = currentModel->getRecommendedZoom();
+        }
         return;
     }
 
@@ -89,7 +123,14 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         viewRotationX = 0.0f;
         viewRotationY = 0.0f;
         viewRotationZ = 0.0f;
-        viewZoom = -5.0f;
+        
+        Model* currentModel = Renderer::getLoadedModel();
+        if (currentModel) {
+            viewZoom = currentModel->getRecommendedZoom();
+        } else {
+            viewZoom = -5.0f;
+        }
+        
         viewX = 0.0f;
         viewY = 0.0f;
         std::cout << "Vista reseteada\n";
@@ -175,15 +216,44 @@ bool initOpenGL() {
 void printModelMenu() {
     std::cout << "\n"
         << "==================================================\n"
-        << "    SELECCIONA UNA AERONAVE (1-5)\n"
+        << "    SELECCIONA UNA AERONAVE (1-4)\n"
         << "==================================================\n"
         << " 1  " << NAME_1 << "\n"
         << " 2  " << NAME_2 << "\n"
         << " 3  " << NAME_3 << "\n"
         << " 4  " << NAME_4 << "\n"
-        << " 5  " << NAME_5 << "\n"
         << "==================================================\n"
         << "\n";
+}
+
+void updateWindowTitle() {
+    if (!window) return;
+    
+    std::string title = "Simulador de Avion - ";
+    int modelNum = Renderer::getCurrentModelNumber();
+    std::string modelName = "";
+    switch (modelNum) {
+        case 1: modelName = NAME_1; break;
+        case 2: modelName = NAME_2; break;
+        case 3: modelName = NAME_3; break;
+        case 4: modelName = NAME_4; break;
+    }
+    title += modelName;
+
+    if (Renderer::isPartsModeActive()) {
+        title += " | [MODO PIEZAS] ";
+        int currentIdx = Renderer::getCurrentPartIndex();
+        int total = Renderer::getNumParts();
+        if (total > 0) {
+            title += Renderer::getCurrentPartName() + " (" + std::to_string(currentIdx + 1) + "/" + std::to_string(total) + ")";
+        } else {
+            title += "Sin piezas";
+        }
+    } else {
+        title += " | [VISTA COMPLETA]";
+    }
+    
+    glfwSetWindowTitle(window, title.c_str());
 }
 
 // ============================================================
@@ -191,6 +261,7 @@ void printModelMenu() {
 // ============================================================
 
 void render() {
+    updateWindowTitle();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!shaderProgram) return;
@@ -262,15 +333,21 @@ int main(int argc, char** argv) {
     printModelMenu();
 
     int selectedModel = 0;
-    std::cout << "Ingresa el número de la aeronave (1-5): ";
+    std::cout << "Ingresa el número de la aeronave (1-4): ";
     std::cin >> selectedModel;
 
-    if (selectedModel >= 1 && selectedModel <= 5) {
+    if (selectedModel >= 1 && selectedModel <= 4) {
         Renderer::loadModelByNumber(selectedModel);
     }
     else {
-        std::cout << "Opción inválida. Cargando modelo por defecto (5)...\n";
-        Renderer::loadModelByNumber(5);
+        std::cout << "Opción inválida. Cargando modelo por defecto (1)...\n";
+        Renderer::loadModelByNumber(1);
+    }
+
+    // Ajustar zoom recomendado para el modelo inicial
+    Model* initialModel = Renderer::getLoadedModel();
+    if (initialModel) {
+        viewZoom = initialModel->getRecommendedZoom();
     }
 
     Renderer::printHelp();

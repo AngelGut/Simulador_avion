@@ -40,6 +40,7 @@ private:
     bool loaded;
     float scale;
     glm::vec3 center;
+    std::map<std::string, aiMatrix4x4> finalTransforms;
 
     void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
     void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);

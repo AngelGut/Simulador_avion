@@ -100,13 +100,13 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
 }
 
 bool Model::loadModel(const char* path) {
+    finalTransforms.clear();
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
         aiProcess_FlipUVs |
-        aiProcess_CalcTangentSpace |
-        aiProcess_PreTransformVertices);
+        aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "Error al cargar modelo: " << importer.GetErrorString() << std::endl;
@@ -115,6 +115,40 @@ bool Model::loadModel(const char* path) {
 
     std::cout << "Modelo cargado: " << path << std::endl;
     std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
+
+    // Si tiene animaciones, extraer el último fotograma clave de cada canal
+    if (scene->HasAnimations()) {
+        aiAnimation* anim = scene->mAnimations[0];
+        std::cout << "  Detectada animación: " << anim->mName.C_Str() << " (Duración: " << anim->mDuration << ")" << std::endl;
+        
+        for (unsigned int i = 0; i < anim->mNumChannels; i++) {
+            aiNodeAnim* channel = anim->mChannels[i];
+            std::string nodeName = channel->mNodeName.C_Str();
+            
+            aiVector3D scale(1.0f, 1.0f, 1.0f);
+            if (channel->mNumScalingKeys > 0) {
+                scale = channel->mScalingKeys[channel->mNumScalingKeys - 1].mValue;
+            }
+            
+            aiQuaternion rotation;
+            if (channel->mNumRotationKeys > 0) {
+                rotation = channel->mRotationKeys[channel->mNumRotationKeys - 1].mValue;
+            }
+            
+            aiVector3D position(0.0f, 0.0f, 0.0f);
+            if (channel->mNumPositionKeys > 0) {
+                position = channel->mPositionKeys[channel->mNumPositionKeys - 1].mValue;
+            }
+            
+            aiMatrix4x4 transMat, rotMat, scaleMat;
+            aiMatrix4x4::Translation(position, transMat);
+            rotMat = aiMatrix4x4(rotation.GetMatrix());
+            aiMatrix4x4::Scaling(scale, scaleMat);
+            
+            finalTransforms[nodeName] = transMat * rotMat * scaleMat;
+        }
+        std::cout << "  Bakeado fotograma final de animación para " << finalTransforms.size() << " nodos." << std::endl;
+    }
 
     glm::mat4 identity(1.0f);
     processNode(scene->mRootNode, scene, identity);
@@ -131,9 +165,17 @@ bool Model::loadModel(const char* path) {
 
 void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform) {
     glm::mat4 nodeTransform(1.0f);
+    aiMatrix4x4 aiTrans = node->mTransformation;
+    std::string nodeName = node->mName.C_Str();
+    
+    // Si hay una matriz bakeada para esta pieza, usarla
+    if (finalTransforms.find(nodeName) != finalTransforms.end()) {
+        aiTrans = finalTransforms[nodeName];
+    }
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            nodeTransform[j][i] = node->mTransformation[i][j];
+            nodeTransform[j][i] = aiTrans[i][j];
         }
     }
 

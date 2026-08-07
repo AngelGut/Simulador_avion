@@ -7,20 +7,18 @@
 #define CONFIG_H
 
 // RUTAS DE MODELOS POR AERONAVE
-#define MODEL_1 "C:/Users/angel/Desktop/Universidad/8vo/Computacion Grafica/Proyectos/Proyecto 2/Simulador_avion/Simulador_avion/source/American Airlines Boeing 737-800.blend"
-#define MODEL_2 "C:/Users/angel/Desktop/Universidad/8vo/Computacion Grafica/Proyectos/Proyecto 2/Simulador_avion/Simulador_avion/source/kawasaki-ki-61.blend"
-#define MODEL_3 "C:/Users/angel/Desktop/Universidad/8vo/Computacion Grafica/Proyectos/Proyecto 2/Simulador_avion/Simulador_avion/source/MS-406.fbx"
-#define MODEL_4 "C:/Users/angel/Desktop/Universidad/8vo/Computacion Grafica/Proyectos/Proyecto 2/Simulador_avion/Simulador_avion/source/MYSTERE IV N 117 Provence Nancy.fbx"
-#define MODEL_5 "C:/Users/angel/Desktop/Universidad/8vo/Computacion Grafica/Proyectos/Proyecto 2/Simulador_avion/Simulador_avion/source/Millennium Falcon star wars.obj"
+#define MODEL_1 "../modelos 3d/a-10_thunderbolt_ii.glb"
+#define MODEL_2 "../modelos 3d/b-24_liberator.glb"
+#define MODEL_3 "../modelos 3d/boeing-787-_dreamliner.glb"
+#define MODEL_4 "../modelos 3d/mig_29_9-13.glb"
 
 // NOMBRES DE AERONAVES (para mostrar en consola)
-#define NAME_1 "American Airlines Boeing 737-800"
-#define NAME_2 "Kawasaki Ki-61"
-#define NAME_3 "MS-406"
-#define NAME_4 "MYSTERE IV N 117 Provence Nancy"
-#define NAME_5 "??? (Sorpresa)"
+#define NAME_1 "A-10 Thunderbolt II"
+#define NAME_2 "B-24 Liberator"
+#define NAME_3 "Boeing 787 Dreamliner"
+#define NAME_4 "MiG-29"
 
 // MODELO POR DEFECTO
-#define DEFAULT_MODEL 5
+#define DEFAULT_MODEL 1
 
 #endif // CONFIG_H
