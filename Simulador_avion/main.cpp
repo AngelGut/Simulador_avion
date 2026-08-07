@@ -39,6 +39,11 @@ int windowHeight = 768;
 
 bool showHelp = false;
 
+// Variables para control de mouse
+bool leftMouseButtonPressed = false;
+double lastMouseX = 0.0;
+double lastMouseY = 0.0;
+
 // ============================================================
 // CALLBACKS GLFW
 // ============================================================
@@ -47,6 +52,37 @@ void windowSizeCallback(GLFWwindow* window, int width, int height) {
     windowWidth = width;
     windowHeight = height;
     glViewport(0, 0, width, height);
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            leftMouseButtonPressed = true;
+            glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+        } else if (action == GLFW_RELEASE) {
+            leftMouseButtonPressed = false;
+        }
+    }
+}
+
+void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+    if (leftMouseButtonPressed) {
+        double deltaX = xpos - lastMouseX;
+        double deltaY = ypos - lastMouseY;
+
+        float sensitivity = 0.2f;
+        viewRotationY += (float)deltaX * sensitivity;
+        viewRotationX += (float)deltaY * sensitivity;
+
+        lastMouseX = xpos;
+        lastMouseY = ypos;
+    }
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    float zoomSensitivity = 0.5f;
+    viewZoom += (float)yoffset * zoomSensitivity;
+    if (viewZoom > -0.5f) viewZoom = -0.5f;
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -176,6 +212,9 @@ bool initGLFW() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, windowSizeCallback);
     glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetScrollCallback(window, scrollCallback);
     glfwSwapInterval(1);
 
     return true;
