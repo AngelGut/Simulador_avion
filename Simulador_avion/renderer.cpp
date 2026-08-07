@@ -30,6 +30,16 @@ namespace Renderer {
     static int currentPartIndex = 0;
     static bool partsLoaded = false;
 
+    // Variables de la Escenografía (Hangar)
+    static unsigned int floorVAO = 0;
+    static unsigned int floorVBO = 0;
+    static unsigned int floorEBO = 0;
+    static int floorIndexCount = 0;
+
+    static unsigned int gridVAO = 0;
+    static unsigned int gridVBO = 0;
+    static int gridVertexCount = 0;
+
     // Helper para resolver rutas relativas
     std::string resolvePath(const std::string& path) {
         namespace fs = std::filesystem;
@@ -372,6 +382,154 @@ namespace Renderer {
             << "   ESC        Salir\n"
             << "==================================================\n"
             << "\n";
+    }
+
+    // ============================================================
+    // ESCENOGRAFÍA DEL HANGAR
+    // ============================================================
+    static void initFloor() {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+
+        float size = 15.0f;
+        float y = -0.6f;
+        glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        glm::vec3 color(0.15f, 0.15f, 0.2f); // Gris azulado oscuro
+
+        // Vértices del quad del suelo
+        Vertex v1 = { glm::vec3(-size, y, -size), normal, color, glm::vec2(0.0f, 0.0f) };
+        Vertex v2 = { glm::vec3(size, y, -size), normal, color, glm::vec2(1.0f, 0.0f) };
+        Vertex v3 = { glm::vec3(size, y, size), normal, color, glm::vec2(1.0f, 1.0f) };
+        Vertex v4 = { glm::vec3(-size, y, size), normal, color, glm::vec2(0.0f, 1.0f) };
+
+        vertices.push_back(v1);
+        vertices.push_back(v2);
+        vertices.push_back(v3);
+        vertices.push_back(v4);
+
+        indices.push_back(0); indices.push_back(1); indices.push_back(2);
+        indices.push_back(0); indices.push_back(2); indices.push_back(3);
+
+        floorIndexCount = indices.size();
+
+        glGenVertexArrays(1, &floorVAO);
+        glGenBuffers(1, &floorVBO);
+        glGenBuffers(1, &floorEBO);
+
+        glBindVertexArray(floorVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
+    static void initGridLines() {
+        std::vector<Vertex> vertices;
+        float size = 15.0f;
+        float y = -0.59f; // Ligeramente arriba para evitar z-fighting
+        glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        glm::vec3 color(0.3f, 0.4f, 0.5f); // Líneas celestes oscuras
+
+        int divisions = 30;
+        float step = (size * 2.0f) / divisions;
+
+        for (int i = 0; i <= divisions; i++) {
+            float coord = -size + i * step;
+
+            // Línea paralela al eje Z
+            vertices.push_back({ glm::vec3(coord, y, -size), normal, color, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(coord, y, size), normal, color, glm::vec2(0.0f, 0.0f) });
+
+            // Línea paralela al eje X
+            vertices.push_back({ glm::vec3(-size, y, coord), normal, color, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(size, y, coord), normal, color, glm::vec2(0.0f, 0.0f) });
+        }
+
+        gridVertexCount = vertices.size();
+
+        glGenVertexArrays(1, &gridVAO);
+        glGenBuffers(1, &gridVBO);
+
+        glBindVertexArray(gridVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
+    void drawHangar(float cameraY) {
+        float floorY = -0.6f;
+        if (cameraY < floorY) {
+            // Desvanecimiento inteligente: no dibujar el piso si la cámara está debajo de él
+            return;
+        }
+
+        if (floorVAO == 0) {
+            initFloor();
+            initGridLines();
+        }
+
+        GLint currentProgram = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+        GLint useTexLoc = glGetUniformLocation(currentProgram, "uUseTexture");
+        GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
+
+        // El piso y las líneas no usan textura
+        if (useTexLoc != -1) glUniform1i(useTexLoc, 0);
+
+        // Ajustar matriz de modelo a identidad
+        if (modelLoc != -1) {
+            glm::mat4 identity = glm::mat4(1.0f);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
+        }
+
+        // 1. Dibujar suelo
+        glBindVertexArray(floorVAO);
+        glDrawElements(GL_TRIANGLES, floorIndexCount, GL_UNSIGNED_INT, 0);
+
+        // 2. Dibujar rejilla
+        glBindVertexArray(gridVAO);
+        glDrawArrays(GL_LINES, 0, gridVertexCount);
+
+        glBindVertexArray(0);
+    }
+
+    void cleanupHangar() {
+        if (floorVAO != 0) glDeleteVertexArrays(1, &floorVAO);
+        if (floorVBO != 0) glDeleteBuffers(1, &floorVBO);
+        if (floorEBO != 0) glDeleteBuffers(1, &floorEBO);
+        if (gridVAO != 0) glDeleteVertexArrays(1, &gridVAO);
+        if (gridVBO != 0) glDeleteBuffers(1, &gridVBO);
+        floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = 0;
     }
 
 } // namespace Renderer
