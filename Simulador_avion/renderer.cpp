@@ -1,55 +1,121 @@
 // ============================================================
-// ARCHIVO: renderer.cpp - CON CARGADOR DE MODELOS
+// ARCHIVO: renderer.cpp - CON CARGADOR DE MODELOS Y MODO PIEZAS
 // RESPONSABLE: Ronald (Rendering)
-// DESCRIPCION: Renderizado 3D con carga de modelos OBJ/FBX
+// DESCRIPCION: Renderizado 3D con carga de modelos GLB y Modo Piezas
 // ============================================================
 
 #include "renderer.h"
 #include "geometry.h"
 #include "model_loader.h"
 #include "config.h"
-#include <GL/glut.h>
+#include "model_config.h"
+#include <GL/glew.h>
 #include <cstdio>
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <filesystem>
+#include <algorithm>
 
 namespace Renderer {
 
     // Variable estática para almacenar el modelo cargado
     static Model* loadedModel = nullptr;
-    static int currentModelNumber = 5;
+    static int currentModelNumber = 1;
+
+    // Variables de Modo Piezas
+    static bool partsModeActive = false;
+    static std::vector<std::string> partFiles;
+    static std::vector<Model*> partModels;
+    static int currentPartIndex = 0;
+    static bool partsLoaded = false;
+
+    // Helper para resolver rutas relativas
+    std::string resolvePath(const std::string& path) {
+        namespace fs = std::filesystem;
+        if (fs::exists(path)) return path;
+        
+        if (path.rfind("../", 0) == 0) {
+            std::string sub = path.substr(3);
+            if (fs::exists(sub)) return sub;
+            
+            std::string sub2 = "../" + path;
+            if (fs::exists(sub2)) return sub2;
+        }
+        return path;
+    }
+
+    // Cargar piezas individuales usando filesystem
+    void loadParts() {
+        namespace fs = std::filesystem;
+
+        // Limpiar piezas anteriores
+        for (auto model : partModels) {
+            delete model;
+        }
+        partModels.clear();
+        partFiles.clear();
+        currentPartIndex = 0;
+        partsLoaded = false;
+
+        std::string currentModelName = "";
+        switch (currentModelNumber) {
+            case 1: currentModelName = "a-10_thunderbolt_ii"; break;
+            case 2: currentModelName = "b-24_liberator"; break;
+            case 3: currentModelName = "boeing-787-_dreamliner"; break;
+            case 4: currentModelName = "mig_29_9-13"; break;
+            default: return;
+        }
+
+        const auto* info = ModelConfig::getModelInfo(currentModelName);
+        if (!info || info->partsFolder.empty()) return;
+
+        std::string folderPath = std::string(ModelConfig::MODELS_BASE_PATH) + info->partsFolder;
+        std::string resolvedFolder = resolvePath(folderPath);
+
+        if (!fs::exists(resolvedFolder)) {
+            std::cerr << "Carpeta de piezas no existe: " << resolvedFolder << std::endl;
+            return;
+        }
+
+        // Leer todos los archivos .glb de la carpeta
+        for (const auto& entry : fs::directory_iterator(resolvedFolder)) {
+            if (entry.is_regular_file() && (entry.path().extension() == ".glb" || entry.path().extension() == ".GLB")) {
+                partFiles.push_back(entry.path().string());
+            }
+        }
+
+        std::sort(partFiles.begin(), partFiles.end());
+
+        if (partFiles.empty()) {
+            std::cout << "No se encontraron piezas en: " << resolvedFolder << std::endl;
+            return;
+        }
+
+        std::cout << "Cargando " << partFiles.size() << " piezas de forma perezosa...\n";
+        for (const auto& file : partFiles) {
+            Model* part = new Model();
+            std::cout << "  Cargando pieza: " << file << std::endl;
+            if (part->loadModel(file.c_str())) {
+                partModels.push_back(part);
+            } else {
+                std::cerr << "  Error al cargar pieza: " << file << std::endl;
+                delete part;
+            }
+        }
+
+        partsLoaded = true;
+        std::cout << "✓ " << partModels.size() << " piezas cargadas correctamente.\n";
+    }
 
     // ============================================================
-    // setupOpenGL() - Configuración para 3D
+    // setupOpenGL() - Configuración para 3D (compatible OpenGL 3.3+)
     // ============================================================
     void setupOpenGL() {
         glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
-
-        // Habilitar test de profundidad para 3D
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
-
-        // Habilitar iluminación
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glEnable(GL_COLOR_MATERIAL);
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-        // Parámetros de iluminación
-        GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-        GLfloat diffuseLight[] = { 0.9f, 0.9f, 0.9f, 1.0f };
-        GLfloat specularLight[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        GLfloat lightPosition[] = { 5.0f, 5.0f, 5.0f, 0.0f };
-
-        glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-        glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-        glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-
-        // Suavizado de líneas
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-        glLineWidth(1.5f);
+        glEnable(GL_MULTISAMPLE);
     }
 
     // ============================================================
@@ -62,8 +128,9 @@ namespace Renderer {
 
         loadedModel = new Model();
 
-        std::cout << "Cargando modelo: " << modelPath << std::endl;
-        if (loadedModel->loadModel(modelPath)) {
+        std::string resolved = resolvePath(modelPath);
+        std::cout << "Cargando modelo completo: " << resolved << std::endl;
+        if (loadedModel->loadModel(resolved.c_str())) {
             std::cout << "✓ Modelo cargado exitosamente\n";
         }
         else {
@@ -74,9 +141,14 @@ namespace Renderer {
     }
 
     // ============================================================
-    // getLoadedModel() - Obtener referencia al modelo cargado
+    // getLoadedModel() - Obtener referencia al modelo cargado (o pieza activa)
     // ============================================================
     Model* getLoadedModel() {
+        if (partsModeActive && partsLoaded && !partModels.empty()) {
+            if (currentPartIndex >= 0 && currentPartIndex < partModels.size()) {
+                return partModels[currentPartIndex];
+            }
+        }
         return loadedModel;
     }
 
@@ -105,40 +177,57 @@ namespace Renderer {
     // drawLayer() - Renderizar capa seleccionada
     // ============================================================
     void drawLayer(int layerNumber) {
-        // Si hay modelo cargado, dibujarlo
-        if (loadedModel != nullptr && loadedModel->isLoaded()) {
-            loadedModel->draw();
-        }
-        else {
-            // Fallback: geometría procedural si no hay modelo
-            std::cout << "Usando geometría procedural (modelo no disponible)\n";
+        if (partsModeActive) {
+            if (!partsLoaded) {
+                loadParts();
+            }
 
-            switch (layerNumber) {
-            case 1: // Exterior
-                GeometryBuilder::generateFuselage(0.0f, 0.0f, 30.0f, 300.0f);
-                GeometryBuilder::generateWings();
-                GeometryBuilder::generateMotors();
-                break;
+            if (partsLoaded && !partModels.empty()) {
+                if (currentPartIndex >= 0 && currentPartIndex < partModels.size()) {
+                    partModels[currentPartIndex]->draw();
+                }
+            } else {
+                // Fallback al modelo completo si no hay piezas
+                if (loadedModel != nullptr && loadedModel->isLoaded()) {
+                    loadedModel->draw();
+                }
+            }
+        } else {
+            // Dibujar el modelo completo
+            if (loadedModel != nullptr && loadedModel->isLoaded()) {
+                loadedModel->draw();
+            }
+            else {
+                // Fallback: geometría procedural si no hay modelo
+                std::cout << "Usando geometría procedural (modelo no disponible)\n";
 
-            case 2: // Estructura interna
-                GeometryBuilder::generateStructure();
-                break;
+                switch (layerNumber) {
+                case 1: // Exterior
+                    GeometryBuilder::generateFuselage(0.0f, 0.0f, 30.0f, 300.0f);
+                    GeometryBuilder::generateWings();
+                    GeometryBuilder::generateMotors();
+                    break;
 
-            case 3: // Sistemas
-                GeometryBuilder::generateSystems();
-                break;
+                case 2: // Estructura interna
+                    GeometryBuilder::generateStructure();
+                    break;
 
-            case 4: // Cabina
-                GeometryBuilder::generateCabin();
-                break;
+                case 3: // Sistemas
+                    GeometryBuilder::generateSystems();
+                    break;
 
-            case 5: // Propulsion
-                GeometryBuilder::generateMotors();
-                GeometryBuilder::generateLandingGear();
-                break;
+                case 4: // Cabina
+                    GeometryBuilder::generateCabin();
+                    break;
 
-            default:
-                break;
+                case 5: // Propulsion
+                    GeometryBuilder::generateMotors();
+                    GeometryBuilder::generateLandingGear();
+                    break;
+
+                default:
+                    break;
+                }
             }
         }
     }
@@ -151,7 +240,7 @@ namespace Renderer {
     }
 
     // ============================================================
-    // loadModelByNumber() - Cargar modelo por número (1-5)
+    // loadModelByNumber() - Cargar modelo por número (1-4)
     // ============================================================
     void loadModelByNumber(int modelNumber) {
         const char* modelPath = nullptr;
@@ -174,17 +263,24 @@ namespace Renderer {
             modelPath = MODEL_4;
             modelName = NAME_4;
             break;
-        case 5:
-            modelPath = MODEL_5;
-            modelName = NAME_5;
-            break;
         default:
-            std::cerr << "Modelo inválido. Opciones: 1-5\n";
+            std::cerr << "Modelo inválido. Opciones: 1-4\n";
             return;
         }
 
         currentModelNumber = modelNumber;
         std::cout << "\n--- Cargando: " << modelName << " ---\n";
+
+        // Resetear variables de piezas
+        partsModeActive = false;
+        partsLoaded = false;
+        for (auto model : partModels) {
+            delete model;
+        }
+        partModels.clear();
+        partFiles.clear();
+        currentPartIndex = 0;
+
         initModel(modelPath);
     }
 
@@ -193,6 +289,89 @@ namespace Renderer {
     // ============================================================
     int getCurrentModelNumber() {
         return currentModelNumber;
+    }
+
+    // ============================================================
+    // MODO PIEZAS
+    // ============================================================
+    void togglePartsMode() {
+        if (currentModelNumber == 4) {
+            std::cout << "[Info] El MiG-29 no posee piezas desarmadas cargadas actualmente.\n";
+            partsModeActive = false;
+            return;
+        }
+
+        partsModeActive = !partsModeActive;
+        std::cout << "Modo piezas: " << (partsModeActive ? "ACTIVADO" : "DESACTIVADO") << std::endl;
+
+        if (partsModeActive && !partsLoaded) {
+            loadParts();
+        }
+    }
+
+    void nextPart() {
+        if (!partsModeActive || partModels.empty()) return;
+        currentPartIndex = (currentPartIndex + 1) % partModels.size();
+    }
+
+    void prevPart() {
+        if (!partsModeActive || partModels.empty()) return;
+        currentPartIndex = (currentPartIndex - 1 + partModels.size()) % partModels.size();
+    }
+
+    bool isPartsModeActive() {
+        return partsModeActive;
+    }
+
+    std::string getCurrentPartName() {
+        if (!partsModeActive || partFiles.empty() || currentPartIndex < 0 || currentPartIndex >= partFiles.size()) {
+            return "";
+        }
+        namespace fs = std::filesystem;
+        fs::path p(partFiles[currentPartIndex]);
+        return p.stem().string();
+    }
+
+    int getCurrentPartIndex() {
+        return currentPartIndex;
+    }
+
+    int getNumParts() {
+        return partModels.size();
+    }
+
+    // ============================================================
+    // printHelp() - Mostrar controles disponibles
+    // ============================================================
+    void printHelp() {
+        std::cout << "\n"
+            << "==================================================\n"
+            << "    Visualizador 3D GLB - Simulador de Aviones\n"
+            << "==================================================\n"
+            << " SELECCIONAR AERONAVE:\n"
+            << "   1-4        Cambiar de avión (A-10, B-24, B787, MiG-29)\n"
+            << "\n"
+            << " MODO PIEZAS:\n"
+            << "   P          Activar / Desactivar Modo Piezas\n"
+            << "   <- / ->    Navegar entre piezas (Flechas)\n"
+            << "\n"
+            << " ROTACIÓN (Pitch/Yaw/Roll):\n"
+            << "   I / K      Rotar arriba / abajo (Pitch)\n"
+            << "   J / L      Rotar izquierda / derecha (Yaw)\n"
+            << "   R / T      Rotar CW / CCW (Roll)\n"
+            << "\n"
+            << " ZOOM (Cámara):\n"
+            << "   Q / E      Alejar / Acercar\n"
+            << "\n"
+            << " PAN (Mover vista):\n"
+            << "   W / A / S / D    Arriba / Izq / Abajo / Der\n"
+            << "\n"
+            << " OTROS:\n"
+            << "   ESPACIO    Reset vista\n"
+            << "   H          Mostrar/ocultar esta ayuda\n"
+            << "   ESC        Salir\n"
+            << "==================================================\n"
+            << "\n";
     }
 
 } // namespace Renderer
