@@ -27,17 +27,22 @@ glm::vec3 cameraPos(0.0f, 0.0f, 4.0f);
 glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
-float viewRotationX = 0.0f;
-float viewRotationY = 0.0f;
-float viewRotationZ = 0.0f;
-float viewZoom = -5.0f;
-float viewX = 0.0f;
-float viewY = 0.0f;
+float viewRotationX = 15.0f; // Pitch (elevación orbital inicial)
+float viewRotationY = 45.0f; // Yaw (rotación orbital inicial)
+float viewRotationZ = 0.0f;  // Roll (no se usa en órbita)
+float viewZoom = -5.0f;      // Radio de órbita (negativo)
+float viewX = 0.0f;          // Paneo horizontal
+float viewY = 0.0f;          // Paneo vertical
 
 int windowWidth = 1024;
 int windowHeight = 768;
 
 bool showHelp = false;
+
+// Variables para control de mouse
+bool leftMouseButtonPressed = false;
+double lastMouseX = 0.0;
+double lastMouseY = 0.0;
 
 // ============================================================
 // CALLBACKS GLFW
@@ -47,6 +52,37 @@ void windowSizeCallback(GLFWwindow* window, int width, int height) {
     windowWidth = width;
     windowHeight = height;
     glViewport(0, 0, width, height);
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            leftMouseButtonPressed = true;
+            glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+        } else if (action == GLFW_RELEASE) {
+            leftMouseButtonPressed = false;
+        }
+    }
+}
+
+void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+    if (leftMouseButtonPressed) {
+        double deltaX = xpos - lastMouseX;
+        double deltaY = ypos - lastMouseY;
+
+        float sensitivity = 0.2f;
+        viewRotationY += (float)deltaX * sensitivity;
+        viewRotationX += (float)deltaY * sensitivity;
+
+        lastMouseX = xpos;
+        lastMouseY = ypos;
+    }
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    float zoomSensitivity = 0.5f;
+    viewZoom += (float)yoffset * zoomSensitivity;
+    if (viewZoom > -0.5f) viewZoom = -0.5f;
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -120,8 +156,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
     // RESET (ESPACIO)
     if (key == GLFW_KEY_SPACE) {
-        viewRotationX = 0.0f;
-        viewRotationY = 0.0f;
+        viewRotationX = 15.0f;
+        viewRotationY = 45.0f;
         viewRotationZ = 0.0f;
         
         Model* currentModel = Renderer::getLoadedModel();
@@ -176,6 +212,9 @@ bool initGLFW() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, windowSizeCallback);
     glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetScrollCallback(window, scrollCallback);
     glfwSwapInterval(1);
 
     return true;
@@ -272,30 +311,44 @@ void render() {
     glm::mat4 projection = glm::perspective(glm::radians(45.0f),
         (float)windowWidth / (float)windowHeight, 0.1f, 500.0f);
 
-    // Vista con rotaciones
+    // Cámara Orbital (Yaw/Pitch/Radius)
+    float radius = std::abs(viewZoom);
+    
+    // Limitar Pitch para evitar giro de 360 grados vertical (polar lock)
+    if (viewRotationX > 89.0f) viewRotationX = 89.0f;
+    if (viewRotationX < -89.0f) viewRotationX = -89.0f;
+
+    float camX = radius * cos(glm::radians(viewRotationX)) * sin(glm::radians(viewRotationY));
+    float camY = radius * sin(glm::radians(viewRotationX));
+    float camZ = radius * cos(glm::radians(viewRotationX)) * cos(glm::radians(viewRotationY));
+
+    // Altura real considerando el desplazamiento vertical (pan)
+    float actualCamY = camY + viewY;
+
+    // Vista orbital de cámara
     glm::mat4 view = glm::lookAt(
-        glm::vec3(viewX, viewY, viewZoom),
-        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(camX + viewX, actualCamY, camZ),
+        glm::vec3(viewX, viewY, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
-    // Modelo con rotaciones
+    // El modelo se queda fijo sobre el suelo
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(viewRotationX), glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(viewRotationY), glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(viewRotationZ), glm::vec3(0.0f, 0.0f, 1.0f));
 
     // Pasar matrices al shader
     shaderProgram->setMat4("uModel", model);
     shaderProgram->setMat4("uView", view);
     shaderProgram->setMat4("uProjection", projection);
 
-    // Parámetros de iluminación
-    shaderProgram->setVec3("uLightPos", glm::vec3(5.0f, 5.0f, 5.0f));
-    shaderProgram->setVec3("uViewPos", glm::vec3(viewX, viewY, viewZoom));
-    shaderProgram->setVec3("uLightColor", glm::vec3(0.9f, 0.9f, 0.9f));
+    // Parámetros de iluminación (luz cenital fija en el hangar)
+    shaderProgram->setVec3("uLightPos", glm::vec3(0.0f, 5.0f, 0.0f));
+    shaderProgram->setVec3("uViewPos", glm::vec3(camX + viewX, actualCamY, camZ));
+    shaderProgram->setVec3("uLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // Dibujar modelo
+    // Dibujar el Hangar (piso + rejilla) pasándole la altura de la cámara
+    Renderer::drawHangar(actualCamY);
+
+    // Dibujar avión/pieza
     Renderer::drawLayer(1);
 }
 
@@ -373,6 +426,7 @@ int main(int argc, char** argv) {
     }
 
     // Limpiar
+    Renderer::cleanupHangar();
     delete shaderProgram;
     glfwDestroyWindow(window);
     glfwTerminate();

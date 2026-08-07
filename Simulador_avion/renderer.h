@@ -35,6 +35,10 @@ namespace Renderer {
     int getCurrentPartIndex();
     int getNumParts();
 
+    // ========== ESCENOGRAFÍA ==========
+    void drawHangar(float cameraY);
+    void cleanupHangar();
+
     // ========== UTILIDADES ==========
     void printHelp();
 

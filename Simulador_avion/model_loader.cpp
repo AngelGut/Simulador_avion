@@ -1,6 +1,6 @@
 // ============================================================
 // ARCHIVO: model_loader.cpp
-// DESCRIPCION: Implementación del cargador con VAO/VBO
+// DESCRIPCION: Implementación del cargador con VAO/VBO y soporte de texturas GLB
 // ============================================================
 
 #include "model_loader.h"
@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <cfloat>
 #include <glm/gtc/matrix_transform.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 Mesh::~Mesh() {
     if (VAO != 0) glDeleteVertexArrays(1, &VAO);
@@ -41,19 +44,43 @@ void Mesh::setupMesh() {
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
 
+    // Atributo de coord de textura (location 3)
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
 void Mesh::draw() {
+    GLint currentProgram = 0;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+    GLint useTexLoc = glGetUniformLocation(currentProgram, "uUseTexture");
+
+    if (hasTexture && textureID != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        if (useTexLoc != -1) glUniform1i(useTexLoc, 1);
+    } else {
+        if (useTexLoc != -1) glUniform1i(useTexLoc, 0);
+    }
+
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
+    if (hasTexture && textureID != 0) {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 Model::Model() : loaded(false), scale(1.0f), center(0.0f) {}
 
-Model::~Model() {}
+Model::~Model() {
+    for (auto const& [key, val] : loadedTextures) {
+        if (val != 0) glDeleteTextures(1, &val);
+    }
+}
 
 glm::vec3 Model::extractColorFromMaterial(aiMaterial* material) {
     if (!material) return glm::vec3(0.8f, 0.8f, 0.8f);
@@ -101,6 +128,7 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
 
 bool Model::loadModel(const char* path) {
     finalTransforms.clear();
+    loadedTextures.clear();
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate |
@@ -115,6 +143,10 @@ bool Model::loadModel(const char* path) {
 
     std::cout << "Modelo cargado: " << path << std::endl;
     std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
+
+    // Obtener directorio del modelo para resolver texturas relativas
+    std::string modelPathStr = path;
+    std::string modelDir = modelPathStr.substr(0, modelPathStr.find_last_of("/\\") + 1);
 
     // Si tiene animaciones, extraer el último fotograma clave de cada canal
     if (scene->HasAnimations()) {
@@ -151,7 +183,7 @@ bool Model::loadModel(const char* path) {
     }
 
     glm::mat4 identity(1.0f);
-    processNode(scene->mRootNode, scene, identity);
+    processNode(scene->mRootNode, scene, identity, modelDir);
     normalizeModel();
 
     // Configurar VAO/VBO para todos los meshes
@@ -163,7 +195,7 @@ bool Model::loadModel(const char* path) {
     return true;
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform) {
+void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform, const std::string& modelDir) {
     glm::mat4 nodeTransform(1.0f);
     aiMatrix4x4 aiTrans = node->mTransformation;
     std::string nodeName = node->mName.C_Str();
@@ -183,15 +215,15 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMesh(mesh, scene, currentTransform);
+        processMesh(mesh, scene, currentTransform, modelDir);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene, currentTransform);
+        processNode(node->mChildren[i], scene, currentTransform, modelDir);
     }
 }
 
-void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform) {
+void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, const std::string& modelDir) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
@@ -234,6 +266,14 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
             vertex.color = meshColor;
         }
 
+        // Coordenadas de textura
+        if (mesh->mTextureCoords[0]) {
+            vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        }
+        else {
+            vertex.texCoords = glm::vec2(0.0f, 0.0f);
+        }
+
         vertices.push_back(vertex);
     }
 
@@ -248,9 +288,43 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
     Mesh newMesh;
     newMesh.vertices = vertices;
     newMesh.indices = indices;
+    newMesh.textureID = 0;
+    newMesh.hasTexture = false;
+
+    // Cargar textura si el material tiene una
+    if (mesh->mMaterialIndex < scene->mNumMaterials) {
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString path;
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS) {
+            std::string texPath = path.C_Str();
+            if (loadedTextures.find(texPath) != loadedTextures.end()) {
+                newMesh.textureID = loadedTextures[texPath];
+                newMesh.hasTexture = true;
+            } else {
+                unsigned int textureID = 0;
+                if (texPath[0] == '*') {
+                    int textureIndex = std::stoi(texPath.substr(1));
+                    if (textureIndex >= 0 && textureIndex < scene->mNumTextures) {
+                        aiTexture* tex = scene->mTextures[textureIndex];
+                        textureID = loadEmbeddedTexture(tex);
+                    }
+                } else {
+                    std::string fullTexPath = resolveTexturePath(modelDir, texPath);
+                    textureID = loadTextureFromFile(fullTexPath);
+                }
+                
+                if (textureID != 0) {
+                    loadedTextures[texPath] = textureID;
+                    newMesh.textureID = textureID;
+                    newMesh.hasTexture = true;
+                }
+            }
+        }
+    }
 
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
-        << indices.size() / 3 << " triángulos" << std::endl;
+        << indices.size() / 3 << " triángulos" 
+        << (newMesh.hasTexture ? " [Con Textura]" : "") << std::endl;
 
     meshes.push_back(newMesh);
 }
@@ -314,4 +388,79 @@ void Model::draw() {
     for (auto& mesh : meshes) {
         mesh.draw();
     }
+}
+
+unsigned int Model::loadEmbeddedTexture(const aiTexture* embeddedTexture) {
+    if (!embeddedTexture) return 0;
+
+    int width, height, nrComponents;
+    unsigned char* data = nullptr;
+
+    if (embeddedTexture->mHeight == 0) {
+        // Textura comprimida (PNG/JPEG)
+        data = stbi_load_from_memory(
+            reinterpret_cast<const unsigned char*>(embeddedTexture->pcData),
+            embeddedTexture->mWidth,
+            &width, &height, &nrComponents, 4
+        );
+    } else {
+        // Textura descomprimida (ARGB8888)
+        data = stbi_load_from_memory(
+            reinterpret_cast<const unsigned char*>(embeddedTexture->pcData),
+            embeddedTexture->mWidth * embeddedTexture->mHeight * 4,
+            &width, &height, &nrComponents, 4
+        );
+    }
+
+    if (!data) {
+        std::cerr << "  [STB] Error al decodificar textura embebida: " << stbi_failure_reason() << std::endl;
+        return 0;
+    }
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
+    return textureID;
+}
+
+unsigned int Model::loadTextureFromFile(const std::string& fullPath) {
+    int width, height, nrComponents;
+    unsigned char* data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 4);
+    if (!data) {
+        return 0;
+    }
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
+    return textureID;
+}
+
+std::string Model::resolveTexturePath(const std::string& modelDir, const std::string& texPath) {
+    std::string filename = texPath;
+    size_t lastSlash = texPath.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        filename = texPath.substr(lastSlash + 1);
+    }
+    return modelDir + filename;
 }

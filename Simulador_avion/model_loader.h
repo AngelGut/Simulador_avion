@@ -19,6 +19,7 @@ struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec3 color;
+    glm::vec2 texCoords;
 };
 
 struct Mesh {
@@ -26,8 +27,10 @@ struct Mesh {
     std::vector<unsigned int> indices;
 
     unsigned int VAO, VBO, EBO;
+    unsigned int textureID;
+    bool hasTexture;
 
-    Mesh() : VAO(0), VBO(0), EBO(0) {}
+    Mesh() : VAO(0), VBO(0), EBO(0), textureID(0), hasTexture(false) {}
     ~Mesh();
 
     void setupMesh();
@@ -41,12 +44,17 @@ private:
     float scale;
     glm::vec3 center;
     std::map<std::string, aiMatrix4x4> finalTransforms;
+    std::map<std::string, unsigned int> loadedTextures;
 
-    void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform);
-    void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform);
+    void processNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform, const std::string& modelDir);
+    void processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, const std::string& modelDir);
     void normalizeModel();
     glm::vec3 extractColorFromMaterial(aiMaterial* material);
     glm::vec3 getMeshColorByIndex(int meshIndex);
+
+    unsigned int loadEmbeddedTexture(const aiTexture* embeddedTexture);
+    unsigned int loadTextureFromFile(const std::string& fullPath);
+    std::string resolveTexturePath(const std::string& modelDir, const std::string& texPath);
 
 public:
     Model();
