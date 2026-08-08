@@ -2,7 +2,7 @@
 // ARCHIVO: main.cpp - GLFW + Shaders (Fase B Moderna)
 // DESCRIPCION: Punto de entrada para OpenGL 3.3+ moderno
 // ============================================================
-
+/*
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -433,5 +433,102 @@ int main(int argc, char** argv) {
     glfwDestroyWindow(window);
     glfwTerminate();
 
+    return 0;
+} */
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include "app_state.h"
+#include "ui_renderer.h"
+#include "screens.h"
+#include "asset_loader.h"
+#include "model_renderer.h"
+
+AppContext ctx;
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    ctx.windowWidth = width;
+    ctx.windowHeight = height;
+    UIRenderer::resize(width, height);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        ctx.mousePressed = (action == GLFW_PRESS);
+    }
+}
+
+int main() {
+    if (!glfwInit()) {
+        std::cout << "Error iniciando GLFW\n";
+        return -1;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(ctx.windowWidth, ctx.windowHeight, "Simulador de Avion", NULL, NULL);
+    if (!window) {
+        std::cout << "Error creando ventana GLFW\n";
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Error cargando GLAD\n";
+        return -1;
+    }
+
+    glViewport(0, 0, ctx.windowWidth, ctx.windowHeight);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+
+    UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
+    ModelRenderer::init();
+
+    startAssetLoading(ctx);
+
+    ctx.lastFrameTime = (float)glfwGetTime();
+
+    while (!glfwWindowShouldClose(window)) {
+        float currentTime = (float)glfwGetTime();
+        ctx.deltaTime = currentTime - ctx.lastFrameTime;
+        ctx.lastFrameTime = currentTime;
+        ctx.totalTime += ctx.deltaTime;
+
+        glfwGetCursorPos(window, &ctx.mouseX, &ctx.mouseY);
+
+        glClearColor(0.09f, 0.09f, 0.13f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        switch (ctx.state) {
+        case AppState::LOADING:
+            Screens::renderLoading(ctx);
+            break;
+        case AppState::WELCOME:
+            Screens::renderWelcome(ctx);
+            break;
+        case AppState::MENU:
+            Screens::renderMenu(ctx);
+            break;
+        case AppState::VIEWER:
+            Screens::renderViewer(ctx, window);
+            break;
+        }
+
+        ctx.mousePressed = false; 
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+    }
+
+    UIRenderer::shutdown();
+    glfwTerminate();
     return 0;
 }
