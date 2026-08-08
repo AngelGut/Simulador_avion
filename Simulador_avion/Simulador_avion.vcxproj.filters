@@ -107,6 +107,15 @@
     <ClInclude Include="model_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="descripcion_Proyecto.md">
@@ -124,6 +133,9 @@
     <None Include="Arq003_ciclo_vida_entrada.md">
       <Filter>docs</Filter>
     </None>
+    <None Include="Arq004_preparacion_modelos_3d.md">
+      <Filter>docs</Filter>
+    </None>
     <None Include="..\modelos 3d\a-10_thunderbolt_ii.glb">
       <Filter>models</Filter>
     </None>
@@ -135,6 +147,21 @@
     </None>
     <None Include="..\models\mig_29_9-13.glb">
       <Filter>models</Filter>
+    </None>
+    <None Include="shaders\vertex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\fragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="copy_dlls.bat">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="convert_models.sh">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="export_blend.py">
+      <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
 </Project>
