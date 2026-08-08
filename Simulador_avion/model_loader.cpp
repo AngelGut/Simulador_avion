@@ -2,9 +2,9 @@
 // ARCHIVO: model_loader.cpp
 // DESCRIPCION: Implementación del cargador con VAO/VBO y soporte de texturas GLB
 // ============================================================
-
+/*
 #include "model_loader.h"
-#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <algorithm>
 #include <cfloat>
@@ -463,4 +463,4 @@ std::string Model::resolveTexturePath(const std::string& modelDir, const std::st
         filename = texPath.substr(lastSlash + 1);
     }
     return modelDir + filename;
-}
+}*/

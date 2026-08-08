@@ -2,7 +2,7 @@
 // ARCHIVO: main.cpp - GLFW + Shaders (Fase B Moderna)
 // DESCRIPCION: Punto de entrada para OpenGL 3.3+ moderno
 // ============================================================
-
+/*
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -439,6 +439,8 @@ int main(int argc, char** argv) {
 #include "app_state.h"
 #include "ui_renderer.h"
 #include "screens.h"
+#include "asset_loader.h"
+#include "model_renderer.h"
 
 AppContext ctx;
 
@@ -483,6 +485,9 @@ int main() {
     glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
+    ModelRenderer::init();
+
+    startAssetLoading(ctx);
 
     ctx.lastFrameTime = (float)glfwGetTime();
 
@@ -490,6 +495,7 @@ int main() {
         float currentTime = (float)glfwGetTime();
         ctx.deltaTime = currentTime - ctx.lastFrameTime;
         ctx.lastFrameTime = currentTime;
+        ctx.totalTime += ctx.deltaTime;
 
         glfwGetCursorPos(window, &ctx.mouseX, &ctx.mouseY);
 
@@ -507,6 +513,7 @@ int main() {
             Screens::renderMenu(ctx);
             break;
         case AppState::VIEWER:
+            Screens::renderViewer(ctx, window);
             break;
         }
 

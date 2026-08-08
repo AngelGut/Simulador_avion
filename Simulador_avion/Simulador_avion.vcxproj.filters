@@ -22,6 +22,9 @@
     <Filter Include="docs">
       <UniqueIdentifier>{8c7562ce-c2e6-4515-bc9d-310d82e927da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="models">
+      <UniqueIdentifier>{e1daae5e-b530-4273-a378-afcfb7b750bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -49,6 +52,15 @@
       <Filter>scr</Filter>
     </ClCompile>
     <ClCompile Include="screens.cpp">
+      <Filter>scr</Filter>
+    </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>scr</Filter>
+    </ClCompile>
+    <ClCompile Include="asset_loader.cpp">
+      <Filter>scr</Filter>
+    </ClCompile>
+    <ClCompile Include="model_renderer.cpp">
       <Filter>scr</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,6 +92,18 @@
     <ClInclude Include="screens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="model_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="asset_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="descripcion_Proyecto.md">
@@ -96,6 +120,18 @@
     </None>
     <None Include="Arq003_ciclo_vida_entrada.md">
       <Filter>docs</Filter>
+    </None>
+    <None Include="..\modelos 3d\a-10_thunderbolt_ii.glb">
+      <Filter>models</Filter>
+    </None>
+    <None Include="..\modelos 3d\b-24_liberator.glb">
+      <Filter>models</Filter>
+    </None>
+    <None Include="..\modelos 3d\boeing-787-_dreamliner.glb">
+      <Filter>models</Filter>
+    </None>
+    <None Include="..\models\mig_29_9-13.glb">
+      <Filter>models</Filter>
     </None>
   </ItemGroup>
 </Project>
