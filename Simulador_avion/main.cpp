@@ -643,11 +643,11 @@ void renderViewerState(GLFWwindow* window) {
 
         // Botones
         std::vector<std::string> labels = {
-            "6. Vista Normal",
-            "7. Tunel Viento",
-            "8. Mapa Termico",
-            "9. Esfuerzo Mec.",
-            "0. Analisis Modal"
+            "Vista Normal",
+            "Tunel Viento",
+            "Mapa Termico",
+            "Esfuerzo Mec.",
+            "Analisis Modal"
         };
         std::vector<SimulationMode> modes = {
             SimulationMode::NONE,
