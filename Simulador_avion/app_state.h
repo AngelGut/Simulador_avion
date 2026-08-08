@@ -37,6 +37,7 @@ struct AppContext {
     glm::vec3 cameraDefaultTarget{ 0.0f, 0.0f, 0.0f };
 
     bool showHelp = false;
+    bool hideHUD = false;
 
     std::vector<PlaneOption> planes = {
         { "A-10 Thunderbolt II",   "../models/a-10_thunderbolt_ii.glb" },
