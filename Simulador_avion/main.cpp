@@ -1,5 +1,5 @@
 // ============================================================
-// ARCHIVO: main.cpp - GLFW + Shaders + Menú Principal (Fusión Fiel)
+// ARCHIVO: main.cpp - GLFW + Shaders + Menú Principal + Hotspots 3D
 // DESCRIPCION: Punto de entrada para OpenGL 3.3+ moderno
 // ============================================================
 
@@ -10,6 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <cmath>
+#include <vector>
+#include <string>
 
 #include "app_state.h"
 #include "ui_renderer.h"
@@ -37,6 +39,77 @@ double lastMouseX = 0.0;
 double lastMouseY = 0.0;
 
 // ============================================================
+// ESTRUCTURA Y BASE DE DATOS DE HOTSPOTS 3D (PUNTOS DE INTERÉS)
+// ============================================================
+
+struct Hotspot {
+    std::string title;
+    std::string description;
+    glm::vec3 localPos;
+};
+
+std::vector<std::vector<Hotspot>> planeHotspots = {
+    // 1: A-10 Thunderbolt II
+    {
+        { "CANON GAU-8 AVENGER", "Canon rotatorio de 30mm de 7 tubos, nucleo del poder del avion.", glm::vec3(0.0f, -0.2f, 1.1f) },
+        { "CABINA DE TITANIO", "Bañera de titanio reforzado de 540 kg disenada para soportar impactos.", glm::vec3(0.0f, 0.25f, 0.6f) },
+        { "TURBOFANS TF34", "Motores montados arriba y atras para ocultar la firma termica y evitar proyectiles.", glm::vec3(0.0f, 0.45f, -0.7f) },
+        { "ALAS RECTAS A-10", "Alas de gran superficie que permiten maniobras extremas a baja velocidad.", glm::vec3(-0.65f, 0.0f, 0.0f) },
+        { "TREN REFORZADO", "Tren de aterrizaje de alta resistencia para operar en terrenos rusticos.", glm::vec3(0.0f, -0.6f, 0.2f) }
+    },
+    // 2: B-24 Liberator
+    {
+        { "COMPARTIMENTO DE BOMBAS", "Bodega central con compuertas enrollables que reducen la friccion.", glm::vec3(0.0f, -0.1f, -0.1f) },
+        { "CABINA DE MANDO B-24", "Estacion para pilotos y navegantes en cabina no presurizada de la SGM.", glm::vec3(0.0f, 0.15f, 0.7f) },
+        { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f) },
+        { "ALA DAVIS", "Ala de envergadura superior y baja friccion, clave para el enorme alcance.", glm::vec3(-0.65f, 0.05f, 0.0f) },
+        { "TREN RETRACTIL LATERAL", "Primer tren de aterrizaje triciclo en bombarderos pesados.", glm::vec3(0.0f, -0.55f, 0.0f) }
+    },
+    // 3: Boeing 787 Dreamliner
+    {
+        { "FUSELAJE COMPOSITE 787", "Estructura de fibra de carbono que ofrece ligereza y ventanas mas amplias.", glm::vec3(0.0f, 0.15f, 0.6f) },
+        { "TURBOFAN GEnx", "Motores ultra silenciosos equipados con cubiertas traseras dentadas (chevrons).", glm::vec3(0.35f, -0.15f, 0.1f) },
+        { "ESTABILIZADOR DE COLA", "Diseno aerodinamico optimizado para maxima estabilidad digital fly-by-wire.", glm::vec3(0.0f, 0.45f, -0.95f) },
+        { "ALAS FLEXIBLES", "Alas que se flexionan en vuelo para amortiguar y suavizar turbulencias.", glm::vec3(-0.75f, 0.0f, -0.1f) },
+        { "TREN DE TITANIO", "Estructura de amortiguacion avanzada en titanio para aterrizajes suaves.", glm::vec3(0.0f, -0.6f, 0.2f) }
+    },
+    // 4: MiG-29
+    {
+        { "CABINA Y MIRA DE CASCO", "Cabina burbuja con sistema de designacion de blancos en casco del piloto.", glm::vec3(0.0f, 0.2f, 0.45f) },
+        { "TURBOFANS KLIMOV RD-33", "Motores gemelos con tomas de aire auxiliares superiores para pistas sucias.", glm::vec3(0.15f, 0.02f, -0.5f) },
+        { "MISIL AIRE-AIRE R-73", "Misiles de corto alcance guiados por infrarrojos para combate cerrado.", glm::vec3(-0.45f, -0.1f, -0.1f) },
+        { "ALAS INTEGRADAS Y LERX", "Extensiones de borde de ataque que otorgan agilidad y angulos extremos.", glm::vec3(0.55f, -0.05f, -0.2f) },
+        { "TREN RUSTICO", "Tren de aterrizaje reforzado con guardabarros para pistas militares sucias.", glm::vec3(0.0f, -0.55f, 0.1f) }
+    }
+};
+
+// ============================================================
+// PROYECCIÓN 3D A COORDENADAS DE PANTALLA (2D)
+// ============================================================
+
+bool project3DToScreen(const glm::vec3& worldPos, const glm::mat4& view, const glm::mat4& proj, int width, int height, float& screenX, float& screenY) {
+    // La matriz de modelo para la aeronave estática es la identidad
+    glm::vec4 clipPos = proj * view * glm::vec4(worldPos, 1.0f);
+    
+    // Si el punto está detrás del plano de la cámara, no proyectarlo
+    if (clipPos.w <= 0.0f) return false;
+    
+    // División perspectiva para obtener Normalized Device Coordinates (NDC)
+    glm::vec3 ndc = glm::vec3(clipPos) / clipPos.w;
+    
+    // Si sale de los límites de visión, omitirlo
+    if (ndc.x < -1.0f || ndc.x > 1.0f || ndc.y < -1.0f || ndc.y > 1.0f || ndc.z < -1.0f || ndc.z > 1.0f) {
+        return false;
+    }
+    
+    // Mapear NDC [-1, 1] a coordenadas de pantalla (origen arriba-izquierda)
+    screenX = (ndc.x + 1.0f) * 0.5f * (float)width;
+    screenY = (1.0f - ndc.y) * 0.5f * (float)height;
+    
+    return true;
+}
+
+// ============================================================
 // CALLBACKS DE INTERACCIÓN
 // ============================================================
 
@@ -48,11 +121,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    // Registrar evento de click para el Menú
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         ctx.mousePressed = (action == GLFW_PRESS);
         
-        // Registrar para rotación de cámara en el visor
         if (ctx.state == AppState::VIEWER) {
             if (action == GLFW_PRESS) {
                 leftMouseButtonPressed = true;
@@ -89,7 +160,6 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action != GLFW_PRESS || ctx.state != AppState::VIEWER) return;
 
-    // Activar / desactivar modo piezas (P)
     if (key == GLFW_KEY_P) {
         Renderer::togglePartsMode();
         Model* currentModel = Renderer::getLoadedModel();
@@ -99,7 +169,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         return;
     }
 
-    // Navegar entre piezas (Flecha Izq / Flecha Der)
     if (key == GLFW_KEY_RIGHT) {
         Renderer::nextPart();
         Model* currentModel = Renderer::getLoadedModel();
@@ -117,26 +186,20 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         return;
     }
 
-    // Rotación PITCH continua con I/K
     if (key == GLFW_KEY_I) viewRotationX += 10.0f;
     if (key == GLFW_KEY_K) viewRotationX -= 10.0f;
-
-    // Rotación YAW continua con J/L
     if (key == GLFW_KEY_J) viewRotationY -= 10.0f;
     if (key == GLFW_KEY_L) viewRotationY += 10.0f;
 
-    // ZOOM (Q/E)
     if (key == GLFW_KEY_Q) viewZoom += 0.5f;
     if (key == GLFW_KEY_E) viewZoom -= 0.5f;
     if (viewZoom > -0.5f) viewZoom = -0.5f;
 
-    // PAN (W/A/S/D)
     if (key == GLFW_KEY_W) viewY += 0.5f;
     if (key == GLFW_KEY_S) viewY -= 0.5f;
     if (key == GLFW_KEY_A) viewX -= 0.5f;
     if (key == GLFW_KEY_D) viewX += 0.5f;
 
-    // RESET (ESPACIO)
     if (key == GLFW_KEY_SPACE) {
         viewRotationX = 15.0f;
         viewRotationY = 45.0f;
@@ -154,7 +217,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         std::cout << "Vista reseteada\n";
     }
 
-    // AYUDA (H)
     if (key == GLFW_KEY_H) {
         ctx.showHelp = !ctx.showHelp;
     }
@@ -170,7 +232,6 @@ void renderViewerState(GLFWwindow* window) {
     if (Renderer::getCurrentModelNumber() != selectedModelNum || !Renderer::getLoadedModel()) {
         Renderer::loadModelByNumber(selectedModelNum);
         
-        // Ajustar el zoom recomendado del modelo
         Model* loaded = Renderer::getLoadedModel();
         if (loaded) {
             viewZoom = loaded->getRecommendedZoom();
@@ -227,11 +288,99 @@ void renderViewerState(GLFWwindow* window) {
     // Desactivar depth test para dibujar el HUD plano encima
     glDisable(GL_DEPTH_TEST);
 
-    // 3. Renderizar HUD de interfaz de usuario encima usando UIRenderer
     float w = (float)ctx.windowWidth;
     float h = (float)ctx.windowHeight;
     float cx = w / 2.0f;
 
+    // 3. RENDERIZAR HOTSPOTS 3D (Miras holográficas interactivas)
+    // Solo se muestran si el avión está completo (no en modo desarmado por piezas)
+    if (!Renderer::isPartsModeActive() && ctx.selectedPlane >= 0 && ctx.selectedPlane < (int)planeHotspots.size()) {
+        const auto& hotspots = planeHotspots[ctx.selectedPlane];
+        int hoveredIdx = -1;
+        float hoveredX = 0.0f;
+        float hoveredY = 0.0f;
+
+        // Calcular posición 2D de cada Hotspot 3D
+        for (size_t i = 0; i < hotspots.size(); ++i) {
+            float sx, sy;
+            if (project3DToScreen(hotspots[i].localPos, view, projection, ctx.windowWidth, ctx.windowHeight, sx, sy)) {
+                // Comprobar distancia al puntero del mouse
+                float dist = std::sqrt(std::pow(ctx.mouseX - sx, 2) + std::pow(ctx.mouseY - sy, 2));
+                bool isHovered = (dist < 18.0f);
+
+                // Amarillo neón si está seleccionado, cian neón si está inactivo
+                UIColor color = isHovered ? UIColor{1.0f, 0.85f, 0.0f, 1.0f} : UIColor{0.0f, 1.0f, 0.85f, 1.0f};
+
+                // Dibujar mira táctica (círculo/borde cuadrado y punto central)
+                UIRenderer::drawBorder(sx - 7.0f, sy - 7.0f, 14.0f, 14.0f, 2.0f, color);
+                UIRenderer::drawQuad(sx - 2.0f, sy - 2.0f, 4.0f, 4.0f, color);
+
+                if (isHovered) {
+                    hoveredIdx = (int)i;
+                    hoveredX = sx;
+                    hoveredY = sy;
+                }
+            }
+        }
+
+        // Si el cursor está encima de un hotspot, dibujar su tarjeta informativa (holograma)
+        if (hoveredIdx != -1) {
+            const auto& hp = hotspots[hoveredIdx];
+            UIColor colorYellow{1.0f, 0.85f, 0.0f, 1.0f};
+            UIColor colorCyan{0.0f, 1.0f, 0.85f, 1.0f};
+
+            // Dibujar línea conectora de diagnóstico
+            UIRenderer::drawQuad(hoveredX, hoveredY - 1.0f, 30.0f, 2.0f, colorYellow);
+            UIRenderer::drawQuad(hoveredX + 30.0f - 2.0f, hoveredY - 3.0f, 6.0f, 6.0f, colorYellow);
+
+            // Ajustar posición del panel flotante
+            float boxW = 240.0f;
+            float boxH = 90.0f;
+            float boxX = hoveredX + 30.0f;
+            float boxY = hoveredY - boxH / 2.0f;
+
+            // Invertir lado si choca con el borde derecho de la pantalla
+            if (boxX + boxW > w) {
+                boxX = hoveredX - 30.0f - boxW;
+                UIRenderer::drawQuad(hoveredX - 30.0f, hoveredY - 1.0f, 30.0f, 2.0f, colorYellow);
+                UIRenderer::drawQuad(hoveredX - 30.0f - 4.0f, hoveredY - 3.0f, 6.0f, 6.0f, colorYellow);
+            }
+            if (boxY < 10.0f) boxY = 10.0f;
+            if (boxY + boxH > h - 10.0f) boxY = h - boxH - 10.0f;
+
+            // Fondo translúcido azul oscuro militar (cristal holográfico)
+            UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{0.02f, 0.04f, 0.07f, 0.88f});
+            UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, colorCyan);
+
+            // Decoraciones/Esquineros estilo HUD táctico
+            UIRenderer::drawQuad(boxX, boxY, 8.0f, 3.0f, colorYellow);
+            UIRenderer::drawQuad(boxX, boxY, 3.0f, 8.0f, colorYellow);
+            UIRenderer::drawQuad(boxX + boxW - 8.0f, boxY, 8.0f, 3.0f, colorYellow);
+            UIRenderer::drawQuad(boxX + boxW - 3.0f, boxY, 3.0f, 8.0f, colorYellow);
+
+            // Título de la pieza
+            UIRenderer::drawText(boxX + 12.0f, boxY + 12.0f, hp.title.c_str(), 1.3f, colorYellow);
+
+            // Formatear descripción corta en dos líneas seguras
+            std::string desc = hp.description;
+            if (desc.length() > 30) {
+                std::string desc1 = desc.substr(0, 30);
+                std::string desc2 = desc.substr(30);
+                size_t space = desc1.find_last_of(" ");
+                if (space != std::string::npos && space > 15) {
+                    desc1 = desc.substr(0, space);
+                    desc2 = desc.substr(space + 1);
+                }
+                UIRenderer::drawText(boxX + 12.0f, boxY + 36.0f, desc1.c_str(), 1.0f, UIColor{0.8f, 0.9f, 1.0f, 1.0f});
+                if (desc2.length() > 30) desc2 = desc2.substr(0, 27) + "...";
+                UIRenderer::drawText(boxX + 12.0f, boxY + 54.0f, desc2.c_str(), 1.0f, UIColor{0.8f, 0.9f, 1.0f, 1.0f});
+            } else {
+                UIRenderer::drawText(boxX + 12.0f, boxY + 36.0f, desc.c_str(), 1.0f, UIColor{0.8f, 0.9f, 1.0f, 1.0f});
+            }
+        }
+    }
+
+    // 4. Renderizar HUD de interfaz de usuario encima usando UIRenderer
     // Nombre del modelo o pieza
     if (Renderer::isPartsModeActive()) {
         std::string partName = Renderer::getCurrentPartName();
