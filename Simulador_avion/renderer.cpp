@@ -272,12 +272,6 @@ namespace Renderer {
     // MODO PIEZAS
     // ============================================================
     void togglePartsMode() {
-        if (currentModelNumber == 4) {
-            std::cout << "[Info] El MiG-29 no posee piezas desarmadas cargadas actualmente.\n";
-            partsModeActive = false;
-            return;
-        }
-
         partsModeActive = !partsModeActive;
         std::cout << "Modo piezas: " << (partsModeActive ? "ACTIVADO" : "DESACTIVADO") << std::endl;
 

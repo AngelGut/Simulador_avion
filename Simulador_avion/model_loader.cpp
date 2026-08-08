@@ -215,6 +215,11 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        std::string meshName = mesh->mName.C_Str();
+        if (meshName == "Plane_0") {
+            std::cout << "[Info] Omitiendo malla de suelo: " << meshName << std::endl;
+            continue;
+        }
         processMesh(mesh, scene, currentTransform, modelDir);
     }
 
