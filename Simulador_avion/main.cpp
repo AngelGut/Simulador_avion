@@ -267,15 +267,15 @@ void printModelMenu() {
 
 void updateWindowTitle() {
     if (!window) return;
-    
+
     std::string title = "Simulador de Avion - ";
     int modelNum = Renderer::getCurrentModelNumber();
     std::string modelName = "";
     switch (modelNum) {
-        case 1: modelName = NAME_1; break;
-        case 2: modelName = NAME_2; break;
-        case 3: modelName = NAME_3; break;
-        case 4: modelName = NAME_4; break;
+    case 1: modelName = NAME_1; break;
+    case 2: modelName = NAME_2; break;
+    case 3: modelName = NAME_3; break;
+    case 4: modelName = NAME_4; break;
     }
     title += modelName;
 
@@ -285,13 +285,15 @@ void updateWindowTitle() {
         int total = Renderer::getNumParts();
         if (total > 0) {
             title += Renderer::getCurrentPartName() + " (" + std::to_string(currentIdx + 1) + "/" + std::to_string(total) + ")";
-        } else {
+        }
+        else {
             title += "Sin piezas";
         }
-    } else {
+    }
+    else {
         title += " | [VISTA COMPLETA]";
     }
-    
+
     glfwSetWindowTitle(window, title.c_str());
 }
 
@@ -313,7 +315,7 @@ void render() {
 
     // Cámara Orbital (Yaw/Pitch/Radius)
     float radius = std::abs(viewZoom);
-    
+
     // Limitar Pitch para evitar giro de 360 grados vertical (polar lock)
     if (viewRotationX > 89.0f) viewRotationX = 89.0f;
     if (viewRotationX < -89.0f) viewRotationX = -89.0f;

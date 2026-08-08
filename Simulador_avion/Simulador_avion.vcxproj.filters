@@ -42,7 +42,10 @@
     <ClCompile Include="model_loader.cpp">
       <Filter>scr</Filter>
     </ClCompile>
-    <ClCompile Include="model_manager_auto.cpp">
+    <ClCompile Include="shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Downloads\Import\Import\Import\.c\glad.c">
       <Filter>scr</Filter>
     </ClCompile>
   </ItemGroup>
@@ -61,6 +64,15 @@
     </ClInclude>
     <ClInclude Include="model_config.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
