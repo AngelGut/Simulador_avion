@@ -44,7 +44,7 @@ struct AppContext {
     float totalTime = 0.0f;
 
     // --- Carga en segundo plano ---
-    std::vector<Model> loadedModels;
+    std::vector<CPU::Model> loadedModels;
     std::atomic<int> modelsLoadedCount{ 0 };
     std::atomic<bool> loadingDone{ false };
 

@@ -3,19 +3,23 @@
 #include <string>
 #include <glm/glm.hpp>
 
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-};
+namespace CPU {
 
-struct MeshData {
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-};
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+    };
 
-struct Model {
-    std::vector<MeshData> meshes;
-    bool loaded = false;
-};
+    struct MeshData {
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+    };
 
-bool loadModel(const std::string& path, Model& outModel);
+    struct Model {
+        std::vector<MeshData> meshes;
+        bool loaded = false;
+    };
+
+    bool loadModel(const std::string& path, Model& outModel);
+
+} // namespace CPU

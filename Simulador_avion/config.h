@@ -7,10 +7,10 @@
 #define CONFIG_H
 
 // RUTAS DE MODELOS POR AERONAVE
-#define MODEL_1 "../modelos 3d/a-10_thunderbolt_ii.glb"
-#define MODEL_2 "../modelos 3d/b-24_liberator.glb"
-#define MODEL_3 "../modelos 3d/boeing-787-_dreamliner.glb"
-#define MODEL_4 "../modelos 3d/mig_29_9-13.glb"
+#define MODEL_1 "../models/a-10_thunderbolt_ii.glb"
+#define MODEL_2 "../models/b-24_liberator.glb"
+#define MODEL_3 "../models/boeing-787-_dreamliner.glb"
+#define MODEL_4 "../models/mig_29_9-13.glb"
 
 // NOMBRES DE AERONAVES (para mostrar en consola)
 #define NAME_1 "A-10 Thunderbolt II"

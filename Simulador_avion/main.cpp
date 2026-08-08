@@ -1,72 +1,71 @@
 // ============================================================
-// ARCHIVO: main.cpp - GLFW + Shaders (Fase B Moderna)
+// ARCHIVO: main.cpp - GLFW + Shaders + Menú Principal (Fusión Fiel)
 // DESCRIPCION: Punto de entrada para OpenGL 3.3+ moderno
 // ============================================================
-/*
-#include <GL/glew.h>
+
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <cmath>
+
+#include "app_state.h"
+#include "ui_renderer.h"
+#include "screens.h"
+#include "asset_loader.h"
 #include "renderer.h"
 #include "shader.h"
 #include "model_loader.h"
 #include "config.h"
 
-// ============================================================
-// VARIABLES GLOBALES
-// ============================================================
+// Contexto global del menú
+AppContext ctx;
 
-GLFWwindow* window = nullptr;
+// Estado de cámara y visor original
 Shader* shaderProgram = nullptr;
-
-// Estado de cámara
-glm::vec3 cameraPos(0.0f, 0.0f, 4.0f);
-glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-
 float viewRotationX = 15.0f; // Pitch (elevación orbital inicial)
 float viewRotationY = 45.0f; // Yaw (rotación orbital inicial)
-float viewRotationZ = 0.0f;  // Roll (no se usa en órbita)
-float viewZoom = -5.0f;      // Radio de órbita (negativo)
-float viewX = 0.0f;          // Paneo horizontal
-float viewY = 0.0f;          // Paneo vertical
+float viewRotationZ = 0.0f;  // Roll (no usado)
+float viewZoom = -5.0f;      // Radio orbital (negativo)
+float viewX = 0.0f;          // Paneo X
+float viewY = 0.0f;          // Paneo Y
 
-int windowWidth = 1024;
-int windowHeight = 768;
-
-bool showHelp = false;
-
-// Variables para control de mouse
 bool leftMouseButtonPressed = false;
 double lastMouseX = 0.0;
 double lastMouseY = 0.0;
 
 // ============================================================
-// CALLBACKS GLFW
+// CALLBACKS DE INTERACCIÓN
 // ============================================================
 
-void windowSizeCallback(GLFWwindow* window, int width, int height) {
-    windowWidth = width;
-    windowHeight = height;
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+    ctx.windowWidth = width;
+    ctx.windowHeight = height;
+    UIRenderer::resize(width, height);
 }
 
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    // Registrar evento de click para el Menú
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS) {
-            leftMouseButtonPressed = true;
-            glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
-        } else if (action == GLFW_RELEASE) {
-            leftMouseButtonPressed = false;
+        ctx.mousePressed = (action == GLFW_PRESS);
+        
+        // Registrar para rotación de cámara en el visor
+        if (ctx.state == AppState::VIEWER) {
+            if (action == GLFW_PRESS) {
+                leftMouseButtonPressed = true;
+                glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+            } else if (action == GLFW_RELEASE) {
+                leftMouseButtonPressed = false;
+            }
         }
     }
 }
 
 void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
-    if (leftMouseButtonPressed) {
+    if (ctx.state == AppState::VIEWER && leftMouseButtonPressed) {
         double deltaX = xpos - lastMouseX;
         double deltaY = ypos - lastMouseY;
 
@@ -80,28 +79,15 @@ void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    float zoomSensitivity = 0.5f;
-    viewZoom += (float)yoffset * zoomSensitivity;
-    if (viewZoom > -0.5f) viewZoom = -0.5f;
+    if (ctx.state == AppState::VIEWER) {
+        float zoomSensitivity = 0.5f;
+        viewZoom += (float)yoffset * zoomSensitivity;
+        if (viewZoom > -0.5f) viewZoom = -0.5f;
+    }
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (action != GLFW_PRESS) return;
-
-    Model* model = Renderer::getLoadedModel();
-
-    // Seleccionar modelo (1-4)
-    if (key >= GLFW_KEY_1 && key <= GLFW_KEY_4) {
-        int modelNumber = key - GLFW_KEY_1 + 1;
-        Renderer::loadModelByNumber(modelNumber);
-        
-        // Restablecer zoom para el nuevo modelo
-        Model* newModel = Renderer::getLoadedModel();
-        if (newModel) {
-            viewZoom = newModel->getRecommendedZoom();
-        }
-        return;
-    }
+    if (action != GLFW_PRESS || ctx.state != AppState::VIEWER) return;
 
     // Activar / desactivar modo piezas (P)
     if (key == GLFW_KEY_P) {
@@ -131,17 +117,13 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         return;
     }
 
-    // Rotación PITCH (I/K)
+    // Rotación PITCH continua con I/K
     if (key == GLFW_KEY_I) viewRotationX += 10.0f;
     if (key == GLFW_KEY_K) viewRotationX -= 10.0f;
 
-    // Rotación YAW (J/L)
+    // Rotación YAW continua con J/L
     if (key == GLFW_KEY_J) viewRotationY -= 10.0f;
     if (key == GLFW_KEY_L) viewRotationY += 10.0f;
-
-    // Rotación ROLL (R/T)
-    if (key == GLFW_KEY_R) viewRotationZ -= 10.0f;
-    if (key == GLFW_KEY_T) viewRotationZ += 10.0f;
 
     // ZOOM (Q/E)
     if (key == GLFW_KEY_Q) viewZoom += 0.5f;
@@ -174,149 +156,41 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
     // AYUDA (H)
     if (key == GLFW_KEY_H) {
-        showHelp = !showHelp;
-        Renderer::printHelp();
-    }
-
-    // SALIR (ESC)
-    if (key == GLFW_KEY_ESCAPE) {
-        glfwSetWindowShouldClose(window, true);
+        ctx.showHelp = !ctx.showHelp;
     }
 }
 
 // ============================================================
-// INICIALIZACIÓN
+// VISOR DE AVIONES CON SOPORTE COMPLETO DE TEXTURAS Y HANGAR
 // ============================================================
 
-bool initGLFW() {
-    if (!glfwInit()) {
-        std::cerr << "Error: No se pudo inicializar GLFW\n";
-        return false;
+void renderViewerState(GLFWwindow* window) {
+    // 1. Cargar el avión dinámicamente si cambia
+    int selectedModelNum = ctx.selectedPlane + 1; // 1-4
+    if (Renderer::getCurrentModelNumber() != selectedModelNum || !Renderer::getLoadedModel()) {
+        Renderer::loadModelByNumber(selectedModelNum);
+        
+        // Ajustar el zoom recomendado del modelo
+        Model* loaded = Renderer::getLoadedModel();
+        if (loaded) {
+            viewZoom = loaded->getRecommendedZoom();
+        }
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    window = glfwCreateWindow(windowWidth, windowHeight, "Boeing 737 Visualizer 3D - Fase B Moderna", NULL, NULL);
-    if (!window) {
-        std::cerr << "Error: No se pudo crear ventana GLFW\n";
-        glfwTerminate();
-        return false;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, windowSizeCallback);
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    glfwSetCursorPosCallback(window, cursorPosCallback);
-    glfwSetScrollCallback(window, scrollCallback);
-    glfwSwapInterval(1);
-
-    return true;
-}
-
-bool initGLEW() {
-    glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
-        return false;
-    }
-
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-
-    return true;
-}
-
-bool initOpenGL() {
+    // 2. Limpieza de pantalla y profundidad para 3D
     glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    // Cargar shaders
-    try {
-        shaderProgram = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-        std::cout << "✓ Shaders cargados exitosamente\n";
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Error al cargar shaders: " << e.what() << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-void printModelMenu() {
-    std::cout << "\n"
-        << "==================================================\n"
-        << "    SELECCIONA UNA AERONAVE (1-4)\n"
-        << "==================================================\n"
-        << " 1  " << NAME_1 << "\n"
-        << " 2  " << NAME_2 << "\n"
-        << " 3  " << NAME_3 << "\n"
-        << " 4  " << NAME_4 << "\n"
-        << "==================================================\n"
-        << "\n";
-}
-
-void updateWindowTitle() {
-    if (!window) return;
-
-    std::string title = "Simulador de Avion - ";
-    int modelNum = Renderer::getCurrentModelNumber();
-    std::string modelName = "";
-    switch (modelNum) {
-    case 1: modelName = NAME_1; break;
-    case 2: modelName = NAME_2; break;
-    case 3: modelName = NAME_3; break;
-    case 4: modelName = NAME_4; break;
-    }
-    title += modelName;
-
-    if (Renderer::isPartsModeActive()) {
-        title += " | [MODO PIEZAS] ";
-        int currentIdx = Renderer::getCurrentPartIndex();
-        int total = Renderer::getNumParts();
-        if (total > 0) {
-            title += Renderer::getCurrentPartName() + " (" + std::to_string(currentIdx + 1) + "/" + std::to_string(total) + ")";
-        }
-        else {
-            title += "Sin piezas";
-        }
-    }
-    else {
-        title += " | [VISTA COMPLETA]";
-    }
-
-    glfwSetWindowTitle(window, title.c_str());
-}
-
-// ============================================================
-// LOOP PRINCIPAL
-// ============================================================
-
-void render() {
-    updateWindowTitle();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     if (!shaderProgram) return;
-
     shaderProgram->use();
 
-    // Matrices de transformación
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-        (float)windowWidth / (float)windowHeight, 0.1f, 500.0f);
+    // Matrices de proyección y vista orbital
+    float aspect = (float)ctx.windowWidth / (float)ctx.windowHeight;
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 500.0f);
 
-    // Cámara Orbital (Yaw/Pitch/Radius)
     float radius = std::abs(viewZoom);
-
-    // Limitar Pitch para evitar giro de 360 grados vertical (polar lock)
     if (viewRotationX > 89.0f) viewRotationX = 89.0f;
     if (viewRotationX < -89.0f) viewRotationX = -89.0f;
 
@@ -324,34 +198,82 @@ void render() {
     float camY = radius * sin(glm::radians(viewRotationX));
     float camZ = radius * cos(glm::radians(viewRotationX)) * cos(glm::radians(viewRotationY));
 
-    // Altura real considerando el desplazamiento vertical (pan)
     float actualCamY = camY + viewY;
 
-    // Vista orbital de cámara
     glm::mat4 view = glm::lookAt(
         glm::vec3(camX + viewX, actualCamY, camZ),
         glm::vec3(viewX, viewY, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
 
-    // El modelo se queda fijo sobre el suelo
     glm::mat4 model = glm::mat4(1.0f);
 
-    // Pasar matrices al shader
+    // Pasar matrices al Shader
     shaderProgram->setMat4("uModel", model);
     shaderProgram->setMat4("uView", view);
     shaderProgram->setMat4("uProjection", projection);
 
-    // Parámetros de iluminación (luz cenital fija en el hangar)
-    shaderProgram->setVec3("uLightPos", glm::vec3(0.0f, 5.0f, 0.0f));
+    // Configurar luces del hangar
+    shaderProgram->setVec3("uLightPos", glm::vec3(0.0f, 5.0f, 0.0f)); // Luz cenital
     shaderProgram->setVec3("uViewPos", glm::vec3(camX + viewX, actualCamY, camZ));
     shaderProgram->setVec3("uLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // Dibujar el Hangar (piso + rejilla) pasándole la altura de la cámara
+    // Dibujar hangar
     Renderer::drawHangar(actualCamY);
 
-    // Dibujar avión/pieza
+    // Dibujar avión
     Renderer::drawLayer(1);
+
+    // Desactivar depth test para dibujar el HUD plano encima
+    glDisable(GL_DEPTH_TEST);
+
+    // 3. Renderizar HUD de interfaz de usuario encima usando UIRenderer
+    float w = (float)ctx.windowWidth;
+    float h = (float)ctx.windowHeight;
+    float cx = w / 2.0f;
+
+    // Nombre del modelo o pieza
+    if (Renderer::isPartsModeActive()) {
+        std::string partName = Renderer::getCurrentPartName();
+        int currentIdx = Renderer::getCurrentPartIndex();
+        int total = Renderer::getNumParts();
+        std::string partHUD = partName + " (" + std::to_string(currentIdx + 1) + "/" + std::to_string(total) + ")";
+        UIRenderer::drawText(cx - 150.0f, 24.0f, partHUD.c_str(), 2.0f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
+    } else {
+        UIRenderer::drawText(cx - 150.0f, 24.0f, ctx.planes[ctx.selectedPlane].name.c_str(), 2.0f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
+    }
+
+    // Botón Volver
+    float backW = 140.0f, backH = 44.0f;
+    bool backClicked = UIRenderer::drawButton(
+        24.0f, h - 68.0f, backW, backH, "Volver",
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed,
+        UIColor{ 0.3f, 0.3f, 0.35f, 1.0f }, UIColor{ 0.4f, 0.4f, 0.46f, 1.0f }
+    );
+    if (backClicked) {
+        ctx.state = AppState::MENU;
+        if (Renderer::isPartsModeActive()) {
+            Renderer::togglePartsMode();
+        }
+    }
+
+    // Dibujar ayuda
+    if (ctx.showHelp) {
+        float boxW = 320.0f, boxH = 190.0f;
+        float boxX = w - boxW - 24.0f, boxY = 24.0f;
+        UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{ 0.05f, 0.05f, 0.08f, 0.85f });
+        UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, UIColor{ 0.3f, 0.3f, 0.3f, 1.0f });
+
+        float lineY = boxY + 16.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "Controles:", 1.4f, UIColor{1, 1, 1, 1}); lineY += 26.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "Arrastrar Click - Rotar", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "Scroll / Q/E - Zoom", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "WASD - Paneo", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "P - Modo Piezas", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
+        UIRenderer::drawText(boxX + 16.0f, lineY, "<- / -> - Cambiar Pieza", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f});
+    } else {
+        UIRenderer::drawText(cx - 150.0f, h - 30.0f, "Presiona H para ver los controles", 1.3f, UIColor{0.5f, 0.5f, 0.5f, 1.0f});
+    }
 }
 
 // ============================================================
@@ -359,107 +281,6 @@ void render() {
 // ============================================================
 
 int main(int argc, char** argv) {
-    std::cout << "\n"
-        << "====================================================\n"
-        << "   Boeing 737 Visualizer 3D v2.1\n"
-        << "   Con GLFW + Shaders OpenGL 3.3+\n"
-        << "   Presiona H para ver controles\n"
-        << "====================================================\n"
-        << "\n";
-
-    // Inicializar GLFW
-    if (!initGLFW()) {
-        return -1;
-    }
-
-    // Inicializar GLEW
-    if (!initGLEW()) {
-        glfwTerminate();
-        return -1;
-    }
-
-    // Inicializar OpenGL
-    if (!initOpenGL()) {
-        glfwTerminate();
-        return -1;
-    }
-
-    // Cargar modelo
-    printModelMenu();
-
-    int selectedModel = 0;
-    std::cout << "Ingresa el número de la aeronave (1-4): ";
-    std::cin >> selectedModel;
-
-    if (selectedModel >= 1 && selectedModel <= 4) {
-        Renderer::loadModelByNumber(selectedModel);
-    }
-    else {
-        std::cout << "Opción inválida. Cargando modelo por defecto (1)...\n";
-        Renderer::loadModelByNumber(1);
-    }
-
-    // Ajustar zoom recomendado para el modelo inicial
-    Model* initialModel = Renderer::getLoadedModel();
-    if (initialModel) {
-        viewZoom = initialModel->getRecommendedZoom();
-    }
-
-    Renderer::printHelp();
-
-    // Loop principal
-    double lastTime = glfwGetTime();
-    int frameCount = 0;
-
-    while (!glfwWindowShouldClose(window)) {
-        render();
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-
-        // FPS counter
-        double currentTime = glfwGetTime();
-        frameCount++;
-        if (currentTime - lastTime >= 1.0) {
-            std::cout << "FPS: " << frameCount << std::endl;
-            frameCount = 0;
-            lastTime = currentTime;
-        }
-    }
-
-    // Limpiar
-    Renderer::cleanupHangar();
-    delete shaderProgram;
-    glfwDestroyWindow(window);
-    glfwTerminate();
-
-    return 0;
-} */
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
-#include "app_state.h"
-#include "ui_renderer.h"
-#include "screens.h"
-#include "asset_loader.h"
-#include "model_renderer.h"
-
-AppContext ctx;
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-    ctx.windowWidth = width;
-    ctx.windowHeight = height;
-    UIRenderer::resize(width, height);
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        ctx.mousePressed = (action == GLFW_PRESS);
-    }
-}
-
-int main() {
     if (!glfwInit()) {
         std::cout << "Error iniciando GLFW\n";
         return -1;
@@ -485,10 +306,24 @@ int main() {
     glViewport(0, 0, ctx.windowWidth, ctx.windowHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+    glfwSetKeyCallback(window, keyCallback);
 
     UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
     ModelRenderer::init();
+    
+    // Cargar shaders de texturas original
+    try {
+        shaderProgram = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+        std::cout << "✓ Shader de texturas e iluminacion cargado exitosamente\n";
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error shaders: " << e.what() << std::endl;
+        return -1;
+    }
 
+    // Iniciar carga dinamica de aviones del menu
     startAssetLoading(ctx);
 
     ctx.lastFrameTime = (float)glfwGetTime();
@@ -515,7 +350,8 @@ int main() {
             Screens::renderMenu(ctx);
             break;
         case AppState::VIEWER:
-            Screens::renderViewer(ctx, window);
+            // Dibujar la escena completa usando nuestro visualizador
+            renderViewerState(window);
             break;
         }
 
@@ -528,7 +364,11 @@ int main() {
             glfwSetWindowShouldClose(window, true);
     }
 
+    // Limpieza final
+    Renderer::cleanupHangar();
+    delete shaderProgram;
     UIRenderer::shutdown();
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
