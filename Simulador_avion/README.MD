@@ -3,7 +3,8 @@
 **Estado:** ✅ Fase B Completada & Optimizada  
 **Tecnología:** OpenGL 3.3 Core Profile | GLFW | GLAD | Assimp | GLM | Miniaudio  
 
-Una aplicación interactiva 3D en C++ moderna que permite la visualización, exploración técnica y desensamblado interactivo de 4 modelos de aeronaves detallados en un hangar digital con iluminación, música de fondo interactiva y una interfaz HUD avanzada.
+Una aplicación interactiva 3D en C++ moderna que permite la visualización, exploración técnica y desensamblado interactivo de 4 modelos de aeronaves detallados en un 
+hangar digital con iluminación, música de fondo interactiva y una interfaz HUD avanzada.
 
 ---
 
@@ -87,10 +88,3 @@ Simulador_avion/
 ```
 
 ---
-
-## 🛠️ Compilación y Ejecución en Visual Studio 2022
-
-1. Abre `Simulador_avion.slnx` en Visual Studio 2022.
-2. Asegúrate de configurar la solución en **Debug/Release** y plataforma **x64**.
-3. Compila presionando **Ctrl + Shift + B**. Las dependencias (`glfw3.dll`, `assimp-vc145-mt.dll`, etc.) se copiarán automáticamente a la carpeta de salida gracias al post-build script.
-4. Presiona **F5** para ejecutar.
