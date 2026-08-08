@@ -22,6 +22,7 @@
 #include "shader.h"
 #include "model_loader.h"
 #include "config.h"
+#include "audio_manager.h"
 
 // Contexto global del menú
 AppContext ctx;
@@ -248,9 +249,12 @@ void drawGeneralStatsPanel(int planeIdx) {
 // ============================================================
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    if (width <= 0) width = 1;
+    if (height <= 0) height = 1;
     glViewport(0, 0, width, height);
     ctx.windowWidth = width;
     ctx.windowHeight = height;
+
     UIRenderer::resize(width, height);
 }
 
@@ -395,7 +399,7 @@ void renderViewerState(GLFWwindow* window) {
     shaderProgram->use();
 
     // Matrices de proyección y vista orbital
-    float aspect = (float)ctx.windowWidth / (float)ctx.windowHeight;
+    float aspect = (ctx.windowHeight > 0) ? ((float)ctx.windowWidth / (float)ctx.windowHeight) : 1.0f;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 500.0f);
 
     float radius = std::abs(viewZoom);
@@ -768,6 +772,9 @@ int main(int argc, char** argv) {
     UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
     ModelRenderer::init();
     
+    // Iniciar reproduccion de musica de fondo (amphitrite.mp3)
+    AudioManager::init();
+
     // Cargar shaders de texturas original
     try {
         shaderProgram = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -783,6 +790,8 @@ int main(int argc, char** argv) {
 
     ctx.lastFrameTime = (float)glfwGetTime();
 
+    static bool mKeyWasPressed = false;
+
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
         ctx.deltaTime = currentTime - ctx.lastFrameTime;
@@ -791,8 +800,29 @@ int main(int argc, char** argv) {
 
         glfwGetCursorPos(window, &ctx.mouseX, &ctx.mouseY);
 
+        // Control de silencio de musica por teclado (Tecla M)
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+            if (!mKeyWasPressed) {
+                AudioManager::toggleMute();
+                mKeyWasPressed = true;
+            }
+        } else {
+            mKeyWasPressed = false;
+        }
+
         glClearColor(0.09f, 0.09f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // Control de música según cambio de estado (Ejecutar SOLO UNA VEZ al cambiar de pantalla)
+        static AppState lastAudioState = AppState::LOADING;
+        if (ctx.state != lastAudioState) {
+            if (ctx.state == AppState::MENU || ctx.state == AppState::WELCOME || ctx.state == AppState::LOADING) {
+                AudioManager::resumeMenuMusic();
+            } else if (ctx.state == AppState::VIEWER) {
+                AudioManager::pauseMenuMusic();
+            }
+            lastAudioState = ctx.state;
+        }
 
         switch (ctx.state) {
         case AppState::LOADING:
@@ -820,6 +850,7 @@ int main(int argc, char** argv) {
     }
 
     // Limpieza final
+    AudioManager::stop();
     Renderer::cleanupHangar();
     delete shaderProgram;
     UIRenderer::shutdown();

@@ -1,6 +1,7 @@
 #include "screens.h"
 #include "ui_renderer.h"
 #include "model_renderer.h"
+#include "audio_manager.h"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -82,8 +83,10 @@ void Screens::renderViewer(AppContext& ctx, GLFWwindow* window) {
     glm::vec3 eye = ctx.cameraTarget + eyeOffset;
     glm::mat4 view = glm::lookAt(eye, ctx.cameraTarget, glm::vec3(0, 1, 0));
 
-    float aspect = w / h;
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, model.radius * 0.01f, model.radius * 20.0f);
+    float aspect = (h > 0.0f) ? (w / h) : 1.0f;
+    float nearPlane = (model.radius > 0.001f) ? (model.radius * 0.01f) : 0.1f;
+    float farPlane = (model.radius > 0.001f) ? (model.radius * 20.0f) : 500.0f;
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, nearPlane, farPlane);
 
     // --- Render 3D a pantalla completa ---
     ModelRenderer::renderModel(model, view, proj, 0, 0, w, h, ctx.windowWidth, ctx.windowHeight);
@@ -189,6 +192,18 @@ void Screens::renderWelcome(AppContext& ctx) {
     );
     if (clicked) ctx.state = AppState::MENU;
 
+    // Botón de audio con icono de bocina (Esquina superior derecha)
+    float audioW = 90.0f, audioH = 44.0f;
+    float audioX = w - audioW - 24.0f;
+    float audioY = 24.0f;
+
+    bool audioClicked = UIRenderer::drawAudioButton(
+        audioX, audioY, audioW, audioH,
+        AudioManager::isMuted(),
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed
+    );
+    if (audioClicked) AudioManager::toggleMute();
+
     std::string uniText = "Universidad Central Del Este";
     float uniWidth = UIRenderer::getTextWidth(uniText, 1.4f);
     UIRenderer::drawText(cx - uniWidth / 2.0f, h - 36.0f, uniText, 1.4f, grayDim);
@@ -206,6 +221,18 @@ void Screens::renderMenu(AppContext& ctx) {
 
     // Fondo plano (sin gradiente, versión simple)
     UIRenderer::drawQuad(0, 0, w, h, bg);
+
+    // Botón de audio con icono de bocina (Esquina superior derecha del Menú)
+    float audioW = 90.0f, audioH = 44.0f;
+    float audioX = w - audioW - 24.0f;
+    float audioY = 24.0f;
+
+    bool audioClicked = UIRenderer::drawAudioButton(
+        audioX, audioY, audioW, audioH,
+        AudioManager::isMuted(),
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed
+    );
+    if (audioClicked) AudioManager::toggleMute();
 
     drawCentered("Selecciona un avion", cx, 70.0f, 3.0f, white);
     drawCentered("Elige un modelo para comenzar la exploracion", cx, 115.0f, 1.5f, gray);

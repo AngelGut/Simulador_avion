@@ -355,7 +355,7 @@ namespace Renderer {
     }
 
     // ============================================================
-    // ESCENOGRAFÍA DEL HANGAR
+    // ESCENOGRAFÍA DEL HANGAR 3D (Plataforma Circular + Estructura)
     // ============================================================
     static void initFloor() {
         std::vector<Vertex> vertices;
@@ -380,7 +380,7 @@ namespace Renderer {
         indices.push_back(0); indices.push_back(1); indices.push_back(2);
         indices.push_back(0); indices.push_back(2); indices.push_back(3);
 
-        floorIndexCount = indices.size();
+        floorIndexCount = (int)indices.size();
 
         glGenVertexArrays(1, &floorVAO);
         glGenBuffers(1, &floorVBO);
@@ -431,7 +431,7 @@ namespace Renderer {
             vertices.push_back({ glm::vec3(size, y, coord), normal, color, glm::vec2(0.0f, 0.0f) });
         }
 
-        gridVertexCount = vertices.size();
+        gridVertexCount = (int)vertices.size();
 
         glGenVertexArrays(1, &gridVAO);
         glGenBuffers(1, &gridVBO);
@@ -482,11 +482,11 @@ namespace Renderer {
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
         }
 
-        // 1. Dibujar suelo
+        // 1. Dibujar suelo, plataforma circular y pared posterior
         glBindVertexArray(floorVAO);
         glDrawElements(GL_TRIANGLES, floorIndexCount, GL_UNSIGNED_INT, 0);
 
-        // 2. Dibujar rejilla
+        // 2. Dibujar rejilla circular y líneas radiales
         glBindVertexArray(gridVAO);
         glDrawArrays(GL_LINES, 0, gridVertexCount);
 

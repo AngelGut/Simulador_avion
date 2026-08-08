@@ -185,9 +185,8 @@ bool UIRenderer::drawButton(float x, float y, float w, float h,
     bool hovered = (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
     drawQuad(x, y, w, h, hovered ? hoverColor : baseColor);
 
-    // Centrar texto aproximadamente (stb_easy_font: ~8px alto, ~6-7px ancho por char a scale=1)
     float textScale = 2.0f;
-    float approxTextWidth = label.size() * 7.0f * textScale;
+    float approxTextWidth = getTextWidth(label, textScale);
     float textX = x + (w - approxTextWidth) / 2.0f;
     float textY = y + (h - 8.0f * textScale) / 2.0f;
     drawText(textX, textY, label, textScale, UIColor{ 1,1,1,1 });
