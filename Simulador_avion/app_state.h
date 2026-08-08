@@ -32,8 +32,8 @@ struct AppContext {
 
     std::vector<PlaneOption> planes = {
         { "A-10 Thunderbolt II",   "../models/a-10_thunderbolt_ii.glb" },
+        { "B-24 Liberator",        "../models/b-24_liberator.glb" },
         { "Boeing 787 Dreamliner", "../models/boeing-787-_dreamliner.glb" },
-        { "B-24 Liberator",                "../models/b-24_liberator.glb" },
         { "MiG-29",                "../models/mig_29_9-13.glb" }
     };
 
