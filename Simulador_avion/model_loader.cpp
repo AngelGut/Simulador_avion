@@ -139,8 +139,7 @@ bool Model::loadModel(const char* path) {
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
-        aiProcess_FlipUVs |
-        aiProcess_CalcTangentSpace);
+        aiProcess_FlipUVs);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cerr << "Error al cargar modelo: " << importer.GetErrorString() << std::endl;

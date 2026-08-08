@@ -43,6 +43,13 @@ namespace Renderer {
     // ========== UTILIDADES ==========
     void printHelp();
 
+    // ========== PRECARGA DE MODELOS ==========
+    void preloadModel(int modelNumber);
+    void preloadParts(int modelNumber);
+    bool isModelPreloaded(int modelNumber);
+    bool isPartsPreloaded(int modelNumber);
+    void cleanupPreloadedModels();
+
 } // namespace Renderer
 
 #endif // RENDERER_H

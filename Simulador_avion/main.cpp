@@ -863,6 +863,7 @@ int main(int argc, char** argv) {
     // Limpieza final
     AudioManager::stop();
     Renderer::cleanupHangar();
+    Renderer::cleanupPreloadedModels();
     delete shaderProgram;
     UIRenderer::shutdown();
     glfwDestroyWindow(window);

@@ -29,6 +29,12 @@ namespace Renderer {
     static int currentPartIndex = 0;
     static bool partsLoaded = false;
 
+    // Caché de modelos y piezas precargadas
+    static Model* preloadedMainModels[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+    static std::vector<Model*> preloadedPartsModels[5];
+    static std::vector<std::string> preloadedPartsFiles[5];
+    static bool preloadedPartsLoaded[5] = { false, false, false, false, false };
+
     // Variables de la Escenografía (Hangar)
     static unsigned int floorVAO = 0;
     static unsigned int floorVBO = 0;
@@ -65,6 +71,7 @@ namespace Renderer {
 
     // Cargar piezas individuales usando filesystem
     void loadParts() {
+        if (partsLoaded) return;
         namespace fs = std::filesystem;
 
         // Limpiar piezas anteriores
@@ -229,43 +236,59 @@ namespace Renderer {
     // loadModelByNumber() - Cargar modelo por número (1-4)
     // ============================================================
     void loadModelByNumber(int modelNumber) {
-        const char* modelPath = nullptr;
-        const char* modelName = nullptr;
-
-        switch (modelNumber) {
-        case 1:
-            modelPath = MODEL_1;
-            modelName = NAME_1;
-            break;
-        case 2:
-            modelPath = MODEL_2;
-            modelName = NAME_2;
-            break;
-        case 3:
-            modelPath = MODEL_3;
-            modelName = NAME_3;
-            break;
-        case 4:
-            modelPath = MODEL_4;
-            modelName = NAME_4;
-            break;
-        default:
+        if (modelNumber < 1 || modelNumber > 4) {
             std::cerr << "Modelo inválido. Opciones: 1-4\n";
             return;
         }
 
         currentModelNumber = modelNumber;
-        std::cout << "\n--- Cargando: " << modelName << " ---\n";
-
-        // Resetear variables de piezas
         partsModeActive = false;
-        partsLoaded = false;
+        currentPartIndex = 0;
+
+        // Si ya está precargado en la caché
+        if (preloadedMainModels[modelNumber] != nullptr) {
+            loadedModel = preloadedMainModels[modelNumber];
+            partModels = preloadedPartsModels[modelNumber];
+            partFiles = preloadedPartsFiles[modelNumber];
+            partsLoaded = preloadedPartsLoaded[modelNumber];
+            std::cout << "✓ Cargado modelo " << modelNumber << " y sus piezas desde caché (instantáneo)\n";
+            return;
+        }
+
+        // --- FALLBACK (si no está precargado) ---
+        const char* modelPath = nullptr;
+        const char* modelName = nullptr;
+        switch (modelNumber) {
+        case 1: modelPath = MODEL_1; modelName = NAME_1; break;
+        case 2: modelPath = MODEL_2; modelName = NAME_2; break;
+        case 3: modelPath = MODEL_3; modelName = NAME_3; break;
+        case 4: modelPath = MODEL_4; modelName = NAME_4; break;
+        }
+
+        std::cout << "\n--- Cargando modelo completo desde disco: " << modelName << " ---\n";
+        
+        // Si el modelo cargado actual no es precargado, borrarlo
+        if (loadedModel != nullptr) {
+            bool isPreloaded = false;
+            for (int i = 1; i <= 4; i++) {
+                if (loadedModel == preloadedMainModels[i]) isPreloaded = true;
+            }
+            if (!isPreloaded) delete loadedModel;
+        }
+        loadedModel = nullptr;
+
         for (auto model : partModels) {
-            delete model;
+            bool isPartPreloaded = false;
+            for (int i = 1; i <= 4; i++) {
+                for (auto pm : preloadedPartsModels[i]) {
+                    if (model == pm) isPartPreloaded = true;
+                }
+            }
+            if (!isPartPreloaded) delete model;
         }
         partModels.clear();
         partFiles.clear();
-        currentPartIndex = 0;
+        partsLoaded = false;
 
         initModel(modelPath);
     }
@@ -643,6 +666,108 @@ namespace Renderer {
         if (windVAO != 0) glDeleteVertexArrays(1, &windVAO);
         if (windVBO != 0) glDeleteBuffers(1, &windVBO);
         floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = windVAO = windVBO = windVertexCount = 0;
+    }
+
+    // ============================================================
+    // PRECARGA DE MODELOS (Caché en RAM/VRAM)
+    // ============================================================
+    void preloadModel(int modelNumber) {
+        if (modelNumber < 1 || modelNumber > 4) return;
+        if (preloadedMainModels[modelNumber] != nullptr) return;
+
+        const char* modelPath = nullptr;
+        switch (modelNumber) {
+        case 1: modelPath = MODEL_1; break;
+        case 2: modelPath = MODEL_2; break;
+        case 3: modelPath = MODEL_3; break;
+        case 4: modelPath = MODEL_4; break;
+        default: return;
+        }
+
+        std::string resolved = resolvePath(modelPath);
+        Model* m = new Model();
+        std::cout << "[Preloader] Cargando modelo " << modelNumber << " en cache: " << resolved << std::endl;
+        if (m->loadModel(resolved.c_str())) {
+            preloadedMainModels[modelNumber] = m;
+            std::cout << "[Preloader] ✓ Modelo principal " << modelNumber << " precargado con exito.\n";
+        } else {
+            std::cerr << "[Preloader] ✗ Error al precargar modelo principal " << modelNumber << ".\n";
+            delete m;
+        }
+    }
+
+    void preloadParts(int modelNumber) {
+        if (modelNumber < 1 || modelNumber > 4) return;
+        if (preloadedPartsLoaded[modelNumber]) return;
+
+        namespace fs = std::filesystem;
+        std::string currentModelName = "";
+        switch (modelNumber) {
+        case 1: currentModelName = "a-10_thunderbolt_ii"; break;
+        case 2: currentModelName = "b-24_liberator"; break;
+        case 3: currentModelName = "boeing-787-_dreamliner"; break;
+        case 4: currentModelName = "mig_29_9-13"; break;
+        default: return;
+        }
+
+        const auto* info = ModelConfig::getModelInfo(currentModelName);
+        if (!info || info->partsFolder.empty()) return;
+
+        std::string folderPath = std::string(ModelConfig::MODELS_BASE_PATH) + info->partsFolder;
+        std::string resolvedFolder = resolvePath(folderPath);
+
+        if (!fs::exists(resolvedFolder)) {
+            std::cerr << "[Preloader] Carpeta de piezas no existe: " << resolvedFolder << std::endl;
+            return;
+        }
+
+        std::vector<std::string> tempFiles;
+        for (const auto& entry : fs::directory_iterator(resolvedFolder)) {
+            if (entry.is_regular_file() && (entry.path().extension() == ".glb" || entry.path().extension() == ".GLB")) {
+                tempFiles.push_back(entry.path().string());
+            }
+        }
+        std::sort(tempFiles.begin(), tempFiles.end());
+
+        std::cout << "[Preloader] Precargando " << tempFiles.size() << " piezas para modelo " << modelNumber << "...\n";
+        for (const auto& file : tempFiles) {
+            Model* part = new Model();
+            if (part->loadModel(file.c_str())) {
+                preloadedPartsModels[modelNumber].push_back(part);
+                preloadedPartsFiles[modelNumber].push_back(file);
+            } else {
+                std::cerr << "[Preloader] Error al cargar pieza: " << file << std::endl;
+                delete part;
+            }
+        }
+
+        preloadedPartsLoaded[modelNumber] = true;
+        std::cout << "[Preloader] ✓ " << preloadedPartsModels[modelNumber].size() << " piezas precargadas para modelo " << modelNumber << "\n";
+    }
+
+    bool isModelPreloaded(int modelNumber) {
+        if (modelNumber < 1 || modelNumber > 4) return false;
+        return preloadedMainModels[modelNumber] != nullptr;
+    }
+
+    bool isPartsPreloaded(int modelNumber) {
+        if (modelNumber < 1 || modelNumber > 4) return false;
+        return preloadedPartsLoaded[modelNumber];
+    }
+
+    void cleanupPreloadedModels() {
+        for (int i = 1; i <= 4; i++) {
+            if (preloadedMainModels[i] != nullptr) {
+                delete preloadedMainModels[i];
+                preloadedMainModels[i] = nullptr;
+            }
+            for (auto* m : preloadedPartsModels[i]) {
+                delete m;
+            }
+            preloadedPartsModels[i].clear();
+            preloadedPartsFiles[i].clear();
+            preloadedPartsLoaded[i] = false;
+        }
     }
 
 } // namespace Renderer

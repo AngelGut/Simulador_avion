@@ -2,6 +2,7 @@
 #include "ui_renderer.h"
 #include "model_renderer.h"
 #include "audio_manager.h"
+#include "renderer.h"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -134,11 +135,52 @@ void Screens::renderLoading(AppContext& ctx) {
     float h = (float)ctx.windowHeight;
     float cx = w / 2.0f;
 
-    int total = (int)ctx.planes.size();
-    int loaded = ctx.modelsLoadedCount.load();
-    ctx.loadingProgress = total > 0 ? (float)loaded / (float)total : 0.0f;
+    static int preloadStep = 0;
+    static std::string loadingStatus = "Cargando componentes...";
 
-    if (ctx.loadingDone.load()) {
+    if (preloadStep == 0) {
+        int total = (int)ctx.planes.size();
+        int loaded = ctx.modelsLoadedCount.load();
+        ctx.loadingProgress = total > 0 ? (float)loaded / (float)total * 0.15f : 0.0f;
+        loadingStatus = "Cargando tarjetas de previsualizacion...";
+        if (ctx.loadingDone.load()) {
+            preloadStep = 1;
+        }
+    }
+    else if (preloadStep == 1) {
+        ctx.loadingProgress = 0.20f;
+        loadingStatus = "Cargando A-10 Thunderbolt II (Modelo completo y piezas)...";
+        preloadStep = 2;
+    }
+    else if (preloadStep == 2) {
+        Renderer::preloadModel(1);
+        Renderer::preloadParts(1);
+        ctx.loadingProgress = 0.40f;
+        loadingStatus = "Cargando B-24 Liberator (Modelo completo y piezas)...";
+        preloadStep = 3;
+    }
+    else if (preloadStep == 3) {
+        Renderer::preloadModel(2);
+        Renderer::preloadParts(2);
+        ctx.loadingProgress = 0.60f;
+        loadingStatus = "Cargando Boeing 787 Dreamliner (Modelo completo y piezas)...";
+        preloadStep = 4;
+    }
+    else if (preloadStep == 4) {
+        Renderer::preloadModel(3);
+        Renderer::preloadParts(3);
+        ctx.loadingProgress = 0.80f;
+        loadingStatus = "Cargando MiG-29 (Modelo completo y piezas)...";
+        preloadStep = 5;
+    }
+    else if (preloadStep == 5) {
+        Renderer::preloadModel(4);
+        Renderer::preloadParts(4);
+        ctx.loadingProgress = 0.95f;
+        loadingStatus = "Inicializando componentes graficos...";
+        preloadStep = 6;
+    }
+    else if (preloadStep == 6) {
         if (!ctx.modelsUploaded) {
             ModelRenderer::uploadAllModels(ctx);
             ctx.modelsUploaded = true;
@@ -148,7 +190,7 @@ void Screens::renderLoading(AppContext& ctx) {
     }
 
     drawCentered("Visualizador de Aviones", cx, h / 2.0f - 130.0f, 3.0f, white);
-    drawCentered("Cargando modelos 3D...", cx, h / 2.0f - 80.0f, 1.5f, gray);
+    drawCentered(loadingStatus, cx, h / 2.0f - 80.0f, 1.5f, gray);
 
     float barWidth = 420.0f, barHeight = 22.0f;
     float barX = cx - barWidth / 2.0f;
@@ -158,8 +200,8 @@ void Screens::renderLoading(AppContext& ctx) {
     UIRenderer::drawQuad(barX, barY, barWidth, barHeight, barBg);
     UIRenderer::drawQuad(barX, barY, barWidth * ctx.loadingProgress, barHeight, accent);
 
-    std::string countText = std::to_string(loaded) + "/" + std::to_string(total) + " modelos";
-    drawCentered(countText, cx, barY + 40.0f, 1.5f, gray);
+    std::string percentText = std::to_string((int)(ctx.loadingProgress * 100.0f)) + "%";
+    drawCentered(percentText, cx, barY + 40.0f, 1.5f, gray);
 
     drawCentered("Universidad Central Del Este", cx, h - 40.0f, 1.3f, grayDim);
 }
