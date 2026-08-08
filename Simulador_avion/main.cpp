@@ -22,6 +22,7 @@
 #include "shader.h"
 #include "model_loader.h"
 #include "config.h"
+#include "audio_manager.h"
 
 // Contexto global del menú
 AppContext ctx;
@@ -622,6 +623,9 @@ int main(int argc, char** argv) {
     UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
     ModelRenderer::init();
     
+    // Iniciar reproduccion de musica de fondo (amphitrite.mp3)
+    AudioManager::init();
+
     // Cargar shaders de texturas original
     try {
         shaderProgram = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -637,6 +641,8 @@ int main(int argc, char** argv) {
 
     ctx.lastFrameTime = (float)glfwGetTime();
 
+    static bool mKeyWasPressed = false;
+
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
         ctx.deltaTime = currentTime - ctx.lastFrameTime;
@@ -644,6 +650,16 @@ int main(int argc, char** argv) {
         ctx.totalTime += ctx.deltaTime;
 
         glfwGetCursorPos(window, &ctx.mouseX, &ctx.mouseY);
+
+        // Control de silencio de musica por teclado (Tecla M)
+        if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+            if (!mKeyWasPressed) {
+                AudioManager::toggleMute();
+                mKeyWasPressed = true;
+            }
+        } else {
+            mKeyWasPressed = false;
+        }
 
         glClearColor(0.09f, 0.09f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -674,6 +690,7 @@ int main(int argc, char** argv) {
     }
 
     // Limpieza final
+    AudioManager::stop();
     Renderer::cleanupHangar();
     delete shaderProgram;
     UIRenderer::shutdown();
