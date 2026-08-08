@@ -472,9 +472,9 @@ void renderViewerState(GLFWwindow* window) {
             UIRenderer::drawQuad(hoveredX, hoveredY - 1.0f, 30.0f, 2.0f, colorYellow);
             UIRenderer::drawQuad(hoveredX + 30.0f - 2.0f, hoveredY - 3.0f, 6.0f, 6.0f, colorYellow);
 
-            // Ajustar posición del panel flotante (Ancho y alto optimizados para texto grande)
-            float boxW = 380.0f;
-            float boxH = 170.0f;
+            // Ajustar posición del panel flotante (Ancho y alto optimizados para texto grande completo)
+            float boxW = 420.0f;
+            float boxH = 200.0f;
             float boxX = hoveredX + 30.0f;
             float boxY = hoveredY - boxH / 2.0f;
 
@@ -499,34 +499,35 @@ void renderViewerState(GLFWwindow* window) {
             // Título de la pieza (Letra grande 2.2f)
             UIRenderer::drawText(boxX + 16.0f, boxY + 18.0f, hp.title.c_str(), 2.2f, colorYellow);
 
-            // Descripción (Letra 1.6f, formateada en hasta 3 líneas seguras de 32 caracteres)
+            // Descripción (Letra 1.6f, formateada dinámicamente en hasta 4 líneas de 36 caracteres)
             std::string desc = hp.description;
-            if (desc.length() > 32) {
-                std::string desc1 = desc.substr(0, 32);
-                std::string desc2 = desc.substr(32);
-                size_t space = desc1.find_last_of(" ");
-                if (space != std::string::npos && space > 15) {
-                    desc1 = desc.substr(0, space);
-                    desc2 = desc.substr(space + 1);
-                }
-                UIRenderer::drawText(boxX + 16.0f, boxY + 54.0f, desc1.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                if (desc2.length() > 32) {
-                    size_t space2 = desc2.substr(0, 32).find_last_of(" ");
-                    if (space2 != std::string::npos && space2 > 15) {
-                        std::string desc3 = desc2.substr(space2 + 1);
-                        desc2 = desc2.substr(0, space2);
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                        if (desc3.length() > 32) desc3 = desc3.substr(0, 28) + "...";
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 122.0f, desc3.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                    } else {
-                        desc2 = desc2.substr(0, 28) + "...";
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                    }
+            std::vector<std::string> lines;
+            
+            while (desc.length() > 36) {
+                std::string current = desc.substr(0, 36);
+                size_t lastSpace = current.find_last_of(" ");
+                if (lastSpace != std::string::npos && lastSpace > 18) {
+                    lines.push_back(desc.substr(0, lastSpace));
+                    desc = desc.substr(lastSpace + 1);
                 } else {
-                    UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                    lines.push_back(current);
+                    desc = desc.substr(36);
                 }
-            } else {
-                UIRenderer::drawText(boxX + 16.0f, boxY + 54.0f, desc.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+            }
+            if (!desc.empty()) {
+                lines.push_back(desc);
+            }
+
+            // Dibujar las líneas del texto (máximo 4 líneas)
+            float textY = boxY + 54.0f;
+            for (size_t l = 0; l < lines.size() && l < 4; ++l) {
+                std::string lineStr = lines[l];
+                if (l == 3 && lines.size() > 4) {
+                    if (lineStr.length() > 32) lineStr = lineStr.substr(0, 32) + "...";
+                    else lineStr += "...";
+                }
+                UIRenderer::drawText(boxX + 16.0f, textY, lineStr.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                textY += 34.0f;
             }
         }
     }
