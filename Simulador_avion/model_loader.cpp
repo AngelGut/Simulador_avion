@@ -357,15 +357,19 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         meshName.find("turbina") != std::string::npos || 
         meshName.find("pylon") != std::string::npos || 
         meshName.find("propeller") != std::string::npos || 
-        meshName.find("boquilla") != std::string::npos) {
+        meshName.find("boquilla") != std::string::npos ||
+        meshName.find("zylinder") != std::string::npos ||
+        meshName.find("cylinder") != std::string::npos ||
+        meshName.find("nozzle") != std::string::npos) {
         newMesh.meshType = 1; // Engine
     } else if (meshName.find("ala") != std::string::npos || 
                meshName.find("wing") != std::string::npos || 
                meshName.find("flap") != std::string::npos || 
                meshName.find("aileron") != std::string::npos || 
                meshName.find("rudder") != std::string::npos || 
-               meshName.find("estabiliz") != std::string::npos) {
-        newMesh.meshType = 2; // Wing
+               meshName.find("estabiliz") != std::string::npos ||
+               meshName.find("keel") != std::string::npos) { // MiG tails/stabilizers
+        newMesh.meshType = 2; // Wing / Stabilizer / Wing-like control surfaces
     } else {
         newMesh.meshType = 0; // Default
     }

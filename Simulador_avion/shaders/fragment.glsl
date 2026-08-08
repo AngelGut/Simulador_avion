@@ -24,9 +24,9 @@ uniform float uTime;
 
 // Rampas de color para visualizaciones de ingenieria
 vec3 getThermalColor(float t) {
-    // Azul (frio) -> Verde -> Amarillo -> Rojo (caliente)
+    // Azul vibrante (frio) -> Verde -> Amarillo -> Rojo (caliente)
     if (t < 0.25) {
-        return mix(vec3(0.0, 0.0, 0.5), vec3(0.0, 0.8, 0.8), t / 0.25);
+        return mix(vec3(0.05, 0.25, 0.8), vec3(0.0, 0.8, 0.8), t / 0.25);
     } else if (t < 0.5) {
         return mix(vec3(0.0, 0.8, 0.8), vec3(0.0, 0.8, 0.0), (t - 0.25) / 0.25);
     } else if (t < 0.75) {
@@ -37,11 +37,11 @@ vec3 getThermalColor(float t) {
 }
 
 vec3 getStressColor(float s) {
-    // Azul (bajo) -> Verde -> Amarillo -> Rojo -> Magenta (esfuerzo critico)
+    // Azul vibrante (bajo) -> Verde -> Amarillo -> Rojo -> Magenta (esfuerzo critico)
     if (s < 0.3) {
-        return mix(vec3(0.0, 0.1, 0.6), vec3(0.0, 0.7, 0.2), s / 0.3);
+        return mix(vec3(0.05, 0.25, 0.8), vec3(0.0, 0.8, 0.4), s / 0.3);
     } else if (s < 0.6) {
-        return mix(vec3(0.0, 0.7, 0.2), vec3(0.9, 0.8, 0.0), (s - 0.3) / 0.3);
+        return mix(vec3(0.0, 0.8, 0.4), vec3(0.9, 0.8, 0.0), (s - 0.3) / 0.3);
     } else if (s < 0.85) {
         return mix(vec3(0.9, 0.8, 0.0), vec3(1.0, 0.1, 0.0), (s - 0.6) / 0.25);
     } else {
@@ -60,6 +60,12 @@ void main() {
         return;
     }
 
+    // Calcular sombreado difuso sutil para dar volumen 3D en las simulaciones
+    vec3 norm = normalize(fs_in.normal);
+    vec3 lightDir = normalize(uLightPos - fs_in.fragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    float shadingFactor = 0.4 + 0.6 * diff;
+
     if (uSimMode == 2) {
         // MODO TERMICO
         float T = 0.05 + 0.1 * smoothstep(1.5, -1.5, fs_in.localPos.z);
@@ -71,7 +77,7 @@ void main() {
             float leading = smoothstep(0.4, -0.4, fs_in.localPos.z);
             T = 0.1 + 0.5 * leading;
         }
-        FragColor = vec4(getThermalColor(T), 1.0);
+        FragColor = vec4(getThermalColor(T) * shadingFactor, 1.0);
         return;
     }
     
@@ -86,7 +92,7 @@ void main() {
             // Carga de peso en los pilones de motores
             S = 0.65 + sin(uTime * 8.0) * 0.02;
         }
-        FragColor = vec4(getStressColor(S), 1.0);
+        FragColor = vec4(getStressColor(S) * shadingFactor, 1.0);
         return;
     }
 
