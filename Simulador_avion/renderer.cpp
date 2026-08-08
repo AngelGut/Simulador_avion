@@ -3,7 +3,7 @@
 // RESPONSABLE: Ronald (Rendering)
 // DESCRIPCION: Renderizado 3D con carga de modelos GLB y Modo Piezas
 // ============================================================
-
+/*
 #include "renderer.h"
 #include "geometry.h"
 #include "model_loader.h"
@@ -532,4 +532,4 @@ namespace Renderer {
         floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = 0;
     }
 
-} // namespace Renderer
+} // namespace Renderer*/

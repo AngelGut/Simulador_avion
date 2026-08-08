@@ -4,7 +4,7 @@
 // DESCRIPCION: Implementación de LayerManager - controla qué
 //              capa (1-5) está activa y visible.
 // ============================================================
-
+/*
 #include "layer_manager.h"
 #include <iostream>
 
@@ -98,4 +98,4 @@ bool LayerManager::isVisible(int layer) const
         return false;
     }
     return layerVisible[layer - 1];
-}
+}*/
