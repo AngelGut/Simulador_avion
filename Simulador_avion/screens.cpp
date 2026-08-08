@@ -84,7 +84,7 @@ void Screens::renderViewer(AppContext& ctx, GLFWwindow* window) {
 
     float aspect = (h > 0.0f) ? (w / h) : 1.0f;
     float nearPlane = (model.radius > 0.001f) ? (model.radius * 0.01f) : 0.1f;
-    float farPlane = 500.0f; // Evitar que el plano lejano recorte la escenografía del hangar
+    float farPlane = (model.radius > 0.001f) ? (model.radius * 20.0f) : 500.0f;
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, nearPlane, farPlane);
 
     // --- Render 3D a pantalla completa ---

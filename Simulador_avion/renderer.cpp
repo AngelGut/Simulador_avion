@@ -15,7 +15,6 @@
 #include <vector>
 #include <filesystem>
 #include <algorithm>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace Renderer {
 
@@ -187,15 +186,6 @@ namespace Renderer {
     // drawLayer() - Renderizar capa seleccionada
     // ============================================================
     void drawLayer(int layerNumber) {
-        // Restablecer la matriz del modelo a la identidad para que el avión se dibuje en su escala real (1.0)
-        GLint currentProgram = 0;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-        GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
-        if (modelLoc != -1) {
-            glm::mat4 identity = glm::mat4(1.0f);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
-        }
-
         if (partsModeActive) {
             if (!partsLoaded) {
                 loadParts();
@@ -572,86 +562,13 @@ namespace Renderer {
         glBindVertexArray(0);
     }
 
-    // Static pointer for 3D GLB Hangar model
-    static Model* hangar3DModel = nullptr;
-    static bool hangarAttempted = false;
-
     void drawHangar(float cameraY) {
         float floorY = -0.6f;
         if (cameraY < floorY) {
-            // Desvanecimiento inteligente: no dibujar si la cámara está por debajo del nivel base
+            // Desvanecimiento inteligente: no dibujar el piso si la cámara está debajo de él
             return;
         }
 
-        // Intento de carga inicial de models/hangar.glb
-        if (!hangarAttempted) {
-            hangarAttempted = true;
-            hangar3DModel = new Model();
-            std::string p1 = resolvePath("../models/hangar.glb");
-            bool ok = hangar3DModel->loadModel(p1.c_str());
-            if (!ok) {
-                std::string p2 = resolvePath("models/hangar.glb");
-                ok = hangar3DModel->loadModel(p2.c_str());
-            }
-
-            if (ok && hangar3DModel->isLoaded()) {
-                std::cout << "✓ [Hangar 3D] Modelo GLB cargado exitosamente con texturas fotorrealistas.\n";
-            } else {
-                std::cout << "i [Hangar 3D] No se encontró hangar.glb o falló la carga. Usando escenografía circular procedural.\n";
-                delete hangar3DModel;
-                hangar3DModel = nullptr;
-            }
-        }
-
-        // Si el modelo 3D del hangar fue cargado con éxito, dibujarlo
-        if (hangar3DModel != nullptr && hangar3DModel->isLoaded()) {
-            GLint currentProgram = 0;
-            glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-            GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
-
-            if (modelLoc != -1) {
-                // Calcular caja delimitadora real del modelo del hangar
-                float minY = 9999.0f, maxY = -9999.0f;
-                float minX = 9999.0f, maxX = -9999.0f;
-                float minZ = 9999.0f, maxZ = -9999.0f;
-                for (const auto& mesh : hangar3DModel->getMeshes()) {
-                    for (const auto& v : mesh.vertices) {
-                        if (v.position.x < minX) minX = v.position.x;
-                        if (v.position.x > maxX) maxX = v.position.x;
-                        if (v.position.y < minY) minY = v.position.y;
-                        if (v.position.y > maxY) maxY = v.position.y;
-                        if (v.position.z < minZ) minZ = v.position.z;
-                        if (v.position.z > maxZ) maxZ = v.position.z;
-                    }
-                }
-
-                float extentX = maxX - minX;
-                float extentY = maxY - minY;
-                float extentZ = maxZ - minZ;
-                float maxExtent = std::max({ extentX, extentY, extentZ });
-
-                // Escalar el hangar para que tenga 40.0 unidades de amplitud envolvente
-                float targetSize = 40.0f;
-                float hangarScale = (maxExtent > 0.001f) ? (targetSize / maxExtent) : 1.0f;
-
-                // Centrar horizontalmente el hangar y apoyar piso en Y = -0.78f
-                float centerX = (minX + maxX) * 0.5f * hangarScale;
-                float centerZ = (minZ + maxZ) * 0.5f * hangarScale;
-                float targetFloorY = -0.78f;
-                float yOffset = targetFloorY - (minY * hangarScale);
-
-                glm::mat4 modelMat = glm::mat4(1.0f);
-                modelMat = glm::translate(modelMat, glm::vec3(-centerX, yOffset, -centerZ));
-                modelMat = glm::scale(modelMat, glm::vec3(hangarScale, hangarScale, hangarScale));
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
-            }
-
-            glDisable(GL_CULL_FACE);
-            hangar3DModel->draw();
-            return;
-        }
-
-        // Fallback: Plataforma circular procedural si no hay hangar 3D .glb
         if (floorVAO == 0) {
             initFloor();
             initGridLines();
@@ -683,11 +600,6 @@ namespace Renderer {
     }
 
     void cleanupHangar() {
-        if (hangar3DModel != nullptr) {
-            delete hangar3DModel;
-            hangar3DModel = nullptr;
-            hangarAttempted = false;
-        }
         if (floorVAO != 0) glDeleteVertexArrays(1, &floorVAO);
         if (floorVBO != 0) glDeleteBuffers(1, &floorVBO);
         if (floorEBO != 0) glDeleteBuffers(1, &floorEBO);

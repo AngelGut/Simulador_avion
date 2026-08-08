@@ -187,13 +187,7 @@ bool Model::loadModel(const char* path) {
 
     glm::mat4 identity(1.0f);
     processNode(scene->mRootNode, scene, identity, modelDir);
-
-    // No normalizar modelos de escenografía/hangar para evitar que vértices auxiliares distorsionen la escala del edificio
-    std::string lowerPath = pathStr;
-    std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
-    if (lowerPath.find("hangar") == std::string::npos) {
-        normalizeModel();
-    }
+    normalizeModel();
 
     if (pathStr.find("b24_tren") != std::string::npos) {
         std::cout << "[Info] Corrigiendo orientacion de b24_tren (rotar 90 grados en X)..." << std::endl;
@@ -229,19 +223,6 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
     aiMatrix4x4 aiTrans = node->mTransformation;
     std::string nodeName = node->mName.C_Str();
     
-    std::string lowerNodeName = nodeName;
-    std::transform(lowerNodeName.begin(), lowerNodeName.end(), lowerNodeName.begin(), ::tolower);
-
-    // Omitir nodos de sombra falsa, colisión, cámaras y triggers de juegos
-    if (lowerNodeName.find("shadow") != std::string::npos ||
-        lowerNodeName.find("collision") != std::string::npos ||
-        lowerNodeName.find("trigger") != std::string::npos ||
-        lowerNodeName.find("camera") != std::string::npos ||
-        lowerNodeName.find("bound") != std::string::npos ||
-        lowerNodeName.find("helper") != std::string::npos) {
-        return;
-    }
-
     // Si hay una matriz bakeada para esta pieza, usarla
     if (finalTransforms.find(nodeName) != finalTransforms.end()) {
         aiTrans = finalTransforms[nodeName];
@@ -266,19 +247,6 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 }
 
 void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, const std::string& modelDir) {
-    std::string meshName = mesh->mName.C_Str();
-    std::string lowerMeshName = meshName;
-    std::transform(lowerMeshName.begin(), lowerMeshName.end(), lowerMeshName.begin(), ::tolower);
-
-    if (lowerMeshName.find("shadow") != std::string::npos ||
-        lowerMeshName.find("collision") != std::string::npos ||
-        lowerMeshName.find("trigger") != std::string::npos ||
-        lowerMeshName.find("camera") != std::string::npos ||
-        lowerMeshName.find("bound") != std::string::npos ||
-        lowerMeshName.find("helper") != std::string::npos) {
-        return;
-    }
-
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
@@ -374,28 +342,6 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
                     newMesh.hasTexture = true;
                 }
             }
-        }
-    }
-
-    // DESCARTAR MALLAS PARÁSITAS (Palabras clave de sombras, cables, picos)
-    // 1. Filtrar por palabras clave de elementos de juego/decals/cables
-    if (lowerMeshName.find("road") != std::string::npos ||
-        lowerMeshName.find("track") != std::string::npos ||
-        lowerMeshName.find("decal") != std::string::npos ||
-        lowerMeshName.find("overlay") != std::string::npos ||
-        lowerMeshName.find("sky") != std::string::npos ||
-        lowerMeshName.find("cable") != std::string::npos ||
-        lowerMeshName.find("wire") != std::string::npos ||
-        lowerMeshName.find("fence") != std::string::npos ||
-        lowerMeshName.find("strip") != std::string::npos ||
-        lowerMeshName.find("terrain") != std::string::npos) {
-        return;
-    }
-
-    // 2. Filtrar mallas de sombras negras sin textura
-    if (!newMesh.hasTexture) {
-        if (meshColor.r < 0.05f && meshColor.g < 0.05f && meshColor.b < 0.05f) {
-            return;
         }
     }
 

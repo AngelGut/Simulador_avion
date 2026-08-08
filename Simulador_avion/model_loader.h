@@ -63,7 +63,6 @@ public:
     bool loadModel(const char* path);
     void draw();
     bool isLoaded() const { return loaded; }
-    const std::vector<Mesh>& getMeshes() const { return meshes; }
     float getRecommendedZoom() const;
     glm::vec3 getCenter() const { return center; }
     float getScale() const { return scale; }
