@@ -41,6 +41,8 @@ double lastMouseY = 0.0;
 // ============================================================
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    if (width <= 0) width = 1;
+    if (height <= 0) height = 1;
     glViewport(0, 0, width, height);
     ctx.windowWidth = width;
     ctx.windowHeight = height;
@@ -187,7 +189,7 @@ void renderViewerState(GLFWwindow* window) {
     shaderProgram->use();
 
     // Matrices de proyección y vista orbital
-    float aspect = (float)ctx.windowWidth / (float)ctx.windowHeight;
+    float aspect = (ctx.windowHeight > 0) ? ((float)ctx.windowWidth / (float)ctx.windowHeight) : 1.0f;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 500.0f);
 
     float radius = std::abs(viewZoom);

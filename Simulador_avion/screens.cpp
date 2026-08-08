@@ -82,8 +82,10 @@ void Screens::renderViewer(AppContext& ctx, GLFWwindow* window) {
     glm::vec3 eye = ctx.cameraTarget + eyeOffset;
     glm::mat4 view = glm::lookAt(eye, ctx.cameraTarget, glm::vec3(0, 1, 0));
 
-    float aspect = w / h;
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, model.radius * 0.01f, model.radius * 20.0f);
+    float aspect = (h > 0.0f) ? (w / h) : 1.0f;
+    float nearPlane = (model.radius > 0.001f) ? (model.radius * 0.01f) : 0.1f;
+    float farPlane = (model.radius > 0.001f) ? (model.radius * 20.0f) : 500.0f;
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, nearPlane, farPlane);
 
     // --- Render 3D a pantalla completa ---
     ModelRenderer::renderModel(model, view, proj, 0, 0, w, h, ctx.windowWidth, ctx.windowHeight);
