@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\..\..\Downloads\Import\Import\Import\.c\glad.c" />
+    <ClCompile Include="..\glad.c" />
     <ClCompile Include="asset_loader.cpp" />
     <ClCompile Include="geometry.cpp" />
     <ClCompile Include="layer_manager.cpp" />
@@ -29,6 +29,7 @@
     <ClCompile Include="model_renderer.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="screens.cpp" />
+    <ClCompile Include="shader.cpp" />
     <ClCompile Include="ui_renderer.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>

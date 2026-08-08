@@ -3,13 +3,12 @@
 // RESPONSABLE: Ronald (Rendering)
 // DESCRIPCION: Renderizado 3D con carga de modelos GLB y Modo Piezas
 // ============================================================
-/*
+#include <glad/glad.h>
 #include "renderer.h"
 #include "geometry.h"
 #include "model_loader.h"
 #include "config.h"
 #include "model_config.h"
-#include <GL/glew.h>
 #include <cstdio>
 #include <cmath>
 #include <iostream>
@@ -166,14 +165,14 @@ namespace Renderer {
     // applyLighting() - Configuración de iluminación
     // ============================================================
     void applyLighting() {
-        glEnable(GL_LIGHTING);
+        // Obsoleto en OpenGL 3.3 Core Profile
     }
 
     // ============================================================
     // applyColor() - Aplicar color
     // ============================================================
     void applyColor(float r, float g, float b) {
-        glColor3f(r, g, b);
+        // Obsoleto en OpenGL 3.3 Core Profile
     }
 
     // ============================================================
@@ -206,38 +205,6 @@ namespace Renderer {
             // Dibujar el modelo completo
             if (loadedModel != nullptr && loadedModel->isLoaded()) {
                 loadedModel->draw();
-            }
-            else {
-                // Fallback: geometría procedural si no hay modelo
-                std::cout << "Usando geometría procedural (modelo no disponible)\n";
-
-                switch (layerNumber) {
-                case 1: // Exterior
-                    GeometryBuilder::generateFuselage(0.0f, 0.0f, 30.0f, 300.0f);
-                    GeometryBuilder::generateWings();
-                    GeometryBuilder::generateMotors();
-                    break;
-
-                case 2: // Estructura interna
-                    GeometryBuilder::generateStructure();
-                    break;
-
-                case 3: // Sistemas
-                    GeometryBuilder::generateSystems();
-                    break;
-
-                case 4: // Cabina
-                    GeometryBuilder::generateCabin();
-                    break;
-
-                case 5: // Propulsion
-                    GeometryBuilder::generateMotors();
-                    GeometryBuilder::generateLandingGear();
-                    break;
-
-                default:
-                    break;
-                }
             }
         }
     }
@@ -532,4 +499,4 @@ namespace Renderer {
         floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = 0;
     }
 
-} // namespace Renderer*/
+} // namespace Renderer

@@ -8,7 +8,7 @@ void startAssetLoading(AppContext& ctx) {
 
     std::thread([&ctx]() {
         for (size_t i = 0; i < ctx.planes.size(); i++) {
-            loadModel(ctx.planes[i].filePath, ctx.loadedModels[i]);
+            CPU::loadModel(ctx.planes[i].filePath, ctx.loadedModels[i]);
             ctx.modelsLoadedCount++;
         }
         ctx.loadingDone = true;

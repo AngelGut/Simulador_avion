@@ -38,7 +38,7 @@ namespace {
         return shader;
     }
 
-    void uploadOneModel(const Model& cpuModel, GLModel& outModel) {
+    void uploadOneModel(const CPU::Model& cpuModel, GLModel& outModel) {
         if (!cpuModel.loaded || cpuModel.meshes.empty()) return;
 
         glm::vec3 minB(std::numeric_limits<float>::max());
@@ -55,14 +55,14 @@ namespace {
             glBindVertexArray(sub.VAO);
 
             glBindBuffer(GL_ARRAY_BUFFER, sub.VBO);
-            glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(CPU::Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sub.EBO);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(CPU::Vertex), (void*)0);
             glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(CPU::Vertex), (void*)offsetof(CPU::Vertex, normal));
             glEnableVertexAttribArray(1);
 
             glBindVertexArray(0);
