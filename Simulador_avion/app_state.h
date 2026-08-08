@@ -9,6 +9,14 @@ enum class AppState {
     LOADING, WELCOME, MENU, VIEWER
 };
 
+enum class SimulationMode {
+    NONE = 0,
+    WIND_TUNNEL = 1,
+    THERMAL = 2,
+    STRESS = 3,
+    VIBRATION = 4
+};
+
 struct PlaneOption {
     std::string name;
     std::string filePath;
@@ -56,4 +64,8 @@ struct AppContext {
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
+
+    // --- Simulaciones Físicas 3D ---
+    SimulationMode simMode = SimulationMode::NONE;
+    std::vector<float> simGraphHistory;
 };

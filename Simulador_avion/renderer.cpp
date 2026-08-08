@@ -39,6 +39,15 @@ namespace Renderer {
     static unsigned int gridVBO = 0;
     static int gridVertexCount = 0;
 
+    static unsigned int windVAO = 0;
+    static unsigned int windVBO = 0;
+    static int windVertexCount = 0;
+
+    static float smoothstep(float edge0, float edge1, float x) {
+        float t = glm::clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+        return t * t * (3.0f - 2.0f * t);
+    }
+
     // Helper para resolver rutas relativas
     std::string resolvePath(const std::string& path) {
         namespace fs = std::filesystem;
@@ -484,13 +493,156 @@ namespace Renderer {
         glBindVertexArray(0);
     }
 
+    static void initWindTunnel() {
+        std::vector<Vertex> vertices;
+        glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        glm::vec3 baseColor(0.0f, 0.6f, 0.9f); // Celeste brillante
+
+        int xCount = 11;
+        int yCount = 5;
+        int zSegments = 40;
+
+        float xStart = -4.0f, xEnd = 4.0f;
+        float yStart = -0.4f, yEnd = 1.2f;
+        float zStart = -8.0f, zEnd = 8.0f;
+
+        float xStep = (xEnd - xStart) / (xCount - 1);
+        float yStep = (yEnd - yStart) / (yCount - 1);
+        float zStep = (zEnd - zStart) / zSegments;
+
+        for (int xi = 0; xi < xCount; xi++) {
+            float x0 = xStart + xi * xStep;
+            for (int yi = 0; yi < yCount; yi++) {
+                float y0 = yStart + yi * yStep;
+
+                // Generar segmentos para esta linea de corriente
+                for (int zi = 0; zi < zSegments; zi++) {
+                    float zA = zStart + zi * zStep;
+                    float zB = zStart + (zi + 1) * zStep;
+
+                    // Calcular deformacion para punto A
+                    float xA = x0;
+                    float yA = y0;
+                    {
+                        float d_fuse = sqrt(x0 * x0 + y0 * y0);
+                        float f_fuse = exp(-zA * zA / 4.0f);
+                        if (d_fuse < 1.8f) {
+                            float scale = 1.0f + 0.4f * f_fuse / (d_fuse + 0.1f);
+                            xA = x0 * scale;
+                            yA = y0 * scale;
+                        }
+                        // Desviacion por las alas (cerca de Z=0, plano horizontal Y=-0.1f)
+                        if (abs(x0) < 3.2f) {
+                            float f_wing = exp(-(zA + 0.2f) * (zA + 0.2f) / 0.8f) * exp(-x0 * x0 / 8.0f);
+                            yA += 0.25f * f_wing * (y0 > -0.1f ? 1.0f : -1.0f);
+                        }
+                    }
+
+                    // Calcular deformacion para punto B
+                    float xB = x0;
+                    float yB = y0;
+                    {
+                        float d_fuse = sqrt(x0 * x0 + y0 * y0);
+                        float f_fuse = exp(-zB * zB / 4.0f);
+                        if (d_fuse < 1.8f) {
+                            float scale = 1.0f + 0.4f * f_fuse / (d_fuse + 0.1f);
+                            xB = x0 * scale;
+                            yB = y0 * scale;
+                        }
+                        if (abs(x0) < 3.2f) {
+                            float f_wing = exp(-(zB + 0.2f) * (zB + 0.2f) / 0.8f) * exp(-x0 * x0 / 8.0f);
+                            yB += 0.25f * f_wing * (y0 > -0.1f ? 1.0f : -1.0f);
+                        }
+                    }
+
+                    // Atenuacion de color en los extremos para desvanecimiento suave
+                    float alphaA = 1.0f - smoothstep(3.5f, 5.0f, abs(zA));
+                    float alphaB = 1.0f - smoothstep(3.5f, 5.0f, abs(zB));
+
+                    glm::vec3 colorA = baseColor * alphaA;
+                    glm::vec3 colorB = baseColor * alphaB;
+
+                    // Mapear posicion Z normalizada en la coordenada de textura para animar flujo en el shader
+                    float tA = (zA - zStart) / (zEnd - zStart);
+                    float tB = (zB - zStart) / (zEnd - zStart);
+
+                    vertices.push_back({ glm::vec3(xA, yA, zA), normal, colorA, glm::vec2(tA, 0.0f) });
+                    vertices.push_back({ glm::vec3(xB, yB, zB), normal, colorB, glm::vec2(tB, 0.0f) });
+                }
+            }
+        }
+
+        windVertexCount = vertices.size();
+
+        glGenVertexArrays(1, &windVAO);
+        glGenBuffers(1, &windVBO);
+
+        glBindVertexArray(windVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, windVBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
+    void drawWindTunnel(float time) {
+        if (windVAO == 0) {
+            initWindTunnel();
+        }
+
+        GLint currentProgram = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+        GLint useTexLoc = glGetUniformLocation(currentProgram, "uUseTexture");
+        GLint useLightLoc = glGetUniformLocation(currentProgram, "uUseLighting");
+        GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
+        GLint simModeLoc = glGetUniformLocation(currentProgram, "uSimMode");
+        GLint timeLoc = glGetUniformLocation(currentProgram, "uTime");
+
+        // Desactivar textura e iluminacion para las lineas
+        if (useTexLoc != -1) glUniform1i(useTexLoc, 0);
+        if (useLightLoc != -1) glUniform1i(useLightLoc, 0);
+        
+        // Forzar simMode a 1 (Wind tunnel) y pasar el tiempo
+        if (simModeLoc != -1) glUniform1i(simModeLoc, 1);
+        if (timeLoc != -1) glUniform1f(timeLoc, time);
+
+        // Matriz de modelo identidad para que este centrado en el hangar
+        if (modelLoc != -1) {
+            glm::mat4 identity = glm::mat4(1.0f);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
+        }
+
+        glLineWidth(2.0f);
+        glBindVertexArray(windVAO);
+        glDrawArrays(GL_LINES, 0, windVertexCount);
+        glBindVertexArray(0);
+        glLineWidth(1.0f);
+
+        // Restaurar estado de iluminacion
+        if (useLightLoc != -1) glUniform1i(useLightLoc, 1);
+    }
+
     void cleanupHangar() {
         if (floorVAO != 0) glDeleteVertexArrays(1, &floorVAO);
         if (floorVBO != 0) glDeleteBuffers(1, &floorVBO);
         if (floorEBO != 0) glDeleteBuffers(1, &floorEBO);
         if (gridVAO != 0) glDeleteVertexArrays(1, &gridVAO);
         if (gridVBO != 0) glDeleteBuffers(1, &gridVBO);
-        floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = 0;
+        if (windVAO != 0) glDeleteVertexArrays(1, &windVAO);
+        if (windVBO != 0) glDeleteBuffers(1, &windVBO);
+        floorVAO = floorVBO = floorEBO = gridVAO = gridVBO = windVAO = windVBO = windVertexCount = 0;
     }
 
 } // namespace Renderer

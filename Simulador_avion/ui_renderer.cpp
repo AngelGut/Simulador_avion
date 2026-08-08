@@ -194,3 +194,73 @@ bool UIRenderer::drawButton(float x, float y, float w, float h,
 
     return hovered && mousePressed;
 }
+
+void UIRenderer::drawSimGraph(float x, float y, float w, float h, 
+                              const std::vector<float>& history, 
+                              float maxVal, const std::string& title, 
+                              const std::string& unit) {
+    // 1. Fondo del grafico (gris muy oscuro traslucido)
+    UIColor bgColor = { 0.05f, 0.05f, 0.07f, 0.85f };
+    drawQuad(x, y, w, h, bgColor);
+
+    // 2. Bordes
+    UIColor borderColor = { 0.2f, 0.3f, 0.4f, 1.0f };
+    drawBorder(x, y, w, h, 1.5f, borderColor);
+
+    // 3. Titulo y valor actual
+    UIColor textColor = { 1.0f, 0.85f, 0.0f, 1.0f }; // Amarillo HUD
+    drawText(x + 10.0f, y + 10.0f, title, 1.4f, textColor);
+
+    float val = 0.0f;
+    if (!history.empty()) {
+        val = history.back();
+    }
+    char valStr[64];
+    sprintf_s(valStr, sizeof(valStr), "ACTUAL: %.1f %s", val, unit.c_str());
+    UIColor valColor = { 0.0f, 0.9f, 0.9f, 1.0f }; // Cian HUD
+    drawText(x + w - 190.0f, y + 10.0f, valStr, 1.4f, valColor);
+
+    // 4. Lineas de rejilla de fondo (Grid lines a 25%, 50%, 75%)
+    UIColor gridColor = { 0.15f, 0.22f, 0.3f, 0.4f };
+    for (int i = 1; i < 4; i++) {
+        float ly = y + (h * 0.25f * i);
+        drawQuad(x + 2.0f, ly, w - 4.0f, 1.0f, gridColor);
+    }
+
+    // 5. Graficar el historial de datos
+    if (history.empty()) return;
+
+    int maxPoints = 50; // Maximo de barras en el grafico
+    int numPoints = history.size();
+    float dx = (w - 20.0f) / maxPoints;
+
+    UIColor barColor = { 0.0f, 0.7f, 0.7f, 0.35f }; // Barra cian traslucida
+    UIColor capColor = { 0.0f, 1.0f, 1.0f, 0.95f }; // Tapa cian brillante
+
+    int startIdx = 0;
+    if (numPoints > maxPoints) {
+        startIdx = numPoints - maxPoints;
+    }
+
+    for (int i = 0; i < maxPoints; i++) {
+        int idx = startIdx + i;
+        if (idx >= numPoints) break;
+
+        float valHistory = history[idx];
+        if (valHistory < 0.0f) valHistory = 0.0f;
+        if (valHistory > maxVal) valHistory = maxVal;
+
+        // Calcular altura de la barra en pixeles (dejar margen inferior y superior)
+        float usableH = h - 45.0f;
+        float barH = (valHistory / maxVal) * usableH;
+        if (barH < 1.0f) barH = 1.0f; // Asegurar al menos una linea fina
+
+        float bx = x + 10.0f + i * dx;
+        float by = y + h - 10.0f - barH;
+
+        // Dibujar barra de espectro
+        drawQuad(bx, by, dx - 1.5f, barH, barColor);
+        // Dibujar tapa brillante
+        drawQuad(bx, by, dx - 1.5f, 2.0f, capColor);
+    }
+}

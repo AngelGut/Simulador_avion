@@ -38,6 +38,7 @@ namespace Renderer {
     // ========== ESCENOGRAFÍA ==========
     void drawHangar(float cameraY);
     void cleanupHangar();
+    void drawWindTunnel(float time);
 
     // ========== UTILIDADES ==========
     void printHelp();
