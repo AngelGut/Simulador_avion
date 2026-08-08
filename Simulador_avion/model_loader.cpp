@@ -186,6 +186,29 @@ bool Model::loadModel(const char* path) {
     processNode(scene->mRootNode, scene, identity, modelDir);
     normalizeModel();
 
+    // Rotar tren del B-24 si esta acostado (girar 90 grados en X)
+    std::string pathStr = path;
+    std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), ::tolower);
+    if (pathStr.find("b24_tren") != std::string::npos) {
+        std::cout << "[Info] Corrigiendo orientacion de b24_tren (rotar 90 grados en X)..." << std::endl;
+        float theta = glm::radians(90.0f);
+        float cosT = std::cos(theta);
+        float sinT = std::sin(theta);
+        for (auto& mesh : meshes) {
+            for (auto& vertex : mesh.vertices) {
+                float y = vertex.position.y;
+                float z = vertex.position.z;
+                vertex.position.y = y * cosT - z * sinT;
+                vertex.position.z = y * sinT + z * cosT;
+
+                float ny = vertex.normal.y;
+                float nz = vertex.normal.z;
+                vertex.normal.y = ny * cosT - nz * sinT;
+                vertex.normal.z = ny * sinT + nz * cosT;
+            }
+        }
+    }
+
     // Configurar VAO/VBO para todos los meshes
     for (auto& mesh : meshes) {
         mesh.setupMesh();

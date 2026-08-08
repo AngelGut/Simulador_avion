@@ -61,7 +61,8 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
         { "FLAPS HIPERSUSTENTADORES", "Superficies de ala que aumentan la sustentacion para vuelo lento y estable.", glm::vec3(-0.65f, 0.0f, -0.2f), "flaps" },
         { "MISIL AGM-65 MAVERICK", "Misil tactico aire-tierra guiado por TV para destruir tanques y vehiculos blindados.", glm::vec3(0.0f, -0.4f, 0.1f), "grande" },
         { "BOMBA GUIADA GBU-12", "Bomba de precision GBU-12 guiada por laser de 500 libras para ataque de precision.", glm::vec3(0.0f, -0.4f, 0.1f), "mediano" },
-        { "COHETES FFAR 70MM", "Lanzadores de cohetes no guiados para saturacion de objetivos terrestres.", glm::vec3(0.0f, -0.4f, 0.1f), "peque" }
+        { "COHETES FFAR 70MM", "Lanzadores de cohetes no guiados para saturacion de objetivos terrestres.", glm::vec3(0.0f, -0.4f, 0.1f), "peque" },
+        { "ANCLAJES DE ARMAMENTO", "Soportes subalares reforzados disenados para transportar cargas pesadas de combate.", glm::vec3(-0.3f, -0.2f, 0.1f), "soporte" }
     },
     // 2: B-24 Liberator
     {
@@ -69,7 +70,9 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
         { "CABINA DE MANDO B-24", "Estacion para pilotos y navegantes en cabina no presurizada de la SGM.", glm::vec3(0.0f, 0.15f, 0.7f), "interior" },
         { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para de de de vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f), "motores" },
         { "ALA DAVIS", "Ala de envergadura superior y baja friccion, clave para el enorme alcance.", glm::vec3(-0.65f, 0.05f, 0.0f), "alas" },
-        { "TREN RETRACTIL LATERAL", "Primer tren de aterrizaje triciclo en bombarderos pesados.", glm::vec3(0.0f, -0.55f, 0.0f), "tren" }
+        { "TREN RETRACTIL LATERAL", "Primer tren de aterrizaje triciclo en bombarderos pesados.", glm::vec3(0.0f, -0.55f, 0.0f), "tren" },
+        { "ESTRUCTURA DEL FUSELAJE", "Armazon metalico de aluminio disenado para soportar tensiones aerodinamicas.", glm::vec3(0.0f, 0.0f, 0.0f), "estructura" },
+        { "FLAPS TRASEROS B-24", "Superficies de sustentacion que reducen la velocidad de perdida en aterrizaje.", glm::vec3(-0.65f, 0.0f, -0.2f), "flaps" }
     },
     // 3: Boeing 787 Dreamliner
     {
@@ -77,7 +80,9 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
         { "TURBOFAN GEnx", "Motores ultra silenciosos equipados con cubiertas traseras dentadas (chevrons).", glm::vec3(0.35f, -0.15f, 0.1f), "motores" },
         { "ESTABILIZADOR DE COLA", "Diseno aerodinamico optimizado para maxima estabilidad digital fly-by-wire.", glm::vec3(0.0f, 0.45f, -0.95f), "fuselaje" },
         { "ALAS FLEXIBLES", "Alas que se flexionan en vuelo para amortiguar y suavizar turbulencias.", glm::vec3(-0.75f, 0.0f, -0.1f), "fuselaje" },
-        { "TREN DE TITANIO", "Estructura de amortiguacion avanzada en titanio para aterrizajes suaves.", glm::vec3(0.0f, -0.6f, 0.2f), "tren" }
+        { "TREN DE TITANIO", "Estructura de amortiguacion avanzada en titanio para aterrizajes suaves.", glm::vec3(0.0f, -0.6f, 0.2f), "tren" },
+        { "BODEGA DE CARGA INFERIOR", "Compartimiento de carga presurizado y climatizado para equipaje y carga comercial.", glm::vec3(0.0f, -0.2f, -0.2f), "almacen" },
+        { "CABINA DE PASAJEROS", "Cabina presurizada a menor altitud para reducir el cansancio y mejorar el confort.", glm::vec3(0.0f, 0.15f, -0.1f), "inter" }
     },
     // 4: MiG-29
     {
@@ -85,7 +90,8 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
         { "TURBOFANS KLIMOV RD-33", "Motores gemelos con tomas de aire auxiliares superiores para pistas sucias.", glm::vec3(0.15f, 0.02f, -0.5f), "cabina" },
         { "MISIL AIRE-AIRE R-73", "Misiles de corto alcance guiados por infrarrojos para combate cerrado.", glm::vec3(-0.45f, -0.1f, -0.1f), "misiles" },
         { "ALAS INTEGRADAS Y LERX", "Extensiones de borde de ataque que otorgan agilidad y angulos extremos.", glm::vec3(0.55f, -0.05f, -0.2f), "alas" },
-        { "TREN RUSTICO", "Tren de aterrizaje de gran absorcion para pistas de tierra sucias.", glm::vec3(0.0f, -0.55f, 0.1f), "tren" }
+        { "TREN RUSTICO", "Tren de aterrizaje de gran absorcion para pistas de tierra sucias.", glm::vec3(0.0f, -0.55f, 0.1f), "tren" },
+        { "FUSELAJE INTEGRADO MiG-29", "Diseno aerodinamico donde el cuerpo genera sustentacion adicional junto con las alas.", glm::vec3(0.0f, 0.0f, 0.0f), "fuselaje" }
     }
 };
 
