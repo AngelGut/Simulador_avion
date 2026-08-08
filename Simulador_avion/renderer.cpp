@@ -15,6 +15,7 @@
 #include <vector>
 #include <filesystem>
 #include <algorithm>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Renderer {
 
@@ -562,13 +563,56 @@ namespace Renderer {
         glBindVertexArray(0);
     }
 
+    // Static pointer for 3D GLB Hangar model
+    static Model* hangar3DModel = nullptr;
+    static bool hangarAttempted = false;
+
     void drawHangar(float cameraY) {
         float floorY = -0.6f;
         if (cameraY < floorY) {
-            // Desvanecimiento inteligente: no dibujar el piso si la cámara está debajo de él
+            // Desvanecimiento inteligente: no dibujar si la cámara está por debajo del nivel base
             return;
         }
 
+        // Intento de carga inicial de models/hangar.glb
+        if (!hangarAttempted) {
+            hangarAttempted = true;
+            hangar3DModel = new Model();
+            std::string p1 = resolvePath("../models/hangar.glb");
+            bool ok = hangar3DModel->loadModel(p1.c_str());
+            if (!ok) {
+                std::string p2 = resolvePath("models/hangar.glb");
+                ok = hangar3DModel->loadModel(p2.c_str());
+            }
+
+            if (ok && hangar3DModel->isLoaded()) {
+                std::cout << "✓ [Hangar 3D] Modelo GLB cargado exitosamente con texturas fotorrealistas.\n";
+            } else {
+                std::cout << "i [Hangar 3D] No se encontró hangar.glb o falló la carga. Usando escenografía circular procedural.\n";
+                delete hangar3DModel;
+                hangar3DModel = nullptr;
+            }
+        }
+
+        // Si el modelo 3D del hangar fue cargado con éxito, dibujarlo
+        if (hangar3DModel != nullptr && hangar3DModel->isLoaded()) {
+            GLint currentProgram = 0;
+            glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+            GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
+
+            if (modelLoc != -1) {
+                glm::mat4 modelMat = glm::mat4(1.0f);
+                // Escalar y posicionar el hangar para envolver perfectamente al avión
+                modelMat = glm::translate(modelMat, glm::vec3(0.0f, -0.6f, 0.0f));
+                modelMat = glm::scale(modelMat, glm::vec3(15.0f, 15.0f, 15.0f));
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
+            }
+
+            hangar3DModel->draw();
+            return;
+        }
+
+        // Fallback: Plataforma circular procedural si no hay hangar 3D .glb
         if (floorVAO == 0) {
             initFloor();
             initGridLines();
@@ -600,6 +644,11 @@ namespace Renderer {
     }
 
     void cleanupHangar() {
+        if (hangar3DModel != nullptr) {
+            delete hangar3DModel;
+            hangar3DModel = nullptr;
+            hangarAttempted = false;
+        }
         if (floorVAO != 0) glDeleteVertexArrays(1, &floorVAO);
         if (floorVBO != 0) glDeleteBuffers(1, &floorVBO);
         if (floorEBO != 0) glDeleteBuffers(1, &floorEBO);
