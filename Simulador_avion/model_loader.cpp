@@ -187,7 +187,13 @@ bool Model::loadModel(const char* path) {
 
     glm::mat4 identity(1.0f);
     processNode(scene->mRootNode, scene, identity, modelDir);
-    normalizeModel();
+
+    // No normalizar modelos de escenografía/hangar para evitar que vértices auxiliares distorsionen la escala del edificio
+    std::string lowerPath = pathStr;
+    std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
+    if (lowerPath.find("hangar") == std::string::npos) {
+        normalizeModel();
+    }
 
     if (pathStr.find("b24_tren") != std::string::npos) {
         std::cout << "[Info] Corrigiendo orientacion de b24_tren (rotar 90 grados en X)..." << std::endl;
@@ -371,20 +377,17 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         }
     }
 
-    // DESCARTAR MALLAS PARÁSITAS (Picos de techos deformados, carreteras y planos de sombras)
-    glm::vec3 mMin(FLT_MAX), mMax(-FLT_MAX);
-    for (const auto& v : vertices) {
-        mMin = glm::min(mMin, v.position);
-        mMax = glm::max(mMax, v.position);
-    }
-    glm::vec3 mSize = mMax - mMin;
-
-    // 1. Filtrar por palabras clave de juegos (carreteras exteriores, overlays, sombras, triggers)
+    // DESCARTAR MALLAS PARÁSITAS (Palabras clave de sombras, cables, picos)
+    // 1. Filtrar por palabras clave de elementos de juego/decals/cables
     if (lowerMeshName.find("road") != std::string::npos ||
         lowerMeshName.find("track") != std::string::npos ||
         lowerMeshName.find("decal") != std::string::npos ||
         lowerMeshName.find("overlay") != std::string::npos ||
         lowerMeshName.find("sky") != std::string::npos ||
+        lowerMeshName.find("cable") != std::string::npos ||
+        lowerMeshName.find("wire") != std::string::npos ||
+        lowerMeshName.find("fence") != std::string::npos ||
+        lowerMeshName.find("strip") != std::string::npos ||
         lowerMeshName.find("terrain") != std::string::npos) {
         return;
     }
@@ -394,13 +397,6 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         if (meshColor.r < 0.05f && meshColor.g < 0.05f && meshColor.b < 0.05f) {
             return;
         }
-    }
-
-    // 3. Filtrar mallas con picos o deformaciones de dimensiones desproporcionadas (> 45.0 unidades)
-    if (mSize.x > 45.0f || mSize.y > 45.0f || mSize.z > 45.0f) {
-        std::cout << "  [Filtro Hangar] Omitiendo malla deformada/pico: " << meshName 
-                  << " [" << mSize.x << "x" << mSize.y << "x" << mSize.z << "]\n";
-        return;
     }
 
     std::cout << "  Mesh: " << vertices.size() << " vértices, "

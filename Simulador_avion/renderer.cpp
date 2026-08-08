@@ -610,23 +610,38 @@ namespace Renderer {
             GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
 
             if (modelLoc != -1) {
-                // Escala de hangar 22x para que sea gigantesco y espacioso en comparación con el avión
-                float hangarScale = 22.0f;
-
-                // Calcular el punto Y mínimo real de la malla del hangar
-                float minY = 9999.0f;
+                // Calcular caja delimitadora real del modelo del hangar
+                float minY = 9999.0f, maxY = -9999.0f;
+                float minX = 9999.0f, maxX = -9999.0f;
+                float minZ = 9999.0f, maxZ = -9999.0f;
                 for (const auto& mesh : hangar3DModel->getMeshes()) {
                     for (const auto& v : mesh.vertices) {
+                        if (v.position.x < minX) minX = v.position.x;
+                        if (v.position.x > maxX) maxX = v.position.x;
                         if (v.position.y < minY) minY = v.position.y;
+                        if (v.position.y > maxY) maxY = v.position.y;
+                        if (v.position.z < minZ) minZ = v.position.z;
+                        if (v.position.z > maxZ) maxZ = v.position.z;
                     }
                 }
 
-                // Ajustar traslación Y para que el suelo del hangar quede por debajo del tren de aterrizaje (-0.78f)
+                float extentX = maxX - minX;
+                float extentY = maxY - minY;
+                float extentZ = maxZ - minZ;
+                float maxExtent = std::max({ extentX, extentY, extentZ });
+
+                // Escalar el hangar para que tenga 40.0 unidades de amplitud envolvente
+                float targetSize = 40.0f;
+                float hangarScale = (maxExtent > 0.001f) ? (targetSize / maxExtent) : 1.0f;
+
+                // Centrar horizontalmente el hangar y apoyar piso en Y = -0.78f
+                float centerX = (minX + maxX) * 0.5f * hangarScale;
+                float centerZ = (minZ + maxZ) * 0.5f * hangarScale;
                 float targetFloorY = -0.78f;
                 float yOffset = targetFloorY - (minY * hangarScale);
 
                 glm::mat4 modelMat = glm::mat4(1.0f);
-                modelMat = glm::translate(modelMat, glm::vec3(0.0f, yOffset, 0.0f));
+                modelMat = glm::translate(modelMat, glm::vec3(-centerX, yOffset, -centerZ));
                 modelMat = glm::scale(modelMat, glm::vec3(hangarScale, hangarScale, hangarScale));
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
             }
