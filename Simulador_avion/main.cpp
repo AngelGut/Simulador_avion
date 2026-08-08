@@ -311,6 +311,7 @@ int main(int argc, char** argv) {
     glfwSetKeyCallback(window, keyCallback);
 
     UIRenderer::init(ctx.windowWidth, ctx.windowHeight);
+    ModelRenderer::init();
     
     // Cargar shaders de texturas original
     try {
