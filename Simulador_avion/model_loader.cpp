@@ -371,12 +371,36 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         }
     }
 
-    // DESCARTAR MALLAS DE SOMBRA NEGRAS O DEFORMACIONES DE PICOS:
-    // Si la malla no tiene textura y su color es negro o casi negro, es un plano de sombra/colisión
+    // DESCARTAR MALLAS PARÁSITAS (Picos de techos deformados, carreteras y planos de sombras)
+    glm::vec3 mMin(FLT_MAX), mMax(-FLT_MAX);
+    for (const auto& v : vertices) {
+        mMin = glm::min(mMin, v.position);
+        mMax = glm::max(mMax, v.position);
+    }
+    glm::vec3 mSize = mMax - mMin;
+
+    // 1. Filtrar por palabras clave de juegos (carreteras exteriores, overlays, sombras, triggers)
+    if (lowerMeshName.find("road") != std::string::npos ||
+        lowerMeshName.find("track") != std::string::npos ||
+        lowerMeshName.find("decal") != std::string::npos ||
+        lowerMeshName.find("overlay") != std::string::npos ||
+        lowerMeshName.find("sky") != std::string::npos ||
+        lowerMeshName.find("terrain") != std::string::npos) {
+        return;
+    }
+
+    // 2. Filtrar mallas de sombras negras sin textura
     if (!newMesh.hasTexture) {
         if (meshColor.r < 0.05f && meshColor.g < 0.05f && meshColor.b < 0.05f) {
-            return; // Omitir planos de sombras oscuras deformadas
+            return;
         }
+    }
+
+    // 3. Filtrar mallas con picos o deformaciones de dimensiones desproporcionadas (> 45.0 unidades)
+    if (mSize.x > 45.0f || mSize.y > 45.0f || mSize.z > 45.0f) {
+        std::cout << "  [Filtro Hangar] Omitiendo malla deformada/pico: " << meshName 
+                  << " [" << mSize.x << "x" << mSize.y << "x" << mSize.z << "]\n";
+        return;
     }
 
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
