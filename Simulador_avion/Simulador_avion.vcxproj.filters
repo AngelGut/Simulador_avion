@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -48,10 +48,13 @@
     <ClCompile Include="ui_renderer.cpp">
       <Filter>scr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\glad\src\glad.c">
+    <ClCompile Include="..\glad.c">
       <Filter>scr</Filter>
     </ClCompile>
     <ClCompile Include="screens.cpp">
+      <Filter>scr</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
       <Filter>scr</Filter>
     </ClCompile>
     <ClCompile Include="model.cpp">
