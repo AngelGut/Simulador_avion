@@ -74,7 +74,7 @@ void Mesh::draw() {
     }
 }
 
-Model::Model() : loaded(false), scale(1.0f), center(0.0f) {}
+Model::Model() : loaded(false), scale(1.0f), center(0.0f), isMainBoeing(false) {}
 
 Model::~Model() {
     for (auto const& [key, val] : loadedTextures) {
@@ -129,6 +129,10 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
 bool Model::loadModel(const char* path) {
     finalTransforms.clear();
     loadedTextures.clear();
+
+    std::string pathStr = path;
+    std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), ::tolower);
+    isMainBoeing = (pathStr.find("boeing-787-_dreamliner") != std::string::npos);
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate |
@@ -186,9 +190,6 @@ bool Model::loadModel(const char* path) {
     processNode(scene->mRootNode, scene, identity, modelDir);
     normalizeModel();
 
-    // Rotar tren del B-24 si esta acostado (girar 90 grados en X)
-    std::string pathStr = path;
-    std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), ::tolower);
     if (pathStr.find("b24_tren") != std::string::npos) {
         std::cout << "[Info] Corrigiendo orientacion de b24_tren (rotar 90 grados en X)..." << std::endl;
         float theta = glm::radians(90.0f);
@@ -239,8 +240,8 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         std::string meshName = mesh->mName.C_Str();
-        if (meshName == "Plane_0") {
-            std::cout << "[Info] Omitiendo malla de suelo: " << meshName << std::endl;
+        if (isMainBoeing && meshName == "Plane_0") {
+            std::cout << "[Info] Omitiendo malla de suelo del Boeing principal: " << meshName << std::endl;
             continue;
         }
         processMesh(mesh, scene, currentTransform, modelDir);
