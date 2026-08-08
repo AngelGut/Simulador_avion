@@ -701,9 +701,10 @@ void renderViewerState(GLFWwindow* window) {
         UIColor{ 0.3f, 0.3f, 0.35f, 1.0f }, UIColor{ 0.4f, 0.4f, 0.46f, 1.0f }
     );
     if (backClicked) {
-        ctx.state = AppState::MENU;
         if (Renderer::isPartsModeActive()) {
             Renderer::togglePartsMode();
+        } else {
+            ctx.state = AppState::MENU;
         }
     }
 
