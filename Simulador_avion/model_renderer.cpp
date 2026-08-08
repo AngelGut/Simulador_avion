@@ -141,8 +141,10 @@ void ModelRenderer::renderPreview(GLModel& model, float uiX, float uiY, float ui
     int windowWidth, int windowHeight, float timeSeconds) {
     if (!model.ready) return;
 
-    float aspect = uiW / uiH;
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, model.radius * 0.01f, model.radius * 10.0f);
+    float aspect = (uiH > 0.0f) ? (uiW / uiH) : 1.0f;
+    float nearPlane = (model.radius > 0.001f) ? (model.radius * 0.01f) : 0.1f;
+    float farPlane = (model.radius > 0.001f) ? (model.radius * 10.0f) : 500.0f;
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, nearPlane, farPlane);
 
     float angle = timeSeconds * 0.6f;
     glm::vec3 offset(sin(angle) * model.radius * 2.2f, model.radius * 0.6f, cos(angle) * model.radius * 2.2f);
