@@ -129,6 +129,9 @@ glm::vec3 Model::getMeshColorByIndex(int meshIndex) {
 bool Model::loadModel(const char* path) {
     finalTransforms.clear();
     loadedTextures.clear();
+
+    std::string pathStr = path;
+    std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), ::tolower);
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
         aiProcess_Triangulate |
@@ -186,6 +189,26 @@ bool Model::loadModel(const char* path) {
     processNode(scene->mRootNode, scene, identity, modelDir);
     normalizeModel();
 
+    if (pathStr.find("b24_tren") != std::string::npos) {
+        std::cout << "[Info] Corrigiendo orientacion de b24_tren (rotar 90 grados en X)..." << std::endl;
+        float theta = glm::radians(90.0f);
+        float cosT = std::cos(theta);
+        float sinT = std::sin(theta);
+        for (auto& mesh : meshes) {
+            for (auto& vertex : mesh.vertices) {
+                float y = vertex.position.y;
+                float z = vertex.position.z;
+                vertex.position.y = y * cosT - z * sinT;
+                vertex.position.z = y * sinT + z * cosT;
+
+                float ny = vertex.normal.y;
+                float nz = vertex.normal.z;
+                vertex.normal.y = ny * cosT - nz * sinT;
+                vertex.normal.z = ny * sinT + nz * cosT;
+            }
+        }
+    }
+
     // Configurar VAO/VBO para todos los meshes
     for (auto& mesh : meshes) {
         mesh.setupMesh();
@@ -215,11 +238,6 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        std::string meshName = mesh->mName.C_Str();
-        if (meshName == "Plane_0") {
-            std::cout << "[Info] Omitiendo malla de suelo: " << meshName << std::endl;
-            continue;
-        }
         processMesh(mesh, scene, currentTransform, modelDir);
     }
 

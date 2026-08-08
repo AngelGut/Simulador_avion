@@ -106,7 +106,7 @@ void UIRenderer::drawQuad(float x, float y, float w, float h, UIColor color) {
     glBindVertexArray(0);
 }
 
-void UIRenderer::drawText(float x, float y, const std::string& text, float scale, UIColor color) {
+void drawTextRaw(float x, float y, const std::string& text, float scale, UIColor color) {
     static char buffer[99999];
     int numQuads = stb_easy_font_print(0, 0, (char*)text.c_str(), nullptr, buffer, sizeof(buffer));
 
@@ -159,6 +159,23 @@ void UIRenderer::drawText(float x, float y, const std::string& text, float scale
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
+}
+
+void UIRenderer::drawText(float x, float y, const std::string& text, float scale, UIColor color) {
+    float offset = 0.3f * scale;
+    float shadowOffset = 0.6f * scale;
+    
+    // 1. Sombra negra (efecto negrita para la sombra)
+    UIColor shadowColor{0.0f, 0.0f, 0.0f, 0.75f};
+    drawTextRaw(x + shadowOffset + offset, y + shadowOffset, text, scale, shadowColor);
+    drawTextRaw(x + shadowOffset, y + shadowOffset + offset, text, scale, shadowColor);
+    drawTextRaw(x + shadowOffset, y + shadowOffset, text, scale, shadowColor);
+
+    // 2. Texto principal en negrita (bolded)
+    drawTextRaw(x + offset, y, text, scale, color);
+    drawTextRaw(x, y + offset, text, scale, color);
+    drawTextRaw(x + offset, y + offset, text, scale, color);
+    drawTextRaw(x, y, text, scale, color);
 }
 
 bool UIRenderer::drawButton(float x, float y, float w, float h,
