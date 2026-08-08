@@ -631,6 +631,7 @@ namespace Renderer {
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
             }
 
+            glDisable(GL_CULL_FACE);
             hangar3DModel->draw();
             return;
         }

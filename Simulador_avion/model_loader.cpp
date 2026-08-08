@@ -223,6 +223,19 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
     aiMatrix4x4 aiTrans = node->mTransformation;
     std::string nodeName = node->mName.C_Str();
     
+    std::string lowerNodeName = nodeName;
+    std::transform(lowerNodeName.begin(), lowerNodeName.end(), lowerNodeName.begin(), ::tolower);
+
+    // Omitir nodos de sombra falsa, colisión, cámaras y triggers de juegos
+    if (lowerNodeName.find("shadow") != std::string::npos ||
+        lowerNodeName.find("collision") != std::string::npos ||
+        lowerNodeName.find("trigger") != std::string::npos ||
+        lowerNodeName.find("camera") != std::string::npos ||
+        lowerNodeName.find("bound") != std::string::npos ||
+        lowerNodeName.find("helper") != std::string::npos) {
+        return;
+    }
+
     // Si hay una matriz bakeada para esta pieza, usarla
     if (finalTransforms.find(nodeName) != finalTransforms.end()) {
         aiTrans = finalTransforms[nodeName];
@@ -247,6 +260,19 @@ void Model::processNode(aiNode* node, const aiScene* scene, const glm::mat4& par
 }
 
 void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nodeTransform, const std::string& modelDir) {
+    std::string meshName = mesh->mName.C_Str();
+    std::string lowerMeshName = meshName;
+    std::transform(lowerMeshName.begin(), lowerMeshName.end(), lowerMeshName.begin(), ::tolower);
+
+    if (lowerMeshName.find("shadow") != std::string::npos ||
+        lowerMeshName.find("collision") != std::string::npos ||
+        lowerMeshName.find("trigger") != std::string::npos ||
+        lowerMeshName.find("camera") != std::string::npos ||
+        lowerMeshName.find("bound") != std::string::npos ||
+        lowerMeshName.find("helper") != std::string::npos) {
+        return;
+    }
+
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
