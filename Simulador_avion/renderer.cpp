@@ -346,32 +346,106 @@ namespace Renderer {
     }
 
     // ============================================================
-    // ESCENOGRAFÍA DEL HANGAR
+    // ESCENOGRAFÍA DEL HANGAR 3D (Plataforma Circular + Estructura)
     // ============================================================
     static void initFloor() {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
+        glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
 
-        float size = 15.0f;
-        float y = -0.6f;
-        glm::vec3 normal(0.0f, 1.0f, 0.0f);
-        glm::vec3 color(0.15f, 0.15f, 0.2f); // Gris azulado oscuro
+        // 1. Suelo Base Epóxico Oscuro (Quad Principal)
+        float size = 30.0f;
+        float yFloor = -0.60f;
+        glm::vec3 darkEpoxyColor(0.06f, 0.07f, 0.10f);
 
-        // Vértices del quad del suelo
-        Vertex v1 = { glm::vec3(-size, y, -size), normal, color, glm::vec2(0.0f, 0.0f) };
-        Vertex v2 = { glm::vec3(size, y, -size), normal, color, glm::vec2(1.0f, 0.0f) };
-        Vertex v3 = { glm::vec3(size, y, size), normal, color, glm::vec2(1.0f, 1.0f) };
-        Vertex v4 = { glm::vec3(-size, y, size), normal, color, glm::vec2(0.0f, 1.0f) };
+        Vertex f1 = { glm::vec3(-size, yFloor, -size), upNormal, darkEpoxyColor, glm::vec2(0.0f, 0.0f) };
+        Vertex f2 = { glm::vec3(size, yFloor, -size), upNormal, darkEpoxyColor, glm::vec2(1.0f, 0.0f) };
+        Vertex f3 = { glm::vec3(size, yFloor, size), upNormal, darkEpoxyColor, glm::vec2(1.0f, 1.0f) };
+        Vertex f4 = { glm::vec3(-size, yFloor, size), upNormal, darkEpoxyColor, glm::vec2(0.0f, 1.0f) };
 
-        vertices.push_back(v1);
-        vertices.push_back(v2);
-        vertices.push_back(v3);
-        vertices.push_back(v4);
+        unsigned int baseIdx = (unsigned int)vertices.size();
+        vertices.push_back(f1); vertices.push_back(f2); vertices.push_back(f3); vertices.push_back(f4);
+        indices.push_back(baseIdx + 0); indices.push_back(baseIdx + 1); indices.push_back(baseIdx + 2);
+        indices.push_back(baseIdx + 0); indices.push_back(baseIdx + 2); indices.push_back(baseIdx + 3);
 
-        indices.push_back(0); indices.push_back(1); indices.push_back(2);
-        indices.push_back(0); indices.push_back(2); indices.push_back(3);
+        // 2. Plataforma Circular Central (Disco Metálico)
+        float yPad = -0.595f;
+        float padRadius = 5.2f;
+        int segments = 64;
+        glm::vec3 metalColor(0.18f, 0.20f, 0.26f);
 
-        floorIndexCount = indices.size();
+        unsigned int centerIdx = (unsigned int)vertices.size();
+        vertices.push_back({ glm::vec3(0.0f, yPad, 0.0f), upNormal, metalColor, glm::vec2(0.5f, 0.5f) });
+
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * (2.0f * 3.14159265f / segments);
+            float x = cos(angle) * padRadius;
+            float z = sin(angle) * padRadius;
+            vertices.push_back({ glm::vec3(x, yPad, z), upNormal, metalColor, glm::vec2(0.5f + cos(angle)*0.5f, 0.5f + sin(angle)*0.5f) });
+        }
+
+        for (int i = 1; i <= segments; i++) {
+            indices.push_back(centerIdx);
+            indices.push_back(centerIdx + i);
+            indices.push_back(centerIdx + i + 1);
+        }
+
+        // 3. Anillo LED Exterior de Advertencia (Cyan Glow Ring)
+        float yRing = -0.590f;
+        float innerR = 4.9f;
+        float outerR = 5.2f;
+        glm::vec3 cyanLED(0.15f, 0.65f, 0.90f);
+
+        unsigned int ringStartIdx = (unsigned int)vertices.size();
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * (2.0f * 3.14159265f / segments);
+            float cosA = cos(angle);
+            float sinA = sin(angle);
+
+            vertices.push_back({ glm::vec3(cosA * innerR, yRing, sinA * innerR), upNormal, cyanLED, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(cosA * outerR, yRing, sinA * outerR), upNormal, cyanLED, glm::vec2(1.0f, 1.0f) });
+        }
+
+        for (int i = 0; i < segments; i++) {
+            unsigned int current = ringStartIdx + i * 2;
+            unsigned int next = ringStartIdx + (i + 1) * 2;
+
+            indices.push_back(current); indices.push_back(next); indices.push_back(current + 1);
+            indices.push_back(next); indices.push_back(next + 1); indices.push_back(current + 1);
+        }
+
+        // 4. Pared Posterior del Hangar (Back Wall)
+        float zWall = -20.0f;
+        float yWallTop = 15.0f;
+        glm::vec3 wallColor(0.04f, 0.05f, 0.08f);
+        glm::vec3 wallNormal(0.0f, 0.0f, 1.0f);
+
+        unsigned int wallIdx = (unsigned int)vertices.size();
+        vertices.push_back({ glm::vec3(-size, yFloor, zWall), wallNormal, wallColor, glm::vec2(0.0f, 0.0f) });
+        vertices.push_back({ glm::vec3(size, yFloor, zWall), wallNormal, wallColor, glm::vec2(1.0f, 0.0f) });
+        vertices.push_back({ glm::vec3(size, yWallTop, zWall), wallNormal, wallColor, glm::vec2(1.0f, 1.0f) });
+        vertices.push_back({ glm::vec3(-size, yWallTop, zWall), wallNormal, wallColor, glm::vec2(0.0f, 1.0f) });
+
+        indices.push_back(wallIdx + 0); indices.push_back(wallIdx + 1); indices.push_back(wallIdx + 2);
+        indices.push_back(wallIdx + 0); indices.push_back(wallIdx + 2); indices.push_back(wallIdx + 3);
+
+        // 5. Columnas Estructurales Laterales (Pillars)
+        glm::vec3 pillarColor(0.12f, 0.14f, 0.18f);
+        float pillarXPositions[] = { -16.0f, -8.0f, 8.0f, 16.0f };
+        float pillarW = 1.2f;
+
+        for (float pX : pillarXPositions) {
+            unsigned int pIdx = (unsigned int)vertices.size();
+            vertices.push_back({ glm::vec3(pX - pillarW, yFloor, zWall + 0.1f), wallNormal, pillarColor, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(pX + pillarW, yFloor, zWall + 0.1f), wallNormal, pillarColor, glm::vec2(1.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(pX + pillarW, yWallTop, zWall + 0.1f), wallNormal, pillarColor, glm::vec2(1.0f, 1.0f) });
+            vertices.push_back({ glm::vec3(pX - pillarW, yWallTop, zWall + 0.1f), wallNormal, pillarColor, glm::vec2(0.0f, 1.0f) });
+
+            indices.push_back(pIdx + 0); indices.push_back(pIdx + 1); indices.push_back(pIdx + 2);
+            indices.push_back(pIdx + 0); indices.push_back(pIdx + 2); indices.push_back(pIdx + 3);
+        }
+
+        floorIndexCount = (int)indices.size();
 
         glGenVertexArrays(1, &floorVAO);
         glGenBuffers(1, &floorVBO);
@@ -402,27 +476,37 @@ namespace Renderer {
 
     static void initGridLines() {
         std::vector<Vertex> vertices;
-        float size = 15.0f;
-        float y = -0.59f; // Ligeramente arriba para evitar z-fighting
-        glm::vec3 normal(0.0f, 1.0f, 0.0f);
-        glm::vec3 color(0.3f, 0.4f, 0.5f); // Líneas celestes oscuras
+        float yGrid = -0.585f;
+        glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
+        glm::vec3 gridCyan(0.20f, 0.60f, 0.90f);
 
-        int divisions = 30;
-        float step = (size * 2.0f) / divisions;
+        // 1. Anillos Concéntricos en la Plataforma Circular
+        float ringRadii[] = { 1.8f, 3.2f, 4.5f, 5.1f };
+        int ringSegments = 64;
 
-        for (int i = 0; i <= divisions; i++) {
-            float coord = -size + i * step;
+        for (float r : ringRadii) {
+            for (int i = 0; i < ringSegments; i++) {
+                float a1 = i * (2.0f * 3.14159265f / ringSegments);
+                float a2 = (i + 1) * (2.0f * 3.14159265f / ringSegments);
 
-            // Línea paralela al eje Z
-            vertices.push_back({ glm::vec3(coord, y, -size), normal, color, glm::vec2(0.0f, 0.0f) });
-            vertices.push_back({ glm::vec3(coord, y, size), normal, color, glm::vec2(0.0f, 0.0f) });
-
-            // Línea paralela al eje X
-            vertices.push_back({ glm::vec3(-size, y, coord), normal, color, glm::vec2(0.0f, 0.0f) });
-            vertices.push_back({ glm::vec3(size, y, coord), normal, color, glm::vec2(0.0f, 0.0f) });
+                vertices.push_back({ glm::vec3(cos(a1) * r, yGrid, sin(a1) * r), upNormal, gridCyan, glm::vec2(0.0f, 0.0f) });
+                vertices.push_back({ glm::vec3(cos(a2) * r, yGrid, sin(a2) * r), upNormal, gridCyan, glm::vec2(0.0f, 0.0f) });
+            }
         }
 
-        gridVertexCount = vertices.size();
+        // 2. Líneas Radiales (Rayos de 0 a 360 grados)
+        int radialLines = 24;
+        float maxR = 5.1f;
+        for (int i = 0; i < radialLines; i++) {
+            float angle = i * (2.0f * 3.14159265f / radialLines);
+            float cosA = cos(angle);
+            float sinA = sin(angle);
+
+            vertices.push_back({ glm::vec3(cosA * 0.8f, yGrid, sinA * 0.8f), upNormal, gridCyan, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(cosA * maxR, yGrid, sinA * maxR), upNormal, gridCyan, glm::vec2(0.0f, 0.0f) });
+        }
+
+        gridVertexCount = (int)vertices.size();
 
         glGenVertexArrays(1, &gridVAO);
         glGenBuffers(1, &gridVBO);
@@ -473,11 +557,11 @@ namespace Renderer {
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
         }
 
-        // 1. Dibujar suelo
+        // 1. Dibujar suelo, plataforma circular y pared posterior
         glBindVertexArray(floorVAO);
         glDrawElements(GL_TRIANGLES, floorIndexCount, GL_UNSIGNED_INT, 0);
 
-        // 2. Dibujar rejilla
+        // 2. Dibujar rejilla circular y líneas radiales
         glBindVertexArray(gridVAO);
         glDrawArrays(GL_LINES, 0, gridVertexCount);
 
