@@ -277,7 +277,7 @@ void Screens::renderWelcome(AppContext& ctx) {
     // Botón Comenzar (con borde)
     float btnW = 240.0f, btnH = 64.0f;
     float btnX = cx - btnW / 2.0f;
-    float btnY = h / 2.0f - 10.0f;
+    float btnY = h / 2.0f - 30.0f; // Subido un poco para dar espacio a Salir
 
     UIRenderer::drawBorder(btnX - 3, btnY - 3, btnW + 6, btnH + 6, 2.0f, accent);
     bool clicked = UIRenderer::drawButton(
@@ -286,6 +286,24 @@ void Screens::renderWelcome(AppContext& ctx) {
         accent, accentHover
     );
     if (clicked) ctx.state = AppState::MENU;
+
+    // Botón Salir (debajo de Comenzar, con borde rojo)
+    float exitW = 240.0f, exitH = 64.0f;
+    float exitX = cx - exitW / 2.0f;
+    float exitY = btnY + btnH + 20.0f;
+
+    UIRenderer::drawBorder(exitX - 3, exitY - 3, exitW + 6, exitH + 6, 2.0f, UIColor{ 0.6f, 0.15f, 0.15f, 1.0f });
+    bool exitClicked = UIRenderer::drawButton(
+        exitX, exitY, exitW, exitH, "Salir",
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed,
+        UIColor{ 0.35f, 0.12f, 0.12f, 1.0f }, UIColor{ 0.5f, 0.18f, 0.18f, 1.0f }
+    );
+    if (exitClicked) {
+        GLFWwindow* currentWin = glfwGetCurrentContext();
+        if (currentWin) {
+            glfwSetWindowShouldClose(currentWin, true);
+        }
+    }
 
     // Botón de audio con icono de bocina (Esquina superior derecha)
     float audioW = 90.0f, audioH = 44.0f;
