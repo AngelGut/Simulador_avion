@@ -65,6 +65,9 @@ void Mesh::draw() {
         if (useTexLoc != -1) glUniform1i(useTexLoc, 0);
     }
 
+    GLint meshTypeLoc = glGetUniformLocation(currentProgram, "uMeshType");
+    if (meshTypeLoc != -1) glUniform1i(meshTypeLoc, meshType);
+
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -345,9 +348,36 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         }
     }
 
+    // Identificar el tipo de malla por su nombre para las simulaciones físicas
+    std::string meshName = mesh->mName.C_Str();
+    for (auto& c : meshName) c = tolower(c);
+    
+    if (meshName.find("motor") != std::string::npos || 
+        meshName.find("engine") != std::string::npos || 
+        meshName.find("turbina") != std::string::npos || 
+        meshName.find("pylon") != std::string::npos || 
+        meshName.find("propeller") != std::string::npos || 
+        meshName.find("boquilla") != std::string::npos ||
+        meshName.find("zylinder") != std::string::npos ||
+        meshName.find("cylinder") != std::string::npos ||
+        meshName.find("nozzle") != std::string::npos) {
+        newMesh.meshType = 1; // Engine
+    } else if (meshName.find("ala") != std::string::npos || 
+               meshName.find("wing") != std::string::npos || 
+               meshName.find("flap") != std::string::npos || 
+               meshName.find("aileron") != std::string::npos || 
+               meshName.find("rudder") != std::string::npos || 
+               meshName.find("estabiliz") != std::string::npos ||
+               meshName.find("keel") != std::string::npos) { // MiG tails/stabilizers
+        newMesh.meshType = 2; // Wing / Stabilizer / Wing-like control surfaces
+    } else {
+        newMesh.meshType = 0; // Default
+    }
+
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
         << indices.size() / 3 << " triángulos" 
-        << (newMesh.hasTexture ? " [Con Textura]" : "") << std::endl;
+        << (newMesh.hasTexture ? " [Con Textura]" : "") 
+        << " [Tipo: " << newMesh.meshType << "]" << std::endl;
 
     meshes.push_back(newMesh);
 }

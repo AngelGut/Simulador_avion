@@ -358,6 +358,19 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_H) {
         ctx.showHelp = !ctx.showHelp;
     }
+
+    if (key == GLFW_KEY_F1 || key == GLFW_KEY_TAB || key == GLFW_KEY_U) {
+        ctx.hideHUD = !ctx.hideHUD;
+    }
+
+    // Atajos de teclado del 6 al 0 para simulaciones (solo en avion armado)
+    if (!Renderer::isPartsModeActive()) {
+        if (key == GLFW_KEY_6) { ctx.simMode = SimulationMode::NONE; ctx.simGraphHistory.clear(); }
+        if (key == GLFW_KEY_7) { ctx.simMode = SimulationMode::WIND_TUNNEL; ctx.simGraphHistory.clear(); }
+        if (key == GLFW_KEY_8) { ctx.simMode = SimulationMode::THERMAL; ctx.simGraphHistory.clear(); }
+        if (key == GLFW_KEY_9) { ctx.simMode = SimulationMode::STRESS; ctx.simGraphHistory.clear(); }
+        if (key == GLFW_KEY_0) { ctx.simMode = SimulationMode::VIBRATION; ctx.simGraphHistory.clear(); }
+    }
 }
 
 // ============================================================
@@ -417,11 +430,32 @@ void renderViewerState(GLFWwindow* window) {
     shaderProgram->setVec3("uViewPos", glm::vec3(camX + viewX, actualCamY, camZ));
     shaderProgram->setVec3("uLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
+    // Configurar tiempo, tipo de avion y activar iluminacion por defecto
+    shaderProgram->setFloat("uTime", ctx.totalTime);
+    shaderProgram->setInt("uPlaneType", ctx.selectedPlane);
+    shaderProgram->setInt("uUseLighting", 1);
+
+    // Desactivar modo de simulacion temporalmente para dibujar el hangar con colores normales
+    shaderProgram->setInt("uSimMode", 0);
+
     // Dibujar hangar
     Renderer::drawHangar(actualCamY);
 
+    // Reactivar el modo de simulacion para el tunel de viento y el avion
+    shaderProgram->setInt("uSimMode", (int)ctx.simMode);
+
+    // Dibujar tunel de viento si esta activo
+    if (ctx.simMode == SimulationMode::WIND_TUNNEL && !Renderer::isPartsModeActive()) {
+        Renderer::drawWindTunnel(ctx.totalTime);
+        shaderProgram->use(); // Reactivar el shader del avion
+        shaderProgram->setInt("uSimMode", (int)ctx.simMode);
+    }
+
     // Dibujar avión
     Renderer::drawLayer(1);
+
+    // Desactivar modo de simulacion para subsiguientes elementos de dibujo
+    shaderProgram->setInt("uSimMode", 0);
 
     // Desactivar depth test para dibujar el HUD plano encima
     glDisable(GL_DEPTH_TEST);
@@ -430,7 +464,21 @@ void renderViewerState(GLFWwindow* window) {
     float h = (float)ctx.windowHeight;
     float cx = w / 2.0f;
 
-    // 3. RENDERIZAR HOTSPOTS 3D (Miras holográficas interactivas)
+    if (!ctx.hideHUD) {
+        // --- BOTÓN MOSTRAR/OCULTAR HUD ---
+        float hudBtnW = 140.0f, hudBtnH = 44.0f;
+        bool hudClicked = UIRenderer::drawButton(
+            24.0f, 24.0f, hudBtnW, hudBtnH, "Ocultar HUD",
+            ctx.mouseX, ctx.mouseY, ctx.mousePressed,
+            UIColor{ 0.12f, 0.22f, 0.35f, 0.9f }, UIColor{ 0.18f, 0.32f, 0.48f, 1.0f }
+        );
+        if (hudClicked) {
+            ctx.hideHUD = true;
+        }
+    }
+
+    if (!ctx.hideHUD) {
+        // 3. RENDERIZAR HOTSPOTS 3D (Miras holográficas interactivas)
     if (ctx.selectedPlane >= 0 && ctx.selectedPlane < (int)planeHotspots.size()) {
         const auto& hotspots = planeHotspots[ctx.selectedPlane];
         int hoveredIdx = -1;
@@ -554,6 +602,101 @@ void renderViewerState(GLFWwindow* window) {
         UIRenderer::drawText(cx - 175.0f, 24.0f, ctx.planes[ctx.selectedPlane].name.c_str(), 2.4f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
     }
 
+    // --- ACUMULAR HISTORIAL DE GRÁFICO DE SIMULACIÓN ---
+    if (!Renderer::isPartsModeActive()) {
+        if (ctx.simMode == SimulationMode::THERMAL) {
+            float baseT = 150.0f + 465.0f * (1.0f - std::exp(-ctx.totalTime / 15.0f));
+            float noise = ((float)(rand() % 100) - 50.0f) * 0.08f;
+            ctx.simGraphHistory.push_back(baseT + noise);
+            if (ctx.simGraphHistory.size() > 100) {
+                ctx.simGraphHistory.erase(ctx.simGraphHistory.begin());
+            }
+        } else if (ctx.simMode == SimulationMode::STRESS) {
+            float baseS = 32.0f + 8.0f * std::sin(ctx.totalTime * 5.0f);
+            float noise = ((float)(rand() % 100) - 50.0f) * 0.04f;
+            ctx.simGraphHistory.push_back(baseS + noise);
+            if (ctx.simGraphHistory.size() > 100) {
+                ctx.simGraphHistory.erase(ctx.simGraphHistory.begin());
+            }
+        } else {
+            ctx.simGraphHistory.clear();
+        }
+    } else {
+        ctx.simMode = SimulationMode::NONE;
+        ctx.simGraphHistory.clear();
+    }
+
+    // --- RENDERIZAR SELECTOR DE SIMULACIONES A LA DERECHA ---
+    if (!Renderer::isPartsModeActive()) {
+        float panelW = 240.0f;
+        float panelH = 290.0f;
+        float panelX = w - panelW - 24.0f;
+        float panelY = 100.0f;
+
+        // Si la ayuda esta activa, mover el panel hacia abajo para no solaparse
+        if (ctx.showHelp) {
+            panelY = 380.0f;
+        }
+
+        // Fondo del panel
+        UIRenderer::drawQuad(panelX, panelY, panelW, panelH, UIColor{ 0.02f, 0.04f, 0.07f, 0.88f });
+        UIRenderer::drawBorder(panelX, panelY, panelW, panelH, 1.5f, UIColor{ 0.0f, 1.0f, 0.85f, 1.0f });
+
+        // Título del panel
+        UIRenderer::drawText(panelX + 16.0f, panelY + 16.0f, "ANALISIS SIMULACION", 1.4f, UIColor{ 1.0f, 0.85f, 0.0f, 1.0f });
+
+        // Botones
+        std::vector<std::string> labels = {
+            "Vista Normal",
+            "Tunel Viento",
+            "Mapa Termico",
+            "Esfuerzo Mec.",
+            "Analisis Modal"
+        };
+        std::vector<SimulationMode> modes = {
+            SimulationMode::NONE,
+            SimulationMode::WIND_TUNNEL,
+            SimulationMode::THERMAL,
+            SimulationMode::STRESS,
+            SimulationMode::VIBRATION
+        };
+
+        float btnW = 208.0f;
+        float btnH = 34.0f;
+        float startY = panelY + 45.0f;
+        float spacing = 44.0f;
+
+        for (size_t i = 0; i < labels.size(); ++i) {
+            UIColor baseCol = (ctx.simMode == modes[i]) ? UIColor{ 0.0f, 0.5f, 0.5f, 1.0f } : UIColor{ 0.15f, 0.15f, 0.18f, 1.0f };
+            UIColor hoverCol = UIColor{ 0.25f, 0.35f, 0.35f, 1.0f };
+
+            bool clicked = UIRenderer::drawButton(
+                panelX + 16.0f, startY + i * spacing, btnW, btnH, labels[i],
+                ctx.mouseX, ctx.mouseY, ctx.mousePressed,
+                baseCol, hoverCol
+            );
+
+            if (clicked) {
+                ctx.simMode = modes[i];
+                ctx.simGraphHistory.clear();
+            }
+        }
+    }
+
+    // --- RENDERIZAR GRÁFICO DE HISTORIAL A LA DERECHA ABAJO ---
+    if (!Renderer::isPartsModeActive() && (ctx.simMode == SimulationMode::THERMAL || ctx.simMode == SimulationMode::STRESS)) {
+        float graphW = 460.0f;
+        float graphH = 200.0f;
+        float graphX = w - graphW - 24.0f;
+        float graphY = h - graphH - 24.0f;
+
+        if (ctx.simMode == SimulationMode::THERMAL) {
+            UIRenderer::drawSimGraph(graphX, graphY, graphW, graphH, ctx.simGraphHistory, 700.0f, "TEMP. MAX vs TIEMPO", "C");
+        } else if (ctx.simMode == SimulationMode::STRESS) {
+            UIRenderer::drawSimGraph(graphX, graphY, graphW, graphH, ctx.simGraphHistory, 60.0f, "ESFUERZO MAX (VON MISES)", "MPa");
+        }
+    }
+
     // Botón Volver (Colocado al fondo de la barra de información izquierda)
     float backW = 140.0f, backH = 44.0f;
     bool backClicked = UIRenderer::drawButton(
@@ -562,28 +705,33 @@ void renderViewerState(GLFWwindow* window) {
         UIColor{ 0.3f, 0.3f, 0.35f, 1.0f }, UIColor{ 0.4f, 0.4f, 0.46f, 1.0f }
     );
     if (backClicked) {
-        ctx.state = AppState::MENU;
         if (Renderer::isPartsModeActive()) {
             Renderer::togglePartsMode();
+        } else {
+            ctx.state = AppState::MENU;
         }
     }
 
-    // Dibujar ayuda en la derecha (Para no solapar con el panel de info izquierdo)
-    if (ctx.showHelp) {
-        float boxW = 380.0f, boxH = 240.0f; // Tamaño de ayuda
-        float boxX = w - boxW - 24.0f, boxY = 24.0f;
-        UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{ 0.05f, 0.05f, 0.08f, 0.85f });
-        UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, UIColor{ 0.3f, 0.3f, 0.3f, 1.0f });
+        // Dibujar ayuda en la derecha (Para no solapar con el panel de info izquierdo)
+        if (ctx.showHelp) {
+            float boxW = 440.0f, boxH = 340.0f; // Tamaño de ayuda ampliado para los nuevos controles
+            float boxX = w - boxW - 24.0f, boxY = 24.0f;
+            UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{ 0.05f, 0.05f, 0.08f, 0.85f });
+            UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, UIColor{ 0.3f, 0.3f, 0.3f, 1.0f });
 
-        float lineY = boxY + 20.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "Controles:", 1.8f, UIColor{1, 1, 1, 1}); lineY += 34.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "Arrastrar Click - Rotar", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "Scroll / Q/E - Zoom", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "WASD - Paneo", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "P - Modo Piezas", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
-        UIRenderer::drawText(boxX + 20.0f, lineY, "<- / -> - Cambiar Pieza", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f});
-    } else {
-        UIRenderer::drawText(w - 440.0f, h - 30.0f, "Presiona H para ver los controles", 1.6f, UIColor{0.5f, 0.5f, 0.5f, 1.0f});
+            float lineY = boxY + 20.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "Controles:", 1.8f, UIColor{1, 1, 1, 1}); lineY += 34.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "Arrastrar Click - Rotar Modelo", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "Scroll / Q/E - Acercar/Alejar Zoom", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "WASD - Paneo / Mover Camara", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "P - Alternar Modo Piezas/Armado", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "Flechas Izq/Der - Seleccionar Pieza", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "6, 7, 8, 9, 0 - Modos de Simulacion", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "H - Mostrar/Ocultar Controles", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f}); lineY += 28.0f;
+            UIRenderer::drawText(boxX + 20.0f, lineY, "F1 / TAB / U - Mostrar/Ocultar todo el HUD", 1.4f, UIColor{0.75f, 0.8f, 0.85f, 1.0f});
+        } else {
+            UIRenderer::drawText(w - 440.0f, h - 30.0f, "Presiona H para ver los controles", 1.6f, UIColor{0.5f, 0.5f, 0.5f, 1.0f});
+        }
     }
 }
 

@@ -1,114 +1,64 @@
-# 🚀 Boeing 737 Visualizer 3D - Simulador de Aviones
+# 🚀 Simulador de Aviones - Visor 3D Interactivo (Fase B)
 
-**Estado:** ✅ Listo para Pre-Entrega (Fase A)
+**Estado:** ✅ Fase B Completada & Optimizada  
+**Tecnología:** OpenGL 3.3 Core Profile | GLFW | GLAD | Assimp | GLM
 
-Una aplicación 3D interactiva que carga y visualiza 5 modelos de aeronaves diferentes con controles de rotación, zoom y navegación.
-
----
-
-## 📋 Requisitos Previos
-
-- **Visual Studio 2022** (o similar)
-- **vcpkg** (gestor de paquetes de C++)
-- **C++20** o superior
+Una aplicación interactiva 3D en C++ moderna que permite la visualización, exploración técnica y desensamblado interactivo de 4 modelos de aeronaves detallados en un hangar digital con iluminación y una interfaz HUD avanzada.
 
 ---
 
-## ⚡ Instalación Rápida (5 minutos)
+## ✈️ Aeronaves y Piezas Disponibles
 
-### 1️⃣ Clonar el repositorio
+El simulador cuenta con 4 aviones icónicos. Cada uno puede visualizarse en su estado ensamblado completo o desensamblarse en piezas individuales para analizar sus detalles internos:
 
-```bash
-git clone https://github.com/AngelGut/Simulador_avion.git
-cd Simulador_avion
-```
-
-### 2️⃣ Instalar Assimp con vcpkg
-
-```bash
-# Si ya tienes vcpkg:
-vcpkg install assimp:x64-windows
-
-# Si NO tienes vcpkg, primero clonalo:
-git clone https://github.com/Microsoft/vcpkg.git
-cd vcpkg
-.\bootstrap-vcpkg.bat
-.\vcpkg integrate install
-cd ..
-vcpkg install assimp:x64-windows
-```
-
-### 3️⃣ Abrir en Visual Studio
-
-```
-1. Abre: Simulador_avion/Simulador_avion.sln
-2. Esperá que Visual Studio indexe (5-10 seg)
-3. Menú: Build → Rebuild Solution (Ctrl+Shift+B)
-4. Debug → Start Debugging (F5) o presiona F5
-```
-
-### 4️⃣ ¡Listo! 🎉
-
-El programa abrirá una consola pidiendo que selecciones un modelo (1-5).
+1. **A-10 Thunderbolt II (10 piezas):** Cañón rotatorio GAU-8, Cabina de titanio, Motores Turbofan TF34, Alas principales, Tren de aterrizaje, Flaps de control, Misil pesado (AGM-65 Maverick), Misil mediano (GBU-12), Cohetes ligeros (FFAR) y Anclajes de carga.
+2. **B-24 Liberator (7 piezas):** Cabina de mando, Bahía de bombas interna, Motores radiales Pratt & Whitney, Ala de alta eficiencia Davis, Tren retráctil (con corrección de orientación YZ), Estructura interna de aluminio y Flaps traseros.
+3. **Boeing 787 Dreamliner (5 piezas):** Fuselaje composite de fibra de carbono, Turbofans GEnx de alta eficiencia, Tren de aterrizaje principal, Bodega de carga inferior y Cabina interior de pasajeros (`boing_inter`).
+4. **MiG-29 Fulcrum (5 piezas):** Cabina de burbuja, Turbofans Klimov RD-33, Misil aire-aire de corto alcance R-73, Alas de flecha y LERX, Tren de aterrizaje rústico y Fuselaje de sustentación integrada.
 
 ---
 
-## 🎮 Controles
+## 🎮 Controles de Navegación e Interacción
 
-| Acción | Teclas |
-|--------|--------|
-| **Rotar arriba/abajo** | I / K |
-| **Rotar izq/der** | J / L |
-| **Rotar Z (roll)** | R / T |
-| **Zoom in/out** | Q / E |
-| **Mover vista** | W / A / S / D |
-| **Cambiar modelo** | 1, 2, 3, 4, 5 |
-| **Reset vista** | ESPACIO |
-| **Ver ayuda** | H |
-| **Salir** | ESC |
-
----
-
-## ✈️ Modelos Disponibles
-
-```
-1 → American Airlines Boeing 737-800 (BLEND)
-2 → Kawasaki Ki-61 (BLEND)
-3 → MS-406 (FBX)
-4 → MYSTERE IV N 117 (FBX)
-5 → ??? Sorpresa - Millennium Falcon (OBJ)
-```
+| Acción | Control de Teclado / Ratón |
+|--------|----------------------------|
+| **Rotación de Cámara** | Arrastrar con **Click Izquierdo** del Ratón (o teclas `I` / `K` / `J` / `L`) |
+| **Mover / Panear Vista** | Arrastrar con **Click Derecho** del Ratón (o teclas `W` / `A` / `S` / `D`) |
+| **Zoom In / Out** | Rueda del Ratón o teclas `Q` / `E` |
+| **Modo Piezas (Toggle)** | Tecla `P` o tecla `Retroceso (Backspace)` |
+| **Navegar Piezas** | Teclas de flecha **Izquierda (←)** / **Derecha (→)** (solo en Modo Piezas) |
+| **Restablecer Cámara** | Tecla **Espacio** (reajusta posición, rotación y aplica el zoom ideal del modelo) |
+| **Guía de Ayuda (Toggle)**| Tecla `H` (muestra/oculta el overlay de controles en pantalla) |
+| **Salir** | Tecla **ESC** |
 
 ---
 
-## 🔧 Solución de Problemas
+## 💎 Características Avanzadas de Interfaz (HUD)
 
-### Error: "assimp.lib not found"
-```
-→ Ejecutá: vcpkg integrate install
-→ Reconstruye: Build → Clean Solution → Rebuild Solution
-```
+El HUD ha sido modernizado para ofrecer una presentación visual de nivel premium y máxima legibilidad:
 
-### El programa no compila
-```
-→ Build → Clean Solution
-→ Build → Rebuild Solution
-→ Si persiste, verifica que vcpkg esté en C:\vcpkg (o tu ruta)
-```
+### 1. Panel de Diagnóstico Lateral (Modo Avión Completo)
+Al visualizar la aeronave armada completa, se ocultan los hotspots de detalles y se despliega una ficha técnica en el lateral izquierdo:
+* **Ficha Técnica:** Título en escala grande (`2.4f`) y color amarillo de alto impacto, junto a especificaciones clave (velocidad, autonomía y capacidad).
+* **Barras de Rendimiento:** Indicadores gráficos de barras segmentadas (estilo HUD militar en cian neón) que cuantifican blindaje, fuego, agilidad, eficiencia y confort de la aeronave.
 
-### Modelo no aparece o muy pequeño
-```
-→ Verificá que los archivos .blend/.fbx/.obj estén en:
-   Simulador_avion/Simulador_avion/source/
-→ El programa ajusta automáticamente zoom y escala
-```
+### 2. Hotspots / Hologramas 3D (Modo Piezas)
+Cuando se activa el desensamblado de piezas, el visor se enfoca en el componente activo y despliega esferas de luz animadas que representan puntos de interés (hotspots):
+* **Activación por Proximidad:** Al posicionar el cursor sobre la esfera, esta despliega un menú flotante holográfico.
+* **Auto-Envoltura (Word Wrap):** Un motor dinámico formatea el texto en líneas de hasta **36 caracteres**, soportando descripciones de hasta 4 líneas sin desbordar el cuadro de información (`420x200`).
+* **Legibilidad Mejorada:** El texto utiliza sobre-dibujado cruzado de píxeles (efecto negrita/bold) y una sombra negra proyectada con opacidad (`0.75f`) para contrastar perfectamente sobre cualquier geometría tridimensional.
 
-### El modelo se ve desarmado
-```
-→ Presioná Q/E para zoom in/out
-→ Probá cambiar de modelo (1-5)
-→ Los FBX a veces necesitan Q presionado 2-3 veces
-```
+---
+
+## 🔧 Resoluciones Técnicas & Parches
+
+### 1. Parche de Compatibilidad de Modelos Assimp (GLTF/GLB)
+Assimp presenta una limitación conocida al leer accessors sin `bufferView` (como los que exporta Blender para morph targets o animaciones vacías), lo que causaba el fallo fatal: `GLTF2: data is null`.
+* **Solución Aplicada:** Se incluye un script de procesamiento en Python (`fix_glb.py`) que optimiza los modelos GLB. El script elimina las animaciones redundantes y los morph targets, y reasigna los accessors vacíos a una referencia válida de geometría. Esto resolvió los fallos de carga para el Boeing y su cabina interna (`boing_inter.glb`).
+
+### 2. Corrección del Tren de Aterrizaje del B-24 (`b24_tren`)
+Debido a una orientación de exportación incorrecta en el modelo original, el tren del B-24 aparecía acostado horizontalmente.
+* **Solución Aplicada:** El cargador de modelos (`model_loader.cpp`) detecta el archivo `"b24_tren"` y aplica una transformación matemática de rotación de 90° en el eje X directamente en memoria, asegurando que se dibuje parado en el suelo del hangar.
 
 ---
 
@@ -116,81 +66,27 @@ El programa abrirá una consola pidiendo que selecciones un modelo (1-5).
 
 ```
 Simulador_avion/
+├── models/                   ← Modelos 3D optimizados en GLB (A10, B24, Boeing, MiG29)
 ├── Simulador_avion/
-│   ├── main.cpp              ← Punto de entrada, manejo de eventos
-│   ├── renderer.cpp/h        ← Renderizado OpenGL
-│   ├── model_loader.cpp/h    ← Cargador Assimp (OBJ/FBX/BLEND)
-│   ├── config.h              ← Rutas de modelos
-│   ├── geometry.cpp/h        ← Geometría procedural (fallback)
-│   ├── layer_manager.cpp/h   ← Gestor de capas
-│   ├── source/               ← Archivos de modelos 3D
-│   └── Simulador_avion.vcxproj
-├── README.md                 ← Este archivo
-├── ROADMAP_3D.md             ← Plan Fase A vs Fase B
-└── INSTALACION_OPCION_A.md   ← Detalles técnicos
+│   ├── main.cpp              ← Loop principal, callbacks GLFW y estados de UI
+│   ├── renderer.cpp/h        ← Lógica de renderizado y toggle de piezas
+│   ├── model_loader.cpp/h    ← Cargador Assimp 3D con corrección de rotación
+│   ├── model_renderer.cpp/h  ← Upload de buffers a la GPU (VAO/VBO)
+│   ├── ui_renderer.cpp/h     ← Renderizado de texto, fondos y botones 2D
+│   ├── shader.cpp/h          ← Compilador y gestor de programas shader GLSL
+│   ├── app_state.h           ← Estructura del contexto y estados globales
+│   ├── shaders/              
+│   │   ├── vertex.glsl       ← Shader de vértices (iluminación Phong + matrices)
+│   │   └── fragment.glsl     ← Shader de fragmentos (fusión de color y luz)
+│   └── copy_dlls.bat         ← Script de automatización de librerías en build
+└── Simulador_avion.slnx       ← Solución moderna de Visual Studio 2022
 ```
 
 ---
 
-## 🎯 ¿Qué se implementó en esta sesión?
+## 🛠️ Compilación y Ejecución en Visual Studio 2022
 
-### Fase A: Cargador de Modelos 3D
-
-✅ **Assimp Integration**
-- Soporte para OBJ, FBX, BLEND, GLTF
-- Carga automática de vértices y normales
-- Procesamiento de jerarquías de nodos
-
-✅ **Normalización Automática**
-- Cálculo de bounding box
-- Escalado dinámico (1.5x)
-- Centrado de modelos
-
-✅ **Zoom Adaptativo**
-- Cálculo automático de zoom por modelo
-- Rango: -1.5 a -10.0
-- Se ajusta según tamaño real
-
-✅ **Transformaciones de Nodos**
-- Aplicación de matrices de transformación
-- Soporte para modelos FBX complejos
-- Normales transformadas correctamente
-
-✅ **Interfaz Interactiva**
-- Menú de selección al inicio
-- Cambio de modelo en tiempo real (1-5)
-- Controles 3D completos
-
----
-
-## 🚀 Próximos Pasos: Fase B (Después)
-
-Para agregar **texturas, colores y shaders modernos:**
-
-→ Ver archivo: `ROADMAP_3D.md`
-
-Cambios principales:
-- Migrar de GLUT → GLFW
-- Agregar shaders GLSL
-- Soportar texturas desde Assimp
-- Usar VAO/VBO para mejor rendimiento
-
----
-
-## 📞 Soporte
-
-Si algo no funciona:
-
-1. **Verificá vcpkg:** `vcpkg list | grep assimp`
-2. **Limpia todo:** `Build → Clean Solution`
-3. **Reconstruye:** `Build → Rebuild Solution`
-4. **Reinicia VS:** Cierra y vuelve a abrir Visual Studio
-
----
-
-## 📄 Licencia
-
-Proyecto académico - Universidad
-
-**Versión:** 2.0 (Fase A - Modelos 3D)  
-**Última actualización:** Julio 2025
+1. Abre `Simulador_avion.slnx` en Visual Studio 2022.
+2. Asegúrate de configurar la solución en **Debug/Release** y plataforma **x64**.
+3. Compila presionando **Ctrl + Shift + B**. Las dependencias (`glfw3.dll`, `assimp-vc145-mt.dll`, etc.) se copiarán automáticamente a la carpeta de salida gracias al post-build script.
+4. Presiona **F5** para ejecutar.

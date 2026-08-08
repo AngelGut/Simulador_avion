@@ -194,54 +194,72 @@ bool UIRenderer::drawButton(float x, float y, float w, float h,
     return hovered && mousePressed;
 }
 
-bool UIRenderer::drawAudioButton(float x, float y, float w, float h,
-    bool isMuted, double mouseX, double mouseY, bool mousePressed) {
-    bool hovered = (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+void UIRenderer::drawSimGraph(float x, float y, float w, float h, 
+                              const std::vector<float>& history, 
+                              float maxVal, const std::string& title, 
+                              const std::string& unit) {
+    // 1. Fondo del grafico (gris muy oscuro traslucido)
+    UIColor bgColor = { 0.05f, 0.05f, 0.07f, 0.85f };
+    drawQuad(x, y, w, h, bgColor);
 
-    UIColor bg = hovered ? (isMuted ? UIColor{ 0.35f, 0.35f, 0.40f, 1.0f } : UIColor{ 0.25f, 0.70f, 0.95f, 1.0f })
-                         : (isMuted ? UIColor{ 0.20f, 0.20f, 0.25f, 1.0f } : UIColor{ 0.15f, 0.55f, 0.85f, 1.0f });
+    // 2. Bordes
+    UIColor borderColor = { 0.2f, 0.3f, 0.4f, 1.0f };
+    drawBorder(x, y, w, h, 1.5f, borderColor);
 
-    drawQuad(x, y, w, h, bg);
-    drawBorder(x, y, w, h, 2.0f, isMuted ? UIColor{ 0.45f, 0.45f, 0.50f, 1.0f } : UIColor{ 0.40f, 0.80f, 1.00f, 1.0f });
+    // 3. Titulo y valor actual
+    UIColor textColor = { 1.0f, 0.85f, 0.0f, 1.0f }; // Amarillo HUD
+    drawText(x + 10.0f, y + 10.0f, title, 1.4f, textColor);
 
-    // Dibujar icono 2D de bocina
-    float iconSize = 20.0f;
-    float ix = x + 10.0f;
-    float iy = y + (h - iconSize) / 2.0f;
+    float val = 0.0f;
+    if (!history.empty()) {
+        val = history.back();
+    }
+    char valStr[64];
+    sprintf_s(valStr, sizeof(valStr), "ACTUAL: %.1f %s", val, unit.c_str());
+    UIColor valColor = { 0.0f, 0.9f, 0.9f, 1.0f }; // Cian HUD
+    drawText(x + w - 190.0f, y + 10.0f, valStr, 1.4f, valColor);
 
-    UIColor iconColor = isMuted ? UIColor{ 0.75f, 0.75f, 0.80f, 1.0f } : UIColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-
-    // 1. Cuerpo rectangular de la bocina
-    drawQuad(ix, iy + 5.0f, 5.0f, 10.0f, iconColor);
-
-    // 2. Cono trapezoidal de la bocina
-    for (int step = 0; step < 6; step++) {
-        float stepX = ix + 5.0f + step * 1.2f;
-        float stepH = 10.0f + step * 1.8f;
-        float stepY = iy + (iconSize - stepH) / 2.0f;
-        drawQuad(stepX, stepY, 1.3f, stepH, iconColor);
+    // 4. Lineas de rejilla de fondo (Grid lines a 25%, 50%, 75%)
+    UIColor gridColor = { 0.15f, 0.22f, 0.3f, 0.4f };
+    for (int i = 1; i < 4; i++) {
+        float ly = y + (h * 0.25f * i);
+        drawQuad(x + 2.0f, ly, w - 4.0f, 1.0f, gridColor);
     }
 
-    if (!isMuted) {
-        // Ondas de sonido cuando está sonando (Sound waves ON)
-        float wx = ix + 15.0f;
-        drawQuad(wx, iy + 6.0f, 2.0f, 8.0f, iconColor);
-        drawQuad(wx + 4.0f, iy + 3.0f, 2.0f, 14.0f, iconColor);
-    } else {
-        // X roja sobre la bocina (Muted Speaker OFF)
-        UIColor redSlash{ 0.95f, 0.25f, 0.25f, 1.0f };
-        float sx = ix - 2.0f;
-        float sy = iy - 2.0f;
-        float sSize = iconSize + 4.0f;
+    // 5. Graficar el historial de datos
+    if (history.empty()) return;
 
-        for (int i = 0; i < (int)sSize; i += 2) {
-            drawQuad(sx + i, sy + i, 2.5f, 2.5f, redSlash);
-            drawQuad(sx + sSize - i, sy + i, 2.5f, 2.5f, redSlash);
-        }
+    int maxPoints = 50; // Maximo de barras en el grafico
+    int numPoints = history.size();
+    float dx = (w - 20.0f) / maxPoints;
+
+    UIColor barColor = { 0.0f, 0.7f, 0.7f, 0.35f }; // Barra cian traslucida
+    UIColor capColor = { 0.0f, 1.0f, 1.0f, 0.95f }; // Tapa cian brillante
+
+    int startIdx = 0;
+    if (numPoints > maxPoints) {
+        startIdx = numPoints - maxPoints;
     }
 
-    // Texto de la tecla [M]
-    drawText(x + w - 32.0f, y + (h - 14.0f) / 2.0f, "[M]", 1.6f, iconColor);
+    for (int i = 0; i < maxPoints; i++) {
+        int idx = startIdx + i;
+        if (idx >= numPoints) break;
 
-    return hovered && mousePressed;
+        float valHistory = history[idx];
+        if (valHistory < 0.0f) valHistory = 0.0f;
+        if (valHistory > maxVal) valHistory = maxVal;
+
+        // Calcular altura de la barra en pixeles (dejar margen inferior y superior)
+        float usableH = h - 45.0f;
+        float barH = (valHistory / maxVal) * usableH;
+        if (barH < 1.0f) barH = 1.0f; // Asegurar al menos una linea fina
+
+        float bx = x + 10.0f + i * dx;
+        float by = y + h - 10.0f - barH;
+
+        // Dibujar barra de espectro
+        drawQuad(bx, by, dx - 1.5f, barH, barColor);
+        // Dibujar tapa brillante
+        drawQuad(bx, by, dx - 1.5f, 2.0f, capColor);
+    }
 }

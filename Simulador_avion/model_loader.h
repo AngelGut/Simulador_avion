@@ -29,8 +29,9 @@ struct Mesh {
     unsigned int VAO, VBO, EBO;
     unsigned int textureID;
     bool hasTexture;
+    int meshType; // 0=Default, 1=Engine, 2=Wing
 
-    Mesh() : VAO(0), VBO(0), EBO(0), textureID(0), hasTexture(false) {}
+    Mesh() : VAO(0), VBO(0), EBO(0), textureID(0), hasTexture(false), meshType(0) {}
     ~Mesh();
 
     void setupMesh();

@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
 
 struct UIColor { float r, g, b, a; };
 
@@ -29,4 +30,10 @@ namespace UIRenderer {
         bool isMuted, double mouseX, double mouseY, bool mousePressed);
 
     float getTextWidth(const std::string& text, float scale);
+
+    // Grafico de simulacion 2D
+    void drawSimGraph(float x, float y, float w, float h, 
+                      const std::vector<float>& history, 
+                      float maxVal, const std::string& title, 
+                      const std::string& unit);
 }
