@@ -414,10 +414,10 @@ namespace Renderer {
             indices.push_back(next); indices.push_back(next + 1); indices.push_back(current + 1);
         }
 
-        // 4. Pared Posterior del Hangar (Back Wall)
+        // 4. Pared Posterior del Hangar (Back Wall con paneles y ventanales)
         float zWall = -20.0f;
-        float yWallTop = 15.0f;
-        glm::vec3 wallColor(0.04f, 0.05f, 0.08f);
+        float yWallTop = 16.0f;
+        glm::vec3 wallColor(0.12f, 0.14f, 0.19f); // Tono metálico industrial más claro
         glm::vec3 wallNormal(0.0f, 0.0f, 1.0f);
 
         unsigned int wallIdx = (unsigned int)vertices.size();
@@ -429,10 +429,41 @@ namespace Renderer {
         indices.push_back(wallIdx + 0); indices.push_back(wallIdx + 1); indices.push_back(wallIdx + 2);
         indices.push_back(wallIdx + 0); indices.push_back(wallIdx + 2); indices.push_back(wallIdx + 3);
 
-        // 5. Columnas Estructurales Laterales (Pillars)
-        glm::vec3 pillarColor(0.12f, 0.14f, 0.18f);
-        float pillarXPositions[] = { -16.0f, -8.0f, 8.0f, 16.0f };
-        float pillarW = 1.2f;
+        // 5. Franja / Banda LED Horizontal Trasera (Horizontal Cyan LED Strip)
+        float yLedMin = 3.6f;
+        float yLedMax = 3.9f;
+        glm::vec3 cyanLedWall(0.15f, 0.70f, 0.95f);
+
+        unsigned int ledWallIdx = (unsigned int)vertices.size();
+        vertices.push_back({ glm::vec3(-size, yLedMin, zWall + 0.05f), wallNormal, cyanLedWall, glm::vec2(0.0f, 0.0f) });
+        vertices.push_back({ glm::vec3(size, yLedMin, zWall + 0.05f), wallNormal, cyanLedWall, glm::vec2(1.0f, 0.0f) });
+        vertices.push_back({ glm::vec3(size, yLedMax, zWall + 0.05f), wallNormal, cyanLedWall, glm::vec2(1.0f, 1.0f) });
+        vertices.push_back({ glm::vec3(-size, yLedMax, zWall + 0.05f), wallNormal, cyanLedWall, glm::vec2(0.0f, 1.0f) });
+
+        indices.push_back(ledWallIdx + 0); indices.push_back(ledWallIdx + 1); indices.push_back(ledWallIdx + 2);
+        indices.push_back(ledWallIdx + 0); indices.push_back(ledWallIdx + 2); indices.push_back(ledWallIdx + 3);
+
+        // 6. Ventanales Iluminados de Sala de Control (Control Room Windows)
+        float yWinMin = 7.5f;
+        float yWinMax = 10.5f;
+        glm::vec3 winGlowColor(0.35f, 0.55f, 0.75f); // Luz azul suave de laboratorio
+
+        float winXSpans[][2] = { {-22.0f, -12.0f}, {-6.0f, 6.0f}, {12.0f, 22.0f} };
+        for (auto& span : winXSpans) {
+            unsigned int wIdx = (unsigned int)vertices.size();
+            vertices.push_back({ glm::vec3(span[0], yWinMin, zWall + 0.05f), wallNormal, winGlowColor, glm::vec2(0.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(span[1], yWinMin, zWall + 0.05f), wallNormal, winGlowColor, glm::vec2(1.0f, 0.0f) });
+            vertices.push_back({ glm::vec3(span[1], yWinMax, zWall + 0.05f), wallNormal, winGlowColor, glm::vec2(1.0f, 1.0f) });
+            vertices.push_back({ glm::vec3(span[0], yWinMax, zWall + 0.05f), wallNormal, winGlowColor, glm::vec2(0.0f, 1.0f) });
+
+            indices.push_back(wIdx + 0); indices.push_back(wIdx + 1); indices.push_back(wIdx + 2);
+            indices.push_back(wIdx + 0); indices.push_back(wIdx + 2); indices.push_back(wIdx + 3);
+        }
+
+        // 7. Columnas Estructurales Laterales (Pillars de Acero Cepillado)
+        glm::vec3 pillarColor(0.24f, 0.27f, 0.35f);
+        float pillarXPositions[] = { -24.0f, -14.0f, -3.0f, 3.0f, 14.0f, 24.0f };
+        float pillarW = 1.4f;
 
         for (float pX : pillarXPositions) {
             unsigned int pIdx = (unsigned int)vertices.size();
