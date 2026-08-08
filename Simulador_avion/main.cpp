@@ -57,13 +57,17 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
         { "CABINA DE TITANIO", "Banera de titanio reforzado de 540 kg disenada para soportar impactos.", glm::vec3(0.0f, 0.25f, 0.6f), "cabin" },
         { "TURBOFANS TF34", "Motores montados arriba y atras para ocultar la firma termica y evitar proyectiles.", glm::vec3(0.0f, 0.45f, -0.7f), "motor" },
         { "ALAS RECTAS A-10", "Alas de gran superficie que permiten maniobras extremas a baja velocidad.", glm::vec3(-0.65f, 0.0f, 0.0f), "alas" },
-        { "TREN REFORZADO", "Tren de aterrizaje de alta resistencia para operar en terrenos rusticos.", glm::vec3(0.0f, -0.6f, 0.2f), "tren" }
+        { "TREN REFORZADO", "Tren de aterrizaje de alta resistencia para operar en terrenos rusticos.", glm::vec3(0.0f, -0.6f, 0.2f), "tren" },
+        { "FLAPS HIPERSUSTENTADORES", "Superficies de ala que aumentan la sustentacion para vuelo lento y estable.", glm::vec3(-0.65f, 0.0f, -0.2f), "flaps" },
+        { "MISIL AGM-65 MAVERICK", "Misil tactico aire-tierra guiado por TV para destruir tanques y vehiculos blindados.", glm::vec3(0.0f, -0.4f, 0.1f), "grande" },
+        { "BOMBA GUIADA GBU-12", "Bomba de precision GBU-12 guiada por laser de 500 libras para ataque de precision.", glm::vec3(0.0f, -0.4f, 0.1f), "mediano" },
+        { "COHETES FFAR 70MM", "Lanzadores de cohetes no guiados para saturacion de objetivos terrestres.", glm::vec3(0.0f, -0.4f, 0.1f), "peque" }
     },
     // 2: B-24 Liberator
     {
         { "COMPARTIMENTO DE BOMBAS", "Bodega central con compuertas enrollables que reducen la friccion.", glm::vec3(0.0f, -0.1f, -0.1f), "fuselaje" },
         { "CABINA DE MANDO B-24", "Estacion para pilotos y navegantes en cabina no presurizada de la SGM.", glm::vec3(0.0f, 0.15f, 0.7f), "interior" },
-        { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para de de vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f), "motores" },
+        { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para de de de vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f), "motores" },
         { "ALA DAVIS", "Ala de envergadura superior y baja friccion, clave para el enorme alcance.", glm::vec3(-0.65f, 0.05f, 0.0f), "alas" },
         { "TREN RETRACTIL LATERAL", "Primer tren de aterrizaje triciclo en bombarderos pesados.", glm::vec3(0.0f, -0.55f, 0.0f), "tren" }
     },
@@ -108,7 +112,7 @@ bool project3DToScreen(const glm::vec3& worldPos, const glm::mat4& view, const g
 // ============================================================
 
 void drawStatBar(float x, float y, int value, int maxVal, const UIColor& activeColor, const UIColor& inactiveColor) {
-    float size = 14.0f; // Tamaño aumentado de los bloques de estadísticas
+    float size = 14.0f; // Tamaño de los bloques de estadísticas
     float spacing = 6.0f;
     for (int i = 0; i < maxVal; ++i) {
         UIColor color = (i < value) ? activeColor : inactiveColor;
@@ -125,7 +129,7 @@ void drawGeneralStatsPanel(int planeIdx) {
     
     float boxX = 24.0f;
     float boxY = 24.0f;
-    float boxW = 360.0f; // Ancho aumentado para dar espacio a la fuente grande
+    float boxW = 360.0f; // Ancho para dar espacio a la fuente grande
     float boxH = h - 160.0f;
     
     UIColor colorYellow{1.0f, 0.85f, 0.0f, 1.0f};
@@ -458,7 +462,7 @@ void renderViewerState(GLFWwindow* window) {
             drawGeneralStatsPanel(ctx.selectedPlane);
         }
 
-        // Si el cursor está encima de un hotspot de pieza activa, dibujar su tarjeta holográfica con letra más grande
+        // Si el cursor está encima de un hotspot de pieza activa, dibujar su tarjeta holográfica
         if (hoveredIdx != -1) {
             const auto& hp = hotspots[hoveredIdx];
             UIColor colorYellow{1.0f, 0.85f, 0.0f, 1.0f};
@@ -468,7 +472,7 @@ void renderViewerState(GLFWwindow* window) {
             UIRenderer::drawQuad(hoveredX, hoveredY - 1.0f, 30.0f, 2.0f, colorYellow);
             UIRenderer::drawQuad(hoveredX + 30.0f - 2.0f, hoveredY - 3.0f, 6.0f, 6.0f, colorYellow);
 
-            // Ajustar posición del panel flotante (Tamaño aumentado para legibilidad superior)
+            // Ajustar posición del panel flotante (Ancho y alto optimizados para texto grande)
             float boxW = 380.0f;
             float boxH = 170.0f;
             float boxX = hoveredX + 30.0f;
@@ -495,27 +499,27 @@ void renderViewerState(GLFWwindow* window) {
             // Título de la pieza (Letra grande 2.2f)
             UIRenderer::drawText(boxX + 16.0f, boxY + 18.0f, hp.title.c_str(), 2.2f, colorYellow);
 
-            // Descripción (Letra 1.6f para legibilidad excelente, formateada en hasta 3 líneas dinámicas)
+            // Descripción (Letra 1.6f, formateada en hasta 3 líneas seguras de 32 caracteres)
             std::string desc = hp.description;
-            if (desc.length() > 26) {
-                std::string desc1 = desc.substr(0, 26);
-                std::string desc2 = desc.substr(26);
+            if (desc.length() > 32) {
+                std::string desc1 = desc.substr(0, 32);
+                std::string desc2 = desc.substr(32);
                 size_t space = desc1.find_last_of(" ");
-                if (space != std::string::npos && space > 10) {
+                if (space != std::string::npos && space > 15) {
                     desc1 = desc.substr(0, space);
                     desc2 = desc.substr(space + 1);
                 }
                 UIRenderer::drawText(boxX + 16.0f, boxY + 54.0f, desc1.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                if (desc2.length() > 26) {
-                    size_t space2 = desc2.substr(0, 26).find_last_of(" ");
-                    if (space2 != std::string::npos && space2 > 10) {
+                if (desc2.length() > 32) {
+                    size_t space2 = desc2.substr(0, 32).find_last_of(" ");
+                    if (space2 != std::string::npos && space2 > 15) {
                         std::string desc3 = desc2.substr(space2 + 1);
                         desc2 = desc2.substr(0, space2);
                         UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                        if (desc3.length() > 26) desc3 = desc3.substr(0, 22) + "...";
+                        if (desc3.length() > 32) desc3 = desc3.substr(0, 28) + "...";
                         UIRenderer::drawText(boxX + 16.0f, boxY + 122.0f, desc3.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
                     } else {
-                        desc2 = desc2.substr(0, 22) + "...";
+                        desc2 = desc2.substr(0, 28) + "...";
                         UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
                     }
                 } else {
@@ -555,7 +559,7 @@ void renderViewerState(GLFWwindow* window) {
 
     // Dibujar ayuda en la derecha (Para no solapar con el panel de info izquierdo)
     if (ctx.showHelp) {
-        float boxW = 380.0f, boxH = 240.0f; // Tamaño aumentado de ayuda
+        float boxW = 380.0f, boxH = 240.0f; // Tamaño de ayuda
         float boxX = w - boxW - 24.0f, boxY = 24.0f;
         UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{ 0.05f, 0.05f, 0.08f, 0.85f });
         UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, UIColor{ 0.3f, 0.3f, 0.3f, 1.0f });
