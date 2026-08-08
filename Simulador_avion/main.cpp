@@ -667,15 +667,19 @@ int main(int argc, char** argv) {
 
         switch (ctx.state) {
         case AppState::LOADING:
+            AudioManager::resumeMenuMusic();
             Screens::renderLoading(ctx);
             break;
         case AppState::WELCOME:
+            AudioManager::resumeMenuMusic();
             Screens::renderWelcome(ctx);
             break;
         case AppState::MENU:
+            AudioManager::resumeMenuMusic();
             Screens::renderMenu(ctx);
             break;
         case AppState::VIEWER:
+            AudioManager::pauseMenuMusic();
             // Dibujar la escena completa usando nuestro visualizador
             renderViewerState(window);
             break;

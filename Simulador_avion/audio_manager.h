@@ -6,6 +6,8 @@ namespace AudioManager {
     void toggleMute();
     bool isMuted();
     void setMuted(bool muted);
+    void pauseMenuMusic();
+    void resumeMenuMusic();
     void stop();
 }
 

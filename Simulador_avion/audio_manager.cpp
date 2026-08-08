@@ -49,11 +49,21 @@ namespace AudioManager {
     void setMuted(bool muted) {
         g_isMuted = muted;
         if (g_isMuted) {
-            mciSendStringA("setaudio bgm off", NULL, 0, NULL);
+            mciSendStringA("pause bgm", NULL, 0, NULL);
             std::cout << "[Audio] Musica silenciada." << std::endl;
         } else {
-            mciSendStringA("setaudio bgm on", NULL, 0, NULL);
+            mciSendStringA("play bgm repeat", NULL, 0, NULL);
             std::cout << "[Audio] Musica activada." << std::endl;
+        }
+    }
+
+    void pauseMenuMusic() {
+        mciSendStringA("pause bgm", NULL, 0, NULL);
+    }
+
+    void resumeMenuMusic() {
+        if (!g_isMuted && g_isPlaying) {
+            mciSendStringA("play bgm repeat", NULL, 0, NULL);
         }
     }
 
