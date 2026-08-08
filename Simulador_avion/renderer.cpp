@@ -601,11 +601,24 @@ namespace Renderer {
             GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
 
             if (modelLoc != -1) {
+                // Escala de hangar 22x para que sea gigantesco y espacioso en comparación con el avión
+                float hangarScale = 22.0f;
+
+                // Calcular el punto Y mínimo real de la malla del hangar
+                float minY = 9999.0f;
+                for (const auto& mesh : hangar3DModel->getMeshes()) {
+                    for (const auto& v : mesh.vertices) {
+                        if (v.position.y < minY) minY = v.position.y;
+                    }
+                }
+
+                // Ajustar traslación Y para que el suelo del hangar coincida exactamente con las ruedas del avión (-0.6f)
+                float targetFloorY = -0.60f;
+                float yOffset = targetFloorY - (minY * hangarScale);
+
                 glm::mat4 modelMat = glm::mat4(1.0f);
-                // Proporción exacta 6.5x para que el avión (1.5) ocupe ~20% del ancho del hangar
-                // y sus ruedas descansen perfectamente sobre el suelo del hangar.
-                modelMat = glm::translate(modelMat, glm::vec3(0.0f, 0.35f, 0.0f));
-                modelMat = glm::scale(modelMat, glm::vec3(6.5f, 6.5f, 6.5f));
+                modelMat = glm::translate(modelMat, glm::vec3(0.0f, yOffset, 0.0f));
+                modelMat = glm::scale(modelMat, glm::vec3(hangarScale, hangarScale, hangarScale));
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
             }
 
