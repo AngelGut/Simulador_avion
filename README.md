@@ -1,9 +1,9 @@
-# 🚀 Simulador de Aviones - Visor 3D Interactivo (Fase B)
+# 🚀 Simulador de Aviones - Visor 3D Interactivo (Fase B + Optimizaciones)
 
 **Estado:** ✅ Fase B Completada & Optimizada  
-**Tecnología:** OpenGL 3.3 Core Profile | GLFW | GLAD | Assimp | GLM
+**Tecnología:** OpenGL 3.3 Core Profile | GLFW | GLAD | Assimp | GLM | Miniaudio  
 
-Una aplicación interactiva 3D en C++ moderna que permite la visualización, exploración técnica y desensamblado interactivo de 4 modelos de aeronaves detallados en un hangar digital con iluminación y una interfaz HUD avanzada.
+Una aplicación interactiva 3D en C++ moderna que permite la visualización, exploración técnica y desensamblado interactivo de 4 modelos de aeronaves detallados en un hangar digital con iluminación, música de fondo interactiva y una interfaz HUD avanzada.
 
 ---
 
@@ -11,10 +11,10 @@ Una aplicación interactiva 3D en C++ moderna que permite la visualización, exp
 
 El simulador cuenta con 4 aviones icónicos. Cada uno puede visualizarse en su estado ensamblado completo o desensamblarse en piezas individuales para analizar sus detalles internos:
 
-1. **A-10 Thunderbolt II (10 piezas):** Cañón rotatorio GAU-8, Cabina de titanio, Motores Turbofan TF34, Alas principales, Tren de aterrizaje, Flaps de control, Misil pesado (AGM-65 Maverick), Misil mediano (GBU-12), Cohetes ligeros (FFAR) y Anclajes de carga.
-2. **B-24 Liberator (7 piezas):** Cabina de mando, Bahía de bombas interna, Motores radiales Pratt & Whitney, Ala de alta eficiencia Davis, Tren retráctil (con corrección de orientación YZ), Estructura interna de aluminio y Flaps traseros.
-3. **Boeing 787 Dreamliner (5 piezas):** Fuselaje composite de fibra de carbono, Turbofans GEnx de alta eficiencia, Tren de aterrizaje principal, Bodega de carga inferior y Cabina interior de pasajeros (`boing_inter`).
-4. **MiG-29 Fulcrum (5 piezas):** Cabina de burbuja, Turbofans Klimov RD-33, Misil aire-aire de corto alcance R-73, Alas de flecha y LERX, Tren de aterrizaje rústico y Fuselaje de sustentación integrada.
+1. **A-10 Thunderbolt II (10 piezas):** Cañón GAU-8, Cabina, Motores TF34, Alas principales, Tren de aterrizaje, Flaps, Misil Maverick, Misil GBU-12, Cohetes FFAR y Anclajes.
+2. **B-24 Liberator (16 piezas):** Cabina, Bahía de bombas, Motores radiales, Ala Davis, Tren de aterrizaje, Flaps traseros, hélices y flaps delanteros.
+3. **Boeing 787 Dreamliner (15 piezas):** Fuselaje composite de fibra de carbono, Turbofans GEnx, Tren de aterrizaje principal, Bodega de carga y Cabina de pasajeros.
+4. **MiG-29 Fulcrum (20 piezas):** Cabina, Motores RD-33, Misil aire-aire R-73, Alas de flecha y LERX, Tren de aterrizaje y Fuselaje de sustentación.
 
 ---
 
@@ -27,26 +27,30 @@ El simulador cuenta con 4 aviones icónicos. Cada uno puede visualizarse en su e
 | **Zoom In / Out** | Rueda del Ratón o teclas `Q` / `E` |
 | **Modo Piezas (Toggle)** | Tecla `P` o tecla `Retroceso (Backspace)` |
 | **Navegar Piezas** | Teclas de flecha **Izquierda (←)** / **Derecha (→)** (solo en Modo Piezas) |
-| **Restablecer Cámara** | Tecla **Espacio** (reajusta posición, rotación y aplica el zoom ideal del modelo) |
+| **Restablecer Cámara** | Tecla **Espacio** (reajusta posición, rotación y aplica el zoom ideal) |
 | **Guía de Ayuda (Toggle)**| Tecla `H` (muestra/oculta el overlay de controles en pantalla) |
-| **Salir** | Tecla **ESC** |
+| **Ocultar todo el HUD** | Tecla `F1` (modo inmersivo de visualización limpia) |
+| **Silenciar Música** | Tecla `M` (habilita/deshabilita la música de fondo en el hangar) |
+| **Salir** | Tecla **ESC** o Botón **Salir** (en la pantalla de bienvenida) |
 
 ---
 
-## 💎 Características Avanzadas de Interfaz (HUD)
+## ⚡ Optimizaciones y Características Avanzadas
 
-El HUD ha sido modernizado para ofrecer una presentación visual de nivel premium y máxima legibilidad:
+### 1. Precarga Diferida por Fotograma (Evita Congelamiento y Crasheos)
+* **Antes:** La carga síncrona en disco congelaba el programa al cambiar de avión o activar el modo piezas, además de saturar la cola de comandos del driver de video.
+* **Ahora:** Un sistema de cola secuencial carga un único archivo por frame durante la pantalla de inicio, llamando a `glFlush()` e interactuando con `glfwSwapBuffers`. Esto mantiene la cola de la GPU limpia, previene crasheos en controladores AMD/Intel y permite transiciones 100% instantáneas en el visor.
 
-### 1. Panel de Diagnóstico Lateral (Modo Avión Completo)
-Al visualizar la aeronave armada completa, se ocultan los hotspots de detalles y se despliega una ficha técnica en el lateral izquierdo:
-* **Ficha Técnica:** Título en escala grande (`2.4f`) y color amarillo de alto impacto, junto a especificaciones clave (velocidad, autonomía y capacidad).
-* **Barras de Rendimiento:** Indicadores gráficos de barras segmentadas (estilo HUD militar en cian neón) que cuantifican blindaje, fuego, agilidad, eficiencia y confort de la aeronave.
+### 2. Audio Integrado con AudioManager
+* Soporte nativo para archivos de audio `.mp3` para cada avión a través de la API `miniaudio`.
+* Botón de encendido/silenciador del motor integrado en el panel del visor.
+* Música ambiental para el hangar con atajos de teclado para silenciar (`M`).
 
-### 2. Hotspots / Hologramas 3D (Modo Piezas)
-Cuando se activa el desensamblado de piezas, el visor se enfoca en el componente activo y despliega esferas de luz animadas que representan puntos de interés (hotspots):
-* **Activación por Proximidad:** Al posicionar el cursor sobre la esfera, esta despliega un menú flotante holográfico.
-* **Auto-Envoltura (Word Wrap):** Un motor dinámico formatea el texto en líneas de hasta **36 caracteres**, soportando descripciones de hasta 4 líneas sin desbordar el cuadro de información (`420x200`).
-* **Legibilidad Mejorada:** El texto utiliza sobre-dibujado cruzado de píxeles (efecto negrita/bold) y una sombra negra proyectada con opacidad (`0.75f`) para contrastar perfectamente sobre cualquier geometría tridimensional.
+### 3. Pantalla Completa Nativa
+* El programa obtiene automáticamente la resolución nativa de tu monitor mediante GLFW e inicia directamente en pantalla completa para una inmersión total.
+
+### 4. Botón Salir y Liberación Completa de Memoria
+* Se añadió un botón de salida directa en el menú de bienvenida que ejecuta las funciones `cleanupPreloadedModels()` y `shutdown()` para vaciar la VRAM/RAM y apagar el motor de audio limpiamente antes de cerrar el proceso.
 
 ---
 
@@ -67,17 +71,17 @@ Debido a una orientación de exportación incorrecta en el modelo original, el t
 ```
 Simulador_avion/
 ├── models/                   ← Modelos 3D optimizados en GLB (A10, B24, Boeing, MiG29)
+├── audio/                    ← Efectos de sonido de motor y música del hangar
 ├── Simulador_avion/
 │   ├── main.cpp              ← Loop principal, callbacks GLFW y estados de UI
-│   ├── renderer.cpp/h        ← Lógica de renderizado y toggle de piezas
+│   ├── renderer.cpp/h        ← Lógica de renderizado, caché de precarga y toggle de piezas
+│   ├── screens.cpp/h         ← Pantallas de carga con máquina de estados, menú y HUD
 │   ├── model_loader.cpp/h    ← Cargador Assimp 3D con corrección de rotación
 │   ├── model_renderer.cpp/h  ← Upload de buffers a la GPU (VAO/VBO)
+│   ├── audio_manager.cpp/h   ← Gestión de hilos de audio para música y motores
 │   ├── ui_renderer.cpp/h     ← Renderizado de texto, fondos y botones 2D
 │   ├── shader.cpp/h          ← Compilador y gestor de programas shader GLSL
 │   ├── app_state.h           ← Estructura del contexto y estados globales
-│   ├── shaders/              
-│   │   ├── vertex.glsl       ← Shader de vértices (iluminación Phong + matrices)
-│   │   └── fragment.glsl     ← Shader de fragmentos (fusión de color y luz)
 │   └── copy_dlls.bat         ← Script de automatización de librerías en build
 └── Simulador_avion.slnx       ← Solución moderna de Visual Studio 2022
 ```
