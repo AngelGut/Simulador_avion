@@ -32,10 +32,12 @@
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="ui_renderer.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="audio_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app_state.h" />
     <ClInclude Include="asset_loader.h" />
+    <ClInclude Include="audio_manager.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="layer_manager.h" />
     <ClInclude Include="model.h" />

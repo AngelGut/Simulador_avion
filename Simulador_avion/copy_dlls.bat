@@ -37,4 +37,8 @@ if not exist "%OUTDIR%\assimp-vc145-mt.dll" (
     )
 )
 
+if exist "%~dp0audio" (
+    xcopy /Y /S /I "%~dp0audio" "%OUTDIR%\audio" >nul 2>&1
+)
+
 exit /b 0
