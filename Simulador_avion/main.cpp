@@ -422,18 +422,25 @@ void renderViewerState(GLFWwindow* window) {
     shaderProgram->setVec3("uViewPos", glm::vec3(camX + viewX, actualCamY, camZ));
     shaderProgram->setVec3("uLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // Configurar modo de simulacion y tiempo para los shaders
-    shaderProgram->setInt("uSimMode", (int)ctx.simMode);
+    // Configurar tiempo, tipo de avion y activar iluminacion por defecto
     shaderProgram->setFloat("uTime", ctx.totalTime);
-    shaderProgram->setInt("uUseLighting", 1); // Activar iluminacion por defecto
+    shaderProgram->setInt("uPlaneType", ctx.selectedPlane);
+    shaderProgram->setInt("uUseLighting", 1);
+
+    // Desactivar modo de simulacion temporalmente para dibujar el hangar con colores normales
+    shaderProgram->setInt("uSimMode", 0);
 
     // Dibujar hangar
     Renderer::drawHangar(actualCamY);
+
+    // Reactivar el modo de simulacion para el tunel de viento y el avion
+    shaderProgram->setInt("uSimMode", (int)ctx.simMode);
 
     // Dibujar tunel de viento si esta activo
     if (ctx.simMode == SimulationMode::WIND_TUNNEL && !Renderer::isPartsModeActive()) {
         Renderer::drawWindTunnel(ctx.totalTime);
         shaderProgram->use(); // Reactivar el shader del avion
+        shaderProgram->setInt("uSimMode", (int)ctx.simMode);
     }
 
     // Dibujar avión
@@ -656,8 +663,8 @@ void renderViewerState(GLFWwindow* window) {
 
     // --- RENDERIZAR GRÁFICO DE HISTORIAL A LA DERECHA ABAJO ---
     if (!Renderer::isPartsModeActive() && (ctx.simMode == SimulationMode::THERMAL || ctx.simMode == SimulationMode::STRESS)) {
-        float graphW = 380.0f;
-        float graphH = 180.0f;
+        float graphW = 460.0f;
+        float graphH = 200.0f;
         float graphX = w - graphW - 24.0f;
         float graphY = h - graphH - 24.0f;
 
