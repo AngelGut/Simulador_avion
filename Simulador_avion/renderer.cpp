@@ -696,53 +696,22 @@ namespace Renderer {
         }
     }
 
-    void preloadParts(int modelNumber) {
+    void preloadSinglePart(int modelNumber, const std::string& filePath) {
         if (modelNumber < 1 || modelNumber > 4) return;
-        if (preloadedPartsLoaded[modelNumber]) return;
-
-        namespace fs = std::filesystem;
-        std::string currentModelName = "";
-        switch (modelNumber) {
-        case 1: currentModelName = "a-10_thunderbolt_ii"; break;
-        case 2: currentModelName = "b-24_liberator"; break;
-        case 3: currentModelName = "boeing-787-_dreamliner"; break;
-        case 4: currentModelName = "mig_29_9-13"; break;
-        default: return;
+        Model* part = new Model();
+        if (part->loadModel(filePath.c_str())) {
+            preloadedPartsModels[modelNumber].push_back(part);
+            preloadedPartsFiles[modelNumber].push_back(filePath);
+        } else {
+            std::cerr << "[Preloader] Error al cargar pieza: " << filePath << std::endl;
+            delete part;
         }
+    }
 
-        const auto* info = ModelConfig::getModelInfo(currentModelName);
-        if (!info || info->partsFolder.empty()) return;
-
-        std::string folderPath = std::string(ModelConfig::MODELS_BASE_PATH) + info->partsFolder;
-        std::string resolvedFolder = resolvePath(folderPath);
-
-        if (!fs::exists(resolvedFolder)) {
-            std::cerr << "[Preloader] Carpeta de piezas no existe: " << resolvedFolder << std::endl;
-            return;
-        }
-
-        std::vector<std::string> tempFiles;
-        for (const auto& entry : fs::directory_iterator(resolvedFolder)) {
-            if (entry.is_regular_file() && (entry.path().extension() == ".glb" || entry.path().extension() == ".GLB")) {
-                tempFiles.push_back(entry.path().string());
-            }
-        }
-        std::sort(tempFiles.begin(), tempFiles.end());
-
-        std::cout << "[Preloader] Precargando " << tempFiles.size() << " piezas para modelo " << modelNumber << "...\n";
-        for (const auto& file : tempFiles) {
-            Model* part = new Model();
-            if (part->loadModel(file.c_str())) {
-                preloadedPartsModels[modelNumber].push_back(part);
-                preloadedPartsFiles[modelNumber].push_back(file);
-            } else {
-                std::cerr << "[Preloader] Error al cargar pieza: " << file << std::endl;
-                delete part;
-            }
-        }
-
+    void markPartsAsLoaded(int modelNumber) {
+        if (modelNumber < 1 || modelNumber > 4) return;
         preloadedPartsLoaded[modelNumber] = true;
-        std::cout << "[Preloader] ✓ " << preloadedPartsModels[modelNumber].size() << " piezas precargadas para modelo " << modelNumber << "\n";
+        std::cout << "[Preloader] ✓ " << preloadedPartsModels[modelNumber].size() << " piezas marcadas como cargadas para modelo " << modelNumber << "\n";
     }
 
     bool isModelPreloaded(int modelNumber) {

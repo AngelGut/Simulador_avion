@@ -760,7 +760,14 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(ctx.windowWidth, ctx.windowHeight, "Simulador de Avion", NULL, NULL);
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+    if (mode) {
+        ctx.windowWidth = mode->width;
+        ctx.windowHeight = mode->height;
+    }
+
+    GLFWwindow* window = glfwCreateWindow(ctx.windowWidth, ctx.windowHeight, "Simulador de Avion", primaryMonitor, NULL);
     if (!window) {
         std::cout << "Error creando ventana GLFW\n";
         glfwTerminate();

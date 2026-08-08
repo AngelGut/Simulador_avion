@@ -3,9 +3,11 @@
 #include "model_renderer.h"
 #include "audio_manager.h"
 #include "renderer.h"
+#include "model_config.h"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
+#include <filesystem>
 
 namespace {
     UIColor bg{ 0.09f, 0.09f, 0.13f, 1.0f };
@@ -135,58 +137,109 @@ void Screens::renderLoading(AppContext& ctx) {
     float h = (float)ctx.windowHeight;
     float cx = w / 2.0f;
 
-    static int preloadStep = 0;
+    struct LoadingTask {
+        int type; // 0 = main model, 1 = single part, 2 = mark parts loaded
+        int modelNumber;
+        std::string filePath;
+        std::string displayName;
+    };
+
+    static std::vector<LoadingTask> loadingTasks;
+    static bool tasksInitialized = false;
+    static size_t totalTasksCount = 0;
+    static size_t completedTasksCount = 0;
     static std::string loadingStatus = "Cargando componentes...";
 
-    if (preloadStep == 0) {
+    if (!tasksInitialized) {
         int total = (int)ctx.planes.size();
         int loaded = ctx.modelsLoadedCount.load();
-        ctx.loadingProgress = total > 0 ? (float)loaded / (float)total * 0.15f : 0.0f;
+        ctx.loadingProgress = total > 0 ? (float)loaded / (float)total * 0.10f : 0.0f;
         loadingStatus = "Cargando tarjetas de previsualizacion...";
+
         if (ctx.loadingDone.load()) {
-            preloadStep = 1;
+            namespace fs = std::filesystem;
+            for (int i = 1; i <= 4; i++) {
+                std::string planeName = "";
+                std::string partsFolder = "";
+                switch (i) {
+                case 1: planeName = "A-10 Thunderbolt II"; partsFolder = "Desarmados/a10"; break;
+                case 2: planeName = "B-24 Liberator"; partsFolder = "Desarmados/b-24"; break;
+                case 3: planeName = "Boeing 787 Dreamliner"; partsFolder = "Desarmados/boing"; break;
+                case 4: planeName = "MiG-29"; partsFolder = "Desarmados/mig"; break;
+                }
+
+                // Tarea: Cargar Modelo Principal
+                LoadingTask tMain;
+                tMain.type = 0;
+                tMain.modelNumber = i;
+                tMain.displayName = "Cargando " + planeName + " (Modelo completo)...";
+                loadingTasks.push_back(tMain);
+
+                // Encontrar piezas individuales para este modelo
+                std::string resolvedFolder = std::string(ModelConfig::MODELS_BASE_PATH) + partsFolder;
+                if (fs::exists(resolvedFolder)) {
+                    std::vector<std::string> tempFiles;
+                    for (const auto& entry : fs::directory_iterator(resolvedFolder)) {
+                        if (entry.is_regular_file() && (entry.path().extension() == ".glb" || entry.path().extension() == ".GLB")) {
+                            tempFiles.push_back(entry.path().string());
+                        }
+                    }
+                    std::sort(tempFiles.begin(), tempFiles.end());
+
+                    for (size_t p = 0; p < tempFiles.size(); p++) {
+                        LoadingTask tPart;
+                        tPart.type = 1;
+                        tPart.modelNumber = i;
+                        tPart.filePath = tempFiles[p];
+                        tPart.displayName = "Cargando piezas " + planeName + " (" + std::to_string(p + 1) + "/" + std::to_string(tempFiles.size()) + ")...";
+                        loadingTasks.push_back(tPart);
+                    }
+                }
+
+                // Tarea: Marcar piezas como cargadas
+                LoadingTask tMark;
+                tMark.type = 2;
+                tMark.modelNumber = i;
+                tMark.displayName = "Finalizando " + planeName + "...";
+                loadingTasks.push_back(tMark);
+            }
+
+            totalTasksCount = loadingTasks.size();
+            tasksInitialized = true;
         }
     }
-    else if (preloadStep == 1) {
-        ctx.loadingProgress = 0.20f;
-        loadingStatus = "Cargando A-10 Thunderbolt II (Modelo completo y piezas)...";
-        preloadStep = 2;
-    }
-    else if (preloadStep == 2) {
-        Renderer::preloadModel(1);
-        Renderer::preloadParts(1);
-        ctx.loadingProgress = 0.40f;
-        loadingStatus = "Cargando B-24 Liberator (Modelo completo y piezas)...";
-        preloadStep = 3;
-    }
-    else if (preloadStep == 3) {
-        Renderer::preloadModel(2);
-        Renderer::preloadParts(2);
-        ctx.loadingProgress = 0.60f;
-        loadingStatus = "Cargando Boeing 787 Dreamliner (Modelo completo y piezas)...";
-        preloadStep = 4;
-    }
-    else if (preloadStep == 4) {
-        Renderer::preloadModel(3);
-        Renderer::preloadParts(3);
-        ctx.loadingProgress = 0.80f;
-        loadingStatus = "Cargando MiG-29 (Modelo completo y piezas)...";
-        preloadStep = 5;
-    }
-    else if (preloadStep == 5) {
-        Renderer::preloadModel(4);
-        Renderer::preloadParts(4);
-        ctx.loadingProgress = 0.95f;
-        loadingStatus = "Inicializando componentes graficos...";
-        preloadStep = 6;
-    }
-    else if (preloadStep == 6) {
-        if (!ctx.modelsUploaded) {
-            ModelRenderer::uploadAllModels(ctx);
-            ctx.modelsUploaded = true;
+    else {
+        if (completedTasksCount < totalTasksCount) {
+            const auto& task = loadingTasks[completedTasksCount];
+            loadingStatus = task.displayName;
+
+            // Progreso va del 10% al 95%
+            ctx.loadingProgress = 0.10f + 0.85f * ((float)completedTasksCount / (float)totalTasksCount);
+
+            if (task.type == 0) {
+                Renderer::preloadModel(task.modelNumber);
+            }
+            else if (task.type == 1) {
+                Renderer::preloadSinglePart(task.modelNumber, task.filePath);
+            }
+            else if (task.type == 2) {
+                Renderer::markPartsAsLoaded(task.modelNumber);
+            }
+
+            glFlush();
+            completedTasksCount++;
         }
-        ctx.assetsLoaded = true;
-        ctx.state = AppState::WELCOME;
+        else {
+            ctx.loadingProgress = 1.0f;
+            loadingStatus = "Inicializando componentes graficos...";
+
+            if (!ctx.modelsUploaded) {
+                ModelRenderer::uploadAllModels(ctx);
+                ctx.modelsUploaded = true;
+            }
+            ctx.assetsLoaded = true;
+            ctx.state = AppState::WELCOME;
+        }
     }
 
     drawCentered("Visualizador de Aviones", cx, h / 2.0f - 130.0f, 3.0f, white);

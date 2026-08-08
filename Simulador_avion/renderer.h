@@ -45,7 +45,8 @@ namespace Renderer {
 
     // ========== PRECARGA DE MODELOS ==========
     void preloadModel(int modelNumber);
-    void preloadParts(int modelNumber);
+    void preloadSinglePart(int modelNumber, const std::string& filePath);
+    void markPartsAsLoaded(int modelNumber);
     bool isModelPreloaded(int modelNumber);
     bool isPartsPreloaded(int modelNumber);
     void cleanupPreloadedModels();
