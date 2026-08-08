@@ -8,6 +8,7 @@ namespace AudioManager {
     void setMuted(bool muted);
     void pauseMenuMusic();
     void resumeMenuMusic();
+    void playEngineSound(int planeIndex);
     void stop();
 }
 

@@ -629,7 +629,7 @@ void renderViewerState(GLFWwindow* window) {
     // --- RENDERIZAR SELECTOR DE SIMULACIONES A LA DERECHA ---
     if (!Renderer::isPartsModeActive()) {
         float panelW = 240.0f;
-        float panelH = 290.0f;
+        float panelH = 334.0f;
         float panelX = w - panelW - 24.0f;
         float panelY = 100.0f;
 
@@ -651,14 +651,16 @@ void renderViewerState(GLFWwindow* window) {
             "Tunel Viento",
             "Mapa Termico",
             "Esfuerzo Mec.",
-            "Analisis Modal"
+            "Analisis Modal",
+            "Sonido Motor"
         };
         std::vector<SimulationMode> modes = {
             SimulationMode::NONE,
             SimulationMode::WIND_TUNNEL,
             SimulationMode::THERMAL,
             SimulationMode::STRESS,
-            SimulationMode::VIBRATION
+            SimulationMode::VIBRATION,
+            SimulationMode::NONE
         };
 
         float btnW = 208.0f;
@@ -667,8 +669,13 @@ void renderViewerState(GLFWwindow* window) {
         float spacing = 44.0f;
 
         for (size_t i = 0; i < labels.size(); ++i) {
-            UIColor baseCol = (ctx.simMode == modes[i]) ? UIColor{ 0.0f, 0.5f, 0.5f, 1.0f } : UIColor{ 0.15f, 0.15f, 0.18f, 1.0f };
-            UIColor hoverCol = UIColor{ 0.25f, 0.35f, 0.35f, 1.0f };
+            bool isSoundBtn = (i == 5);
+            UIColor baseCol = isSoundBtn 
+                ? UIColor{ 0.12f, 0.35f, 0.48f, 1.0f }
+                : ((ctx.simMode == modes[i]) ? UIColor{ 0.0f, 0.5f, 0.5f, 1.0f } : UIColor{ 0.15f, 0.15f, 0.18f, 1.0f });
+            UIColor hoverCol = isSoundBtn 
+                ? UIColor{ 0.20f, 0.52f, 0.70f, 1.0f }
+                : UIColor{ 0.25f, 0.35f, 0.35f, 1.0f };
 
             bool clicked = UIRenderer::drawButton(
                 panelX + 16.0f, startY + i * spacing, btnW, btnH, labels[i],
@@ -677,8 +684,12 @@ void renderViewerState(GLFWwindow* window) {
             );
 
             if (clicked) {
-                ctx.simMode = modes[i];
-                ctx.simGraphHistory.clear();
+                if (isSoundBtn) {
+                    AudioManager::playEngineSound(ctx.selectedPlane);
+                } else {
+                    ctx.simMode = modes[i];
+                    ctx.simGraphHistory.clear();
+                }
             }
         }
     }

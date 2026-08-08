@@ -67,6 +67,43 @@ namespace AudioManager {
         }
     }
 
+    void playEngineSound(int planeIndex) {
+        std::string planeId = "";
+        switch (planeIndex) {
+        case 0: planeId = "a-10_thunderbolt_ii"; break;
+        case 1: planeId = "b-24_liberator"; break;
+        case 2: planeId = "boeing-787-_dreamliner"; break;
+        case 3: planeId = "mig_29_9-13"; break;
+        default: return;
+        }
+
+        mciSendStringA("close engine_sfx", NULL, 0, NULL);
+
+        std::string path = "audio/" + planeId + ".mp3";
+        if (!std::filesystem::exists(path)) {
+            if (std::filesystem::exists("../audio/" + planeId + ".mp3")) {
+                path = "../audio/" + planeId + ".mp3";
+            }
+        }
+
+        if (!std::filesystem::exists(path)) {
+            std::cerr << "[Audio ERROR] No se encontro el archivo de audio para " << planeId << ": " << path << std::endl;
+            return;
+        }
+
+        std::string openCmd = "open \"" + path + "\" type mpegvideo alias engine_sfx";
+        MCIERROR err = mciSendStringA(openCmd.c_str(), NULL, 0, NULL);
+        if (err == 0) {
+            if (g_isMuted) {
+                mciSendStringA("setaudio engine_sfx off", NULL, 0, NULL);
+            }
+            mciSendStringA("play engine_sfx", NULL, 0, NULL);
+            std::cout << "[Audio] Reproduciendo sonido de motor para " << planeId << ": " << path << std::endl;
+        } else {
+            std::cerr << "[Audio ERROR] Fallo al reproducir sonido MCI: " << path << " (Error " << err << ")" << std::endl;
+        }
+    }
+
     void stop() {
         if (g_isPlaying) {
             mciSendStringA("close bgm", NULL, 0, NULL);
