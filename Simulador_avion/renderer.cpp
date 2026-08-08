@@ -621,8 +621,8 @@ namespace Renderer {
                     }
                 }
 
-                // Ajustar traslación Y para que el suelo del hangar coincida exactamente con las ruedas del avión (-0.6f)
-                float targetFloorY = -0.60f;
+                // Ajustar traslación Y para que el suelo del hangar quede por debajo del tren de aterrizaje (-0.78f)
+                float targetFloorY = -0.78f;
                 float yOffset = targetFloorY - (minY * hangarScale);
 
                 glm::mat4 modelMat = glm::mat4(1.0f);

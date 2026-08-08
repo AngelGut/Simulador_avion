@@ -371,6 +371,14 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& nod
         }
     }
 
+    // DESCARTAR MALLAS DE SOMBRA NEGRAS O DEFORMACIONES DE PICOS:
+    // Si la malla no tiene textura y su color es negro o casi negro, es un plano de sombra/colisión
+    if (!newMesh.hasTexture) {
+        if (meshColor.r < 0.05f && meshColor.g < 0.05f && meshColor.b < 0.05f) {
+            return; // Omitir planos de sombras oscuras deformadas
+        }
+    }
+
     std::cout << "  Mesh: " << vertices.size() << " vértices, "
         << indices.size() / 3 << " triángulos" 
         << (newMesh.hasTexture ? " [Con Textura]" : "") << std::endl;
