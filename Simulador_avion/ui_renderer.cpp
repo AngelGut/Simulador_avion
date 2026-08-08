@@ -185,12 +185,63 @@ bool UIRenderer::drawButton(float x, float y, float w, float h,
     bool hovered = (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
     drawQuad(x, y, w, h, hovered ? hoverColor : baseColor);
 
-    // Centrar texto aproximadamente (stb_easy_font: ~8px alto, ~6-7px ancho por char a scale=1)
     float textScale = 2.0f;
-    float approxTextWidth = label.size() * 7.0f * textScale;
+    float approxTextWidth = getTextWidth(label, textScale);
     float textX = x + (w - approxTextWidth) / 2.0f;
     float textY = y + (h - 8.0f * textScale) / 2.0f;
     drawText(textX, textY, label, textScale, UIColor{ 1,1,1,1 });
+
+    return hovered && mousePressed;
+}
+
+bool UIRenderer::drawAudioButton(float x, float y, float w, float h,
+    bool isMuted, double mouseX, double mouseY, bool mousePressed) {
+    bool hovered = (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+
+    UIColor bg = hovered ? (isMuted ? UIColor{ 0.35f, 0.35f, 0.40f, 1.0f } : UIColor{ 0.25f, 0.70f, 0.95f, 1.0f })
+                         : (isMuted ? UIColor{ 0.20f, 0.20f, 0.25f, 1.0f } : UIColor{ 0.15f, 0.55f, 0.85f, 1.0f });
+
+    drawQuad(x, y, w, h, bg);
+    drawBorder(x, y, w, h, 2.0f, isMuted ? UIColor{ 0.45f, 0.45f, 0.50f, 1.0f } : UIColor{ 0.40f, 0.80f, 1.00f, 1.0f });
+
+    // Dibujar icono 2D de bocina
+    float iconSize = 20.0f;
+    float ix = x + 10.0f;
+    float iy = y + (h - iconSize) / 2.0f;
+
+    UIColor iconColor = isMuted ? UIColor{ 0.75f, 0.75f, 0.80f, 1.0f } : UIColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+    // 1. Cuerpo rectangular de la bocina
+    drawQuad(ix, iy + 5.0f, 5.0f, 10.0f, iconColor);
+
+    // 2. Cono trapezoidal de la bocina
+    for (int step = 0; step < 6; step++) {
+        float stepX = ix + 5.0f + step * 1.2f;
+        float stepH = 10.0f + step * 1.8f;
+        float stepY = iy + (iconSize - stepH) / 2.0f;
+        drawQuad(stepX, stepY, 1.3f, stepH, iconColor);
+    }
+
+    if (!isMuted) {
+        // Ondas de sonido cuando está sonando (Sound waves ON)
+        float wx = ix + 15.0f;
+        drawQuad(wx, iy + 6.0f, 2.0f, 8.0f, iconColor);
+        drawQuad(wx + 4.0f, iy + 3.0f, 2.0f, 14.0f, iconColor);
+    } else {
+        // X roja sobre la bocina (Muted Speaker OFF)
+        UIColor redSlash{ 0.95f, 0.25f, 0.25f, 1.0f };
+        float sx = ix - 2.0f;
+        float sy = iy - 2.0f;
+        float sSize = iconSize + 4.0f;
+
+        for (int i = 0; i < (int)sSize; i += 2) {
+            drawQuad(sx + i, sy + i, 2.5f, 2.5f, redSlash);
+            drawQuad(sx + sSize - i, sy + i, 2.5f, 2.5f, redSlash);
+        }
+    }
+
+    // Texto de la tecla [M]
+    drawText(x + w - 32.0f, y + (h - 14.0f) / 2.0f, "[M]", 1.6f, iconColor);
 
     return hovered && mousePressed;
 }

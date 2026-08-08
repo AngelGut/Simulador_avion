@@ -24,5 +24,9 @@ namespace UIRenderer {
         double mouseX, double mouseY, bool mousePressed,
         UIColor baseColor, UIColor hoverColor);
 
+    // Botón de audio compacto con icono de bocina (Normal vs Ensordecida con X roja)
+    bool drawAudioButton(float x, float y, float w, float h,
+        bool isMuted, double mouseX, double mouseY, bool mousePressed);
+
     float getTextWidth(const std::string& text, float scale);
 }

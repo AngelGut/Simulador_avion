@@ -192,18 +192,15 @@ void Screens::renderWelcome(AppContext& ctx) {
     );
     if (clicked) ctx.state = AppState::MENU;
 
-    // Botón de audio (Esquina superior derecha)
-    float audioW = 160.0f, audioH = 42.0f;
+    // Botón de audio con icono de bocina (Esquina superior derecha)
+    float audioW = 90.0f, audioH = 44.0f;
     float audioX = w - audioW - 24.0f;
     float audioY = 24.0f;
-    std::string audioText = AudioManager::isMuted() ? "MUSICA: OFF [M]" : "MUSICA: ON [M]";
-    UIColor audioColor = AudioManager::isMuted() ? UIColor{ 0.30f, 0.30f, 0.35f, 1.0f } : UIColor{ 0.15f, 0.65f, 0.90f, 1.0f };
-    UIColor audioHover = AudioManager::isMuted() ? UIColor{ 0.40f, 0.40f, 0.46f, 1.0f } : UIColor{ 0.25f, 0.75f, 1.00f, 1.0f };
 
-    bool audioClicked = UIRenderer::drawButton(
-        audioX, audioY, audioW, audioH, audioText,
-        ctx.mouseX, ctx.mouseY, ctx.mousePressed,
-        audioColor, audioHover
+    bool audioClicked = UIRenderer::drawAudioButton(
+        audioX, audioY, audioW, audioH,
+        AudioManager::isMuted(),
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed
     );
     if (audioClicked) AudioManager::toggleMute();
 
@@ -225,18 +222,15 @@ void Screens::renderMenu(AppContext& ctx) {
     // Fondo plano (sin gradiente, versión simple)
     UIRenderer::drawQuad(0, 0, w, h, bg);
 
-    // Botón de audio (Esquina superior derecha del Menú)
-    float audioW = 160.0f, audioH = 42.0f;
+    // Botón de audio con icono de bocina (Esquina superior derecha del Menú)
+    float audioW = 90.0f, audioH = 44.0f;
     float audioX = w - audioW - 24.0f;
     float audioY = 24.0f;
-    std::string audioText = AudioManager::isMuted() ? "MUSICA: OFF [M]" : "MUSICA: ON [M]";
-    UIColor audioColor = AudioManager::isMuted() ? UIColor{ 0.30f, 0.30f, 0.35f, 1.0f } : UIColor{ 0.15f, 0.65f, 0.90f, 1.0f };
-    UIColor audioHover = AudioManager::isMuted() ? UIColor{ 0.40f, 0.40f, 0.46f, 1.0f } : UIColor{ 0.25f, 0.75f, 1.00f, 1.0f };
 
-    bool audioClicked = UIRenderer::drawButton(
-        audioX, audioY, audioW, audioH, audioText,
-        ctx.mouseX, ctx.mouseY, ctx.mousePressed,
-        audioColor, audioHover
+    bool audioClicked = UIRenderer::drawAudioButton(
+        audioX, audioY, audioW, audioH,
+        AudioManager::isMuted(),
+        ctx.mouseX, ctx.mouseY, ctx.mousePressed
     );
     if (audioClicked) AudioManager::toggleMute();
 
