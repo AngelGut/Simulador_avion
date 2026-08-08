@@ -61,6 +61,7 @@
     <None Include="Arq002_rendering_luces.md" />
     <None Include="Arq003_ciclo_vida_entrada.md" />
     <None Include="Arq004_preparacion_modelos_3d.md" />
+    <None Include="Arq005_toma_decisiones.md" />
     <None Include="descripcion_Proyecto.md" />
     <None Include="shaders\vertex.glsl" />
     <None Include="shaders\fragment.glsl" />

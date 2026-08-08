@@ -136,6 +136,9 @@
     <None Include="Arq004_preparacion_modelos_3d.md">
       <Filter>docs</Filter>
     </None>
+    <None Include="Arq005_toma_decisiones.md">
+      <Filter>docs</Filter>
+    </None>
     <None Include="..\modelos 3d\a-10_thunderbolt_ii.glb">
       <Filter>models</Filter>
     </None>
