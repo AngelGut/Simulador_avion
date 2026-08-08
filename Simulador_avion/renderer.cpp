@@ -602,9 +602,9 @@ namespace Renderer {
 
             if (modelLoc != -1) {
                 glm::mat4 modelMat = glm::mat4(1.0f);
-                // Escalar y posicionar el hangar para envolver perfectamente al avión
-                modelMat = glm::translate(modelMat, glm::vec3(0.0f, -0.6f, 0.0f));
-                modelMat = glm::scale(modelMat, glm::vec3(15.0f, 15.0f, 15.0f));
+                // Ajuste de escala y posición para que el hangar encierre completamente al avión dentro
+                modelMat = glm::translate(modelMat, glm::vec3(0.0f, -1.8f, 0.0f));
+                modelMat = glm::scale(modelMat, glm::vec3(50.0f, 32.0f, 50.0f));
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMat[0][0]);
             }
 
