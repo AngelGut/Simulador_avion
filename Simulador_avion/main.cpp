@@ -63,7 +63,7 @@ std::vector<std::vector<Hotspot>> planeHotspots = {
     {
         { "COMPARTIMENTO DE BOMBAS", "Bodega central con compuertas enrollables que reducen la friccion.", glm::vec3(0.0f, -0.1f, -0.1f), "fuselaje" },
         { "CABINA DE MANDO B-24", "Estacion para pilotos y navegantes en cabina no presurizada de la SGM.", glm::vec3(0.0f, 0.15f, 0.7f), "interior" },
-        { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para de vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f), "motores" },
+        { "MOTORES RADIALES", "Motores Pratt & Whitney R-1830 con turbocompresor para de de vuelo a gran altura.", glm::vec3(0.35f, 0.05f, 0.2f), "motores" },
         { "ALA DAVIS", "Ala de envergadura superior y baja friccion, clave para el enorme alcance.", glm::vec3(-0.65f, 0.05f, 0.0f), "alas" },
         { "TREN RETRACTIL LATERAL", "Primer tren de aterrizaje triciclo en bombarderos pesados.", glm::vec3(0.0f, -0.55f, 0.0f), "tren" }
     },
@@ -108,7 +108,7 @@ bool project3DToScreen(const glm::vec3& worldPos, const glm::mat4& view, const g
 // ============================================================
 
 void drawStatBar(float x, float y, int value, int maxVal, const UIColor& activeColor, const UIColor& inactiveColor) {
-    float size = 12.0f;
+    float size = 14.0f; // Tamaño aumentado de los bloques de estadísticas
     float spacing = 6.0f;
     for (int i = 0; i < maxVal; ++i) {
         UIColor color = (i < value) ? activeColor : inactiveColor;
@@ -125,7 +125,7 @@ void drawGeneralStatsPanel(int planeIdx) {
     
     float boxX = 24.0f;
     float boxY = 24.0f;
-    float boxW = 340.0f;
+    float boxW = 360.0f; // Ancho aumentado para dar espacio a la fuente grande
     float boxH = h - 160.0f;
     
     UIColor colorYellow{1.0f, 0.85f, 0.0f, 1.0f};
@@ -143,93 +143,93 @@ void drawGeneralStatsPanel(int planeIdx) {
     UIRenderer::drawQuad(boxX + boxW - 12.0f, boxY, 12.0f, 3.0f, colorYellow);
     UIRenderer::drawQuad(boxX + boxW - 3.0f, boxY, 3.0f, 12.0f, colorYellow);
 
-    float currentY = boxY + 16.0f;
+    float currentY = boxY + 20.0f;
     
-    // Título del Avión (Escala 1.8f para legibilidad)
+    // Título del Avión (Aumentado a 2.4f para excelente legibilidad)
     std::string name = ctx.planes[planeIdx].name;
-    UIRenderer::drawText(boxX + 16.0f, currentY, name.c_str(), 1.8f, colorYellow);
-    currentY += 34.0f;
+    UIRenderer::drawText(boxX + 18.0f, currentY, name.c_str(), 2.4f, colorYellow);
+    currentY += 40.0f;
     
     // Línea separadora
-    UIRenderer::drawQuad(boxX + 16.0f, currentY, boxW - 32.0f, 2.0f, colorCyan);
-    currentY += 16.0f;
+    UIRenderer::drawQuad(boxX + 18.0f, currentY, boxW - 36.0f, 2.0f, colorCyan);
+    currentY += 24.0f;
 
-    // Ficha técnica según el avión
+    // Ficha técnica según el avión (Letras aumentadas a 1.6f, espaciado vertical de 26.0f)
     if (planeIdx == 0) { // A-10
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Avion de ataque a tierra.", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Disenado para soporte aereo", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "cercano y destruir blindados.", 1.2f, colorWhite); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Avion de ataque a tierra.", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Disenado para soporte cercano", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "y destruir blindados enemigos.", 1.6f, colorWhite); currentY += 38.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Vel. Max: 706 km/h", 1.3f, colorYellow); currentY += 24.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Alcance: 1,300 km", 1.3f, colorYellow); currentY += 35.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Vel. Max: 706 km/h", 1.7f, colorYellow); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Alcance: 1,300 km", 1.7f, colorYellow); currentY += 42.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Blindaje:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Blindaje:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Fuego:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Fuego:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
 
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Agilidad:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 3, 5, colorCyan, colorDarkGray);
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Agilidad:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 3, 5, colorCyan, colorDarkGray);
     }
     else if (planeIdx == 1) { // B-24
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Bombardero pesado de gran", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "capacidad y largo alcance de", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "la Segunda Guerra Mundial.", 1.2f, colorWhite); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Bombardero pesado de gran", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "capacidad y largo alcance de", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "la Segunda Guerra Mundial.", 1.6f, colorWhite); currentY += 38.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Vel. Max: 467 km/h", 1.3f, colorYellow); currentY += 24.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Alcance: 3,400 km", 1.3f, colorYellow); currentY += 35.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Vel. Max: 467 km/h", 1.7f, colorYellow); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Alcance: 3,400 km", 1.7f, colorYellow); currentY += 42.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Blindaje:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 4, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Blindaje:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 4, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Capacidad:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Capacidad:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
 
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Velocidad:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 3, 5, colorCyan, colorDarkGray);
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Velocidad:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 3, 5, colorCyan, colorDarkGray);
     }
     else if (planeIdx == 2) { // Boeing 787
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Avion comercial ultra eficiente", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "fabricado principalmente en", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "fibra de carbono.", 1.2f, colorWhite); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Avion comercial ultra eficiente", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "fabricado principalmente en", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "fibra de carbono.", 1.6f, colorWhite); currentY += 38.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Vel. Max: 903 km/h", 1.3f, colorYellow); currentY += 24.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Pasajeros: 242-330", 1.3f, colorYellow); currentY += 35.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Vel. Max: 903 km/h", 1.7f, colorYellow); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Pasajeros: 242-330", 1.7f, colorYellow); currentY += 42.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Eficiencia:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Eficiencia:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Confort:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Confort:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
 
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Tecnologia:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Tecnologia:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
     }
     else if (planeIdx == 3) { // MiG-29
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Caza supersonico bimotor de", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "superioridad aerea y alta", 1.2f, colorWhite); currentY += 20.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "maniobrabilidad.", 1.2f, colorWhite); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Caza supersonico bimotor de", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "superioridad aerea y alta", 1.6f, colorWhite); currentY += 26.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "maniobrabilidad.", 1.6f, colorWhite); currentY += 38.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Vel. Max: 2,400 km/h", 1.3f, colorYellow); currentY += 24.0f;
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Techo: 18,000 m", 1.3f, colorYellow); currentY += 35.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Vel. Max: 2,400 km/h", 1.7f, colorYellow); currentY += 30.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Techo: 18,000 m", 1.7f, colorYellow); currentY += 42.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Velocidad:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Velocidad:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
         
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Agilidad:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
-        currentY += 28.0f;
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Agilidad:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
+        currentY += 34.0f;
 
-        UIRenderer::drawText(boxX + 16.0f, currentY, "Aceleracion:", 1.3f, colorWhite);
-        drawStatBar(boxX + 140.0f, currentY + 2.0f, 5, 5, colorCyan, colorDarkGray);
+        UIRenderer::drawText(boxX + 18.0f, currentY, "Aceleracion:", 1.7f, colorWhite);
+        drawStatBar(boxX + 190.0f, currentY + 3.0f, 5, 5, colorCyan, colorDarkGray);
     }
 }
 
@@ -449,13 +449,12 @@ void renderViewerState(GLFWwindow* window) {
                             hoveredY = sy;
                         }
                     }
-                    break; // Solo mostramos un hotspot coincidente en modo piezas
+                    break; 
                 }
             }
         } 
         // --- SI EL AVIÓN ESTÁ ENTERO (Modo Piezas apagado) ---
         else {
-            // Renderizar la barra lateral izquierda con los datos generales y las estrellas
             drawGeneralStatsPanel(ctx.selectedPlane);
         }
 
@@ -470,8 +469,8 @@ void renderViewerState(GLFWwindow* window) {
             UIRenderer::drawQuad(hoveredX + 30.0f - 2.0f, hoveredY - 3.0f, 6.0f, 6.0f, colorYellow);
 
             // Ajustar posición del panel flotante (Tamaño aumentado para legibilidad superior)
-            float boxW = 340.0f;
-            float boxH = 140.0f;
+            float boxW = 380.0f;
+            float boxH = 170.0f;
             float boxX = hoveredX + 30.0f;
             float boxY = hoveredY - boxH / 2.0f;
 
@@ -493,51 +492,51 @@ void renderViewerState(GLFWwindow* window) {
             UIRenderer::drawQuad(boxX + boxW - 12.0f, boxY, 12.0f, 3.0f, colorYellow);
             UIRenderer::drawQuad(boxX + boxW - 3.0f, boxY, 3.0f, 12.0f, colorYellow);
 
-            // Título de la pieza (Letra grande 1.6f)
-            UIRenderer::drawText(boxX + 16.0f, boxY + 16.0f, hp.title.c_str(), 1.6f, colorYellow);
+            // Título de la pieza (Letra grande 2.2f)
+            UIRenderer::drawText(boxX + 16.0f, boxY + 18.0f, hp.title.c_str(), 2.2f, colorYellow);
 
-            // Descripción (Letra 1.3f para legibilidad superior, formateada en hasta 3 líneas dinámicas)
+            // Descripción (Letra 1.6f para legibilidad excelente, formateada en hasta 3 líneas dinámicas)
             std::string desc = hp.description;
-            if (desc.length() > 25) {
-                std::string desc1 = desc.substr(0, 25);
-                std::string desc2 = desc.substr(25);
+            if (desc.length() > 26) {
+                std::string desc1 = desc.substr(0, 26);
+                std::string desc2 = desc.substr(26);
                 size_t space = desc1.find_last_of(" ");
                 if (space != std::string::npos && space > 10) {
                     desc1 = desc.substr(0, space);
                     desc2 = desc.substr(space + 1);
                 }
-                UIRenderer::drawText(boxX + 16.0f, boxY + 48.0f, desc1.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                if (desc2.length() > 25) {
-                    size_t space2 = desc2.substr(0, 25).find_last_of(" ");
+                UIRenderer::drawText(boxX + 16.0f, boxY + 54.0f, desc1.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                if (desc2.length() > 26) {
+                    size_t space2 = desc2.substr(0, 26).find_last_of(" ");
                     if (space2 != std::string::npos && space2 > 10) {
                         std::string desc3 = desc2.substr(space2 + 1);
                         desc2 = desc2.substr(0, space2);
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 76.0f, desc2.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
-                        if (desc3.length() > 25) desc3 = desc3.substr(0, 22) + "...";
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 104.0f, desc3.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                        UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                        if (desc3.length() > 26) desc3 = desc3.substr(0, 22) + "...";
+                        UIRenderer::drawText(boxX + 16.0f, boxY + 122.0f, desc3.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
                     } else {
                         desc2 = desc2.substr(0, 22) + "...";
-                        UIRenderer::drawText(boxX + 16.0f, boxY + 76.0f, desc2.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                        UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
                     }
                 } else {
-                    UIRenderer::drawText(boxX + 16.0f, boxY + 76.0f, desc2.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                    UIRenderer::drawText(boxX + 16.0f, boxY + 88.0f, desc2.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
                 }
             } else {
-                UIRenderer::drawText(boxX + 16.0f, boxY + 48.0f, desc.c_str(), 1.3f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
+                UIRenderer::drawText(boxX + 16.0f, boxY + 54.0f, desc.c_str(), 1.6f, UIColor{0.85f, 0.9f, 0.95f, 1.0f});
             }
         }
     }
 
     // 4. Renderizar HUD de interfaz de usuario encima usando UIRenderer
-    // Nombre del modelo o pieza
+    // Nombre del modelo o pieza (Letra grande 2.4f, centrada)
     if (Renderer::isPartsModeActive()) {
         std::string partName = Renderer::getCurrentPartName();
         int currentIdx = Renderer::getCurrentPartIndex();
         int total = Renderer::getNumParts();
         std::string partHUD = partName + " (" + std::to_string(currentIdx + 1) + "/" + std::to_string(total) + ")";
-        UIRenderer::drawText(cx - 150.0f, 24.0f, partHUD.c_str(), 2.0f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
+        UIRenderer::drawText(cx - 175.0f, 24.0f, partHUD.c_str(), 2.4f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
     } else {
-        UIRenderer::drawText(cx - 150.0f, 24.0f, ctx.planes[ctx.selectedPlane].name.c_str(), 2.0f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
+        UIRenderer::drawText(cx - 175.0f, 24.0f, ctx.planes[ctx.selectedPlane].name.c_str(), 2.4f, UIColor{1.0f, 1.0f, 1.0f, 1.0f});
     }
 
     // Botón Volver (Colocado al fondo de la barra de información izquierda)
@@ -556,20 +555,20 @@ void renderViewerState(GLFWwindow* window) {
 
     // Dibujar ayuda en la derecha (Para no solapar con el panel de info izquierdo)
     if (ctx.showHelp) {
-        float boxW = 320.0f, boxH = 190.0f;
+        float boxW = 380.0f, boxH = 240.0f; // Tamaño aumentado de ayuda
         float boxX = w - boxW - 24.0f, boxY = 24.0f;
         UIRenderer::drawQuad(boxX, boxY, boxW, boxH, UIColor{ 0.05f, 0.05f, 0.08f, 0.85f });
         UIRenderer::drawBorder(boxX, boxY, boxW, boxH, 2.0f, UIColor{ 0.3f, 0.3f, 0.3f, 1.0f });
 
-        float lineY = boxY + 16.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "Controles:", 1.4f, UIColor{1, 1, 1, 1}); lineY += 26.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "Arrastrar Click - Rotar", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "Scroll / Q/E - Zoom", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "WASD - Paneo", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "P - Modo Piezas", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 22.0f;
-        UIRenderer::drawText(boxX + 16.0f, lineY, "<- / -> - Cambiar Pieza", 1.2f, UIColor{0.7f, 0.7f, 0.7f, 1.0f});
+        float lineY = boxY + 20.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "Controles:", 1.8f, UIColor{1, 1, 1, 1}); lineY += 34.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "Arrastrar Click - Rotar", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "Scroll / Q/E - Zoom", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "WASD - Paneo", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "P - Modo Piezas", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f}); lineY += 30.0f;
+        UIRenderer::drawText(boxX + 20.0f, lineY, "<- / -> - Cambiar Pieza", 1.5f, UIColor{0.7f, 0.7f, 0.7f, 1.0f});
     } else {
-        UIRenderer::drawText(w - 360.0f, h - 30.0f, "Presiona H para ver los controles", 1.3f, UIColor{0.5f, 0.5f, 0.5f, 1.0f});
+        UIRenderer::drawText(w - 440.0f, h - 30.0f, "Presiona H para ver los controles", 1.6f, UIColor{0.5f, 0.5f, 0.5f, 1.0f});
     }
 }
 
