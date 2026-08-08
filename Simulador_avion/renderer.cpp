@@ -187,6 +187,15 @@ namespace Renderer {
     // drawLayer() - Renderizar capa seleccionada
     // ============================================================
     void drawLayer(int layerNumber) {
+        // Restablecer la matriz del modelo a la identidad para que el avión se dibuje en su escala real (1.0)
+        GLint currentProgram = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+        GLint modelLoc = glGetUniformLocation(currentProgram, "uModel");
+        if (modelLoc != -1) {
+            glm::mat4 identity = glm::mat4(1.0f);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &identity[0][0]);
+        }
+
         if (partsModeActive) {
             if (!partsLoaded) {
                 loadParts();
