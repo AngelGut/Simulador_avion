@@ -66,6 +66,9 @@
     <ClCompile Include="model_renderer.cpp">
       <Filter>scr</Filter>
     </ClCompile>
+    <ClCompile Include="audio_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geometry.h">
@@ -114,6 +117,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stb_image_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="audio_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -165,6 +171,12 @@
     </None>
     <None Include="export_blend.py">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Arq006_errores.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>docs</Filter>
     </None>
   </ItemGroup>
 </Project>
