@@ -665,21 +665,28 @@ int main(int argc, char** argv) {
         glClearColor(0.09f, 0.09f, 0.13f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Control de música según cambio de estado (Ejecutar SOLO UNA VEZ al cambiar de pantalla)
+        static AppState lastAudioState = AppState::LOADING;
+        if (ctx.state != lastAudioState) {
+            if (ctx.state == AppState::MENU || ctx.state == AppState::WELCOME || ctx.state == AppState::LOADING) {
+                AudioManager::resumeMenuMusic();
+            } else if (ctx.state == AppState::VIEWER) {
+                AudioManager::pauseMenuMusic();
+            }
+            lastAudioState = ctx.state;
+        }
+
         switch (ctx.state) {
         case AppState::LOADING:
-            AudioManager::resumeMenuMusic();
             Screens::renderLoading(ctx);
             break;
         case AppState::WELCOME:
-            AudioManager::resumeMenuMusic();
             Screens::renderWelcome(ctx);
             break;
         case AppState::MENU:
-            AudioManager::resumeMenuMusic();
             Screens::renderMenu(ctx);
             break;
         case AppState::VIEWER:
-            AudioManager::pauseMenuMusic();
             // Dibujar la escena completa usando nuestro visualizador
             renderViewerState(window);
             break;
